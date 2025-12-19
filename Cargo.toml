@@ -1,0 +1,23 @@
+[package]
+name = "floem-shadcn"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.87"
+description = "shadcn/ui inspired components for Floem"
+license = "MIT"
+
+[dependencies]
+floem = { path = "../floem", features = ["editor"] }
+floem-tailwind = { path = "../floem-tailwind" }
+floem-editor-core = { path = "../floem/editor-core" }
+peniko = "0.5.0"
+lapce-xi-rope = "0.4.0"
+ui-events = { version = "0.2", features = ["kurbo"] }
+
+[dev-dependencies]
+floem-test = { path = "../floem/test" }
+dpi = "0.1"
+
+[[example]]
+name = "showcase"
+path = "examples/showcase.rs"
