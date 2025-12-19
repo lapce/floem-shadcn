@@ -15,7 +15,13 @@ use lapce_xi_rope::{
 const MIN_LEAF: usize = 511;
 const MAX_LEAF: usize = 1024;
 
-pub struct TextLayoutLines(pub(crate) Node<TextLayoutLineInfo>);
+pub struct TextLayoutLines {
+    pub(crate) tree: Node<TextLayoutLineInfo>,
+    /// Default glyph height from font metrics (ascent + descent)
+    default_glyph_height: f64,
+    /// Default glyph top position (centering offset within line height)
+    default_glyph_top: f64,
+}
 
 impl TextLayoutLines {
     pub fn builder() -> TextLayoutLineBuilder {
@@ -23,36 +29,48 @@ impl TextLayoutLines {
     }
 
     pub fn utf8_len(&self) -> usize {
-        self.0.len()
+        self.tree.len()
     }
 
     pub fn num_visual_lines(&self) -> usize {
-        let info = self.0.info();
+        let info = self.tree.info();
         info.line_breaks + info.line_endings + 1
+    }
+
+    /// Returns the default glyph height from font metrics.
+    /// This is used for cursor drawing when text is empty.
+    pub fn default_glyph_height(&self) -> f64 {
+        self.default_glyph_height
+    }
+
+    /// Returns the default glyph top position (centering offset within line height).
+    /// This is used for cursor positioning when text is empty.
+    pub fn default_glyph_top(&self) -> f64 {
+        self.default_glyph_top
     }
 
     pub fn apply_delta(&mut self, delta: Delta<TextLayoutLineInfo>) {
         let mut b: TreeBuilder<TextLayoutLineInfo> = TreeBuilder::new();
         for elem in delta.els {
             match elem {
-                DeltaElement::Copy(beg, end) => b.push(self.0.subseq(Interval::new(beg, end))),
+                DeltaElement::Copy(beg, end) => b.push(self.tree.subseq(Interval::new(beg, end))),
                 DeltaElement::Insert(n) => b.push(n),
             }
         }
-        self.0 = b.build();
+        self.tree = b.build();
     }
 
     pub fn visual_line(&self, actual_line: usize) -> usize {
-        self.0.count_unit::<usize, VlineLineConverter>(actual_line)
+        self.tree.count_unit::<usize, VlineLineConverter>(actual_line)
     }
 
     pub fn actual_line(&self, visual_line: usize) -> usize {
-        self.0
+        self.tree
             .measure_unit::<usize, VlineLineConverter>(visual_line)
     }
 
     pub fn vline_of_height(&self, height: f64) -> usize {
-        self.0
+        self.tree
             .convert::<GlyphPoint, PointConverter, usize, VlineConverter>(GlyphPoint {
                 x: 0.0,
                 glyph_top: 0.0,
@@ -64,28 +82,28 @@ impl TextLayoutLines {
     }
 
     pub fn height_of_vline(&self, vline: usize) -> f64 {
-        self.0
+        self.tree
             .convert::<usize, VlineConverter, GlyphPoint, PointConverter>(vline)
             .line_bottom
     }
 
     pub fn offset_of_vline(&self, vline: usize) -> usize {
-        self.0
+        self.tree
             .convert::<usize, VlineConverter, usize, BaseConverter>(vline)
     }
 
     pub fn vline_of_offset(&self, offset: usize) -> usize {
-        self.0
+        self.tree
             .convert::<usize, BaseConverter, usize, VlineConverter>(offset)
     }
 
     pub fn point_of_offset(&self, offset: usize) -> GlyphPoint {
-        self.0
+        self.tree
             .convert::<usize, BaseConverter, GlyphPoint, PointConverter>(offset)
     }
 
     pub fn offset_of_point(&self, point: Point) -> usize {
-        self.0
+        self.tree
             .convert::<GlyphPoint, PointConverter, usize, BaseConverter>(GlyphPoint {
                 x: point.x,
                 glyph_top: 0.0,
@@ -101,7 +119,7 @@ impl TextLayoutLines {
         let height = self.point_of_offset(range.start).line_top as f32;
         let vline = self.vline_of_offset(range.start);
         VisualLineIter {
-            cursor: Cursor::new(&self.0, range.start),
+            cursor: Cursor::new(&self.tree, range.start),
             end: range.end,
             leaf_visual_index: None,
             vline,
@@ -155,6 +173,10 @@ pub struct TextLayoutLineLeaf {
     total_height: f64,
     // last glyph point
     last_glyph: GlyphPoint,
+    // default glyph height for empty lines (from font metrics)
+    default_glyph_height: f32,
+    // default centering offset for empty lines
+    default_centering_offset: f32,
 }
 
 impl TextLayoutLineLeaf {
@@ -165,6 +187,8 @@ impl TextLayoutLineLeaf {
         line_ending: LineEnding,
         line_break: bool,
         line_height: f64,
+        default_glyph_height: f32,
+        default_centering_offset: f32,
     ) {
         let line_height = line
             .line_height_opt
@@ -175,9 +199,20 @@ impl TextLayoutLineLeaf {
             self.max_width = line.w as f64
         }
 
+        // Store default glyph metrics
+        self.default_glyph_height = default_glyph_height;
+        self.default_centering_offset = default_centering_offset;
+
         {
-            let glyph_height = line.max_ascent + line.max_descent;
-            let centering_offset = (line_height as f32 - glyph_height) / 2.0;
+            let mut glyph_height = line.max_ascent + line.max_descent;
+            let mut centering_offset = (line_height as f32 - glyph_height) / 2.0;
+
+            // Use defaults for empty lines (no glyphs)
+            if glyph_height == 0.0 && default_glyph_height > 0.0 {
+                glyph_height = default_glyph_height;
+                centering_offset = default_centering_offset;
+            }
+
             self.last_glyph = GlyphPoint {
                 x: line.w as f64,
                 line_top: self.total_height,
@@ -263,6 +298,8 @@ impl Leaf for TextLayoutLineLeaf {
                 line.line_ending,
                 line.line_break,
                 line.line_height,
+                other.default_glyph_height,
+                other.default_centering_offset,
             );
             index += 1;
         }
@@ -276,6 +313,8 @@ impl Leaf for TextLayoutLineLeaf {
                     line.line_ending,
                     line.line_break,
                     line.line_height,
+                    other.default_glyph_height,
+                    other.default_centering_offset,
                 );
             }
             return Some(leaf);
@@ -287,6 +326,8 @@ impl Leaf for TextLayoutLineLeaf {
 
 pub struct TextLayoutLineBuilder {
     builder: TreeBuilder<TextLayoutLineInfo>,
+    default_glyph_height: f64,
+    default_glyph_top: f64,
 }
 
 impl Default for TextLayoutLineBuilder {
@@ -299,11 +340,42 @@ impl TextLayoutLineBuilder {
     pub fn new() -> Self {
         Self {
             builder: TreeBuilder::new(),
+            default_glyph_height: 16.0, // fallback value
+            default_glyph_top: 0.0,
         }
     }
 
     pub fn build(self) -> TextLayoutLines {
-        TextLayoutLines(self.builder.build())
+        TextLayoutLines {
+            tree: self.builder.build(),
+            default_glyph_height: self.default_glyph_height,
+            default_glyph_top: self.default_glyph_top,
+        }
+    }
+
+    /// Sets the default glyph metrics from a TextLayout.
+    /// Call this with any text layout (e.g., one containing a space) to capture
+    /// the font's glyph metrics for use when text is empty.
+    pub fn set_default_from_layout(&mut self, text_layout: &TextLayout) {
+        let metrics = text_layout.metrics();
+        let default_line_height = metrics.line_height as f64;
+        for buffer_line in text_layout.lines() {
+            let lines = buffer_line.layout_opt().into_iter().flatten();
+            for line in lines {
+                let glyph_height = (line.max_ascent + line.max_descent) as f64;
+                if glyph_height > 0.0 {
+                    // Use line_height_opt if available (respects attrs), otherwise use default
+                    let line_height = line
+                        .line_height_opt
+                        .map(|h| h as f64)
+                        .unwrap_or(default_line_height);
+                    let centering_offset = (line_height - glyph_height) / 2.0;
+                    self.default_glyph_height = glyph_height;
+                    self.default_glyph_top = centering_offset;
+                    return;
+                }
+            }
+        }
     }
 
     pub fn push_text_layouts(&mut self, text_layouts: &[TextLayout]) {
@@ -314,12 +386,25 @@ impl TextLayoutLineBuilder {
 
     pub fn push_text_layout(&mut self, text_layout: &TextLayout) {
         let metrics = text_layout.metrics();
+        let mut captured_default = self.default_glyph_height > 16.0; // already have a real value
         for buffer_line in text_layout.lines() {
             let line_ending = buffer_line.ending();
             let mut leaf = TextLayoutLineLeaf::default();
             let lines = buffer_line.layout_opt().into_iter().flatten();
             let mut lines = lines.peekable();
             while let Some(line) = lines.next() {
+                // Capture default glyph metrics from first layout line
+                if !captured_default {
+                    let glyph_height = (line.max_ascent + line.max_descent) as f64;
+                    if glyph_height > 0.0 {
+                        let line_height = metrics.line_height as f64;
+                        let centering_offset = (line_height - glyph_height) / 2.0;
+                        self.default_glyph_height = glyph_height;
+                        self.default_glyph_top = centering_offset;
+                        captured_default = true;
+                    }
+                }
+
                 let is_last_visual_line = lines.peek().is_none();
                 let mut utf8_len = if let Some(next) = lines.peek() {
                     // if there's next line, that means it was wrapped
@@ -362,6 +447,8 @@ impl TextLayoutLineBuilder {
                     },
                     !is_last_visual_line,
                     metrics.line_height as f64,
+                    self.default_glyph_height as f32,
+                    self.default_glyph_top as f32,
                 );
             }
             self.builder.push(Node::from_leaf(leaf));
@@ -540,12 +627,19 @@ impl UnitConverter<TextLayoutLineInfo, GlyphPoint> for PointConverter {
         offset
     }
 
-    fn measure(l: &<TextLayoutLineInfo as NodeInfo>::L, in_base_units: usize) -> GlyphPoint {
+    fn measure(leaf: &<TextLayoutLineInfo as NodeInfo>::L, in_base_units: usize) -> GlyphPoint {
         let mut base = in_base_units;
         let mut point = GlyphPoint::default();
-        for l in l.visual_lines.iter() {
-            let glyph_height = l.line.max_ascent + l.line.max_descent;
-            let centering_offset = (l.line_height as f32 - glyph_height) / 2.0;
+        for l in leaf.visual_lines.iter() {
+            let mut glyph_height = l.line.max_ascent + l.line.max_descent;
+            let mut centering_offset = (l.line_height as f32 - glyph_height) / 2.0;
+
+            // Use defaults for empty lines (no glyphs)
+            if glyph_height == 0.0 && leaf.default_glyph_height > 0.0 {
+                glyph_height = leaf.default_glyph_height;
+                centering_offset = leaf.default_centering_offset;
+            }
+
             match base.cmp(&l.utf8_len) {
                 Ordering::Greater => {
                     base -= l.utf8_len;
@@ -1061,6 +1155,68 @@ mod test {
     }
 
     #[test]
+    fn test_cursor_on_empty_lines() {
+        let attrs_list = default_attrs_list();
+
+        // Text with multiple consecutive empty lines: "a\n\n\nb"
+        // Offset 0 = 'a', Offset 1 = '\n' (end of "a"), Offset 2 = '\n' (empty line 2), Offset 3 = '\n' (empty line 3), Offset 4 = 'b'
+        let reference_layout = TextLayout::new_with_text(" ", attrs_list.clone(), None);
+        let mut builder = TextLayoutLineBuilder::new();
+        builder.set_default_from_layout(&reference_layout);
+        let text_layout = TextLayout::new_with_text("a\n\n\nb", attrs_list.clone(), None);
+        builder.push_text_layout(&text_layout);
+        let lines = builder.build();
+
+        println!("num_visual_lines: {}", lines.num_visual_lines());
+        println!("utf8_len: {}", lines.utf8_len());
+        println!("default_glyph_height: {}", lines.default_glyph_height());
+        println!("default_glyph_top: {}", lines.default_glyph_top());
+
+        // Check cursor position at each offset
+        for offset in 0..=5 {
+            let point = lines.point_of_offset(offset);
+            let glyph_height = point.glyph_bottom - point.glyph_top;
+            println!(
+                "offset {}: x={:.2}, line_top={:.2}, glyph_top={:.2}, glyph_bottom={:.2}, glyph_height={:.2}",
+                offset, point.x, point.line_top, point.glyph_top, point.glyph_bottom, glyph_height
+            );
+
+            // The glyph_height should never be 0 - empty lines should use default metrics
+            assert!(
+                glyph_height > 0.0,
+                "glyph_height should be > 0 at offset {}, but got {}",
+                offset,
+                glyph_height
+            );
+        }
+
+        // Verify that each empty line has a distinct line_top (they should be stacked vertically)
+        let p1 = lines.point_of_offset(1); // end of 'a' line
+        let p2 = lines.point_of_offset(2); // empty line 2
+        let p3 = lines.point_of_offset(3); // empty line 3
+        let p4 = lines.point_of_offset(4); // 'b' line
+
+        assert!(
+            p2.line_top > p1.line_top,
+            "line 2 should be below line 1: {} > {}",
+            p2.line_top,
+            p1.line_top
+        );
+        assert!(
+            p3.line_top > p2.line_top,
+            "line 3 should be below line 2: {} > {}",
+            p3.line_top,
+            p2.line_top
+        );
+        assert!(
+            p4.line_top > p3.line_top,
+            "line 4 should be below line 3: {} > {}",
+            p4.line_top,
+            p3.line_top
+        );
+    }
+
+    #[test]
     fn test_unicode_multibyte() {
         let attrs_list = default_attrs_list();
 
@@ -1244,6 +1400,147 @@ mod test {
             lines.utf8_len() >= 10,
             "expected at least 10 bytes, got {}",
             lines.utf8_len()
+        );
+    }
+
+    #[test]
+    fn test_default_glyph_metrics_from_reference_layout() {
+        let attrs_list = default_attrs_list();
+
+        // Create a reference layout with a space to capture default font metrics
+        let reference_layout = TextLayout::new_with_text(" ", attrs_list.clone(), None);
+
+        let mut builder = TextLayoutLineBuilder::new();
+        builder.set_default_from_layout(&reference_layout);
+        let empty_lines = builder.build();
+
+        // Default glyph height should be captured (not the fallback 16.0)
+        assert!(
+            empty_lines.default_glyph_height() > 0.0,
+            "default_glyph_height should be positive, got {}",
+            empty_lines.default_glyph_height()
+        );
+        assert!(
+            empty_lines.default_glyph_height() != 16.0,
+            "default_glyph_height should not be fallback 16.0, got {}",
+            empty_lines.default_glyph_height()
+        );
+
+        // Default glyph top should be captured (centering offset)
+        // With line height 20.0 and glyph height < 20.0, there should be some centering
+        println!(
+            "default_glyph_height: {}, default_glyph_top: {}",
+            empty_lines.default_glyph_height(),
+            empty_lines.default_glyph_top()
+        );
+    }
+
+    #[test]
+    fn test_cursor_position_matches_empty_vs_nonempty() {
+        let attrs_list = default_attrs_list();
+
+        // Create a reference layout with a space to capture default font metrics
+        let reference_layout = TextLayout::new_with_text(" ", attrs_list.clone(), None);
+
+        // Build empty text layouts with reference metrics
+        let mut empty_builder = TextLayoutLineBuilder::new();
+        empty_builder.set_default_from_layout(&reference_layout);
+        let empty_lines = empty_builder.build();
+
+        // Build text layouts with actual text
+        let mut text_builder = TextLayoutLineBuilder::new();
+        let text_layout = TextLayout::new_with_text("hello", attrs_list.clone(), None);
+        text_builder.push_text_layout(&text_layout);
+        let text_lines = text_builder.build();
+
+        // Get point at offset 0 for text
+        let text_point = text_lines.point_of_offset(0);
+
+        // For empty text, we use default metrics
+        let empty_glyph_top = empty_lines.default_glyph_top();
+        let empty_glyph_height = empty_lines.default_glyph_height();
+
+        // For text, we get metrics from point_of_offset
+        let text_glyph_top = text_point.glyph_top;
+        let text_glyph_height = text_point.glyph_bottom - text_point.glyph_top;
+
+        println!(
+            "Empty: glyph_top={}, glyph_height={}",
+            empty_glyph_top, empty_glyph_height
+        );
+        println!(
+            "Text:  glyph_top={}, glyph_height={}",
+            text_glyph_top, text_glyph_height
+        );
+
+        // They should match exactly
+        assert!(
+            (empty_glyph_top - text_glyph_top).abs() < 0.001,
+            "glyph_top mismatch: empty={}, text={}",
+            empty_glyph_top,
+            text_glyph_top
+        );
+        assert!(
+            (empty_glyph_height - text_glyph_height).abs() < 0.001,
+            "glyph_height mismatch: empty={}, text={}",
+            empty_glyph_height,
+            text_glyph_height
+        );
+    }
+
+    #[test]
+    fn test_cursor_position_matches_after_typing_and_deleting() {
+        let attrs_list = default_attrs_list();
+
+        // Simulate: start with empty, type "a", then delete back to empty
+        // The cursor position should be the same before and after
+
+        // Create reference layout for empty text
+        let reference_layout = TextLayout::new_with_text(" ", attrs_list.clone(), None);
+
+        // Empty state
+        let mut empty_builder = TextLayoutLineBuilder::new();
+        empty_builder.set_default_from_layout(&reference_layout);
+        let empty_lines = empty_builder.build();
+
+        // State with "a"
+        let mut text_builder = TextLayoutLineBuilder::new();
+        text_builder.set_default_from_layout(&reference_layout);
+        let text_layout = TextLayout::new_with_text("a", attrs_list.clone(), None);
+        text_builder.push_text_layout(&text_layout);
+        let text_lines = text_builder.build();
+
+        // Get cursor position for empty (offset 0)
+        let empty_glyph_top = empty_lines.default_glyph_top();
+        let empty_glyph_height = empty_lines.default_glyph_height();
+
+        // Get cursor position for text at offset 0 (before the 'a')
+        let text_point = text_lines.point_of_offset(0);
+        let text_glyph_top = text_point.glyph_top;
+        let text_glyph_height = text_point.glyph_bottom - text_point.glyph_top;
+
+        println!("=== Cursor at offset 0 ===");
+        println!(
+            "Empty: glyph_top={:.4}, glyph_height={:.4}",
+            empty_glyph_top, empty_glyph_height
+        );
+        println!(
+            "Text:  glyph_top={:.4}, glyph_height={:.4}",
+            text_glyph_top, text_glyph_height
+        );
+
+        // Cursor position should match
+        assert!(
+            (empty_glyph_top - text_glyph_top).abs() < 0.001,
+            "glyph_top mismatch at offset 0: empty={}, text={}",
+            empty_glyph_top,
+            text_glyph_top
+        );
+        assert!(
+            (empty_glyph_height - text_glyph_height).abs() < 0.001,
+            "glyph_height mismatch at offset 0: empty={}, text={}",
+            empty_glyph_height,
+            text_glyph_height
         );
     }
 }

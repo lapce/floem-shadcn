@@ -5,99 +5,97 @@
 //! # Example
 //!
 //! ```rust
-//! use floem::reactive::RwSignal;
 //! use floem_shadcn::components::textarea::Textarea;
 //!
-//! let content = RwSignal::new(String::new());
-//!
 //! // Basic textarea
-//! let textarea = Textarea::new(content);
+//! let textarea = Textarea::new("Initial text");
 //!
-//! // With placeholder
-//! let textarea = Textarea::new(content).placeholder("Enter your message...");
+//! // With placeholder, rows, and change handler
+//! let textarea = Textarea::new("")
+//!     .placeholder("Enter your message...")
+//!     .rows(5)
+//!     .on_change(|text| println!("Text changed: {}", text));
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
-use floem::reactive::RwSignal;
-use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
+use crate::text::TextArea as TextAreaView;
 use crate::theme::ShadcnThemeExt;
 
 /// A styled textarea (multi-line input) builder
 pub struct Textarea {
     id: ViewId,
-    value: RwSignal<String>,
+    initial_value: String,
     placeholder: Option<String>,
     rows: u32,
-    disabled: bool,
+    on_change: Option<Box<dyn Fn(&str)>>,
 }
 
 impl Textarea {
-    /// Create a new textarea with the given value signal
-    pub fn new(value: RwSignal<String>) -> Self { Self { id: ViewId::new(),
-            value,
+    /// Create a new textarea with the given initial value
+    pub fn new(initial_value: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            initial_value: initial_value.into(),
             placeholder: None,
             rows: 3,
-            disabled: false,
+            on_change: None,
         }
     }
 
     /// Set placeholder text
-    pub fn placeholder(mut self, text: impl Into<String>) -> Self { self.placeholder = Some(text.into());
+    pub fn placeholder(mut self, text: impl Into<String>) -> Self {
+        self.placeholder = Some(text.into());
         self
     }
 
     /// Set the number of visible rows (default: 3)
-    pub fn rows(mut self, rows: u32) -> Self { self.rows = rows;
+    pub fn rows(mut self, rows: u32) -> Self {
+        self.rows = rows;
         self
     }
 
-    /// Set the textarea as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    /// Set a callback for when the text changes
+    pub fn on_change(mut self, on_change: impl Fn(&str) + 'static) -> Self {
+        self.on_change = Some(Box::new(on_change));
         self
     }
 
     /// Build the textarea view
     pub fn build(self) -> impl IntoView {
-        let value = self.value;
-        let placeholder = self.placeholder;
-        let disabled = self.disabled;
-        let min_height = (self.rows as f64) * 20.0 + 16.0; // Approximate line height + padding
+        let min_height = (self.rows as f64) * 24.0 + 16.0; // line height * rows + padding
 
-        // Use floem's text_input for now - it handles basic text editing
-        // Note: floem doesn't have a native multi-line textarea, so we use text_input
-        // with styling to approximate it
-        let input = floem::views::text_input(value)
-            .placeholder(placeholder.unwrap_or_default())
-            .style(move |s| {
-                s.with_shadcn_theme(move |s, t| {
-                    s.width_full()
-                        .min_height(min_height)
-                        .padding(8.0)
-                        .padding_left(12.0)
-                        .padding_right(12.0)
+        // Use our custom multi-line TextArea
+        let mut textarea = TextAreaView::with_text(self.initial_value);
+
+        if let Some(on_change) = self.on_change {
+            textarea = textarea.on_update(move |text| {
+                on_change(text);
+            });
+        }
+
+        textarea.style(move |s| {
+            s.min_height(min_height)
+                .w_full()
+                .rounded_md()
+                .border_1()
+                .px_3()
+                .py_2()
+                .text_sm()
+                .with_shadcn_theme(|s, t| {
+                    let ring = t.ring;
+                    s.border_color(t.input)
                         .background(t.background)
                         .color(t.foreground)
-                        .border(1.0)
-                        .border_color(t.input)
-                        .border_radius(6.0)
-                        .font_size(14.0)
-                        .cursor(if disabled {
-                            CursorStyle::Default
-                        } else {
-                            CursorStyle::Text
-                        })
-                        .focus(|s| s.border_color(t.ring))
+                        .focus(move |s| s.outline(2.0).outline_color(ring))
                         .disabled(|s| s.background(t.muted).color(t.muted_foreground))
                 })
-            });
-
-        input
+        })
     }
 }
-
 
 impl HasViewId for Textarea {
     fn view_id(&self) -> ViewId {

@@ -2,11 +2,27 @@
 //!
 //! Based on shadcn/ui CSS variables approach with support for light and dark modes.
 //! Integrates with floem's style system via inherited props for automatic theme propagation.
+//! Uses OKLCH color values directly from shadcn/ui for accurate color reproduction.
 
 use floem::prop;
 use floem::style::{Style, StylePropValue};
-use peniko::color::HueDirection;
+use peniko::color::{AlphaColor, HueDirection, Oklch, Srgb};
 use peniko::Color;
+
+/// Create a Color from OKLCH values.
+/// - `l`: Lightness (0.0 to 1.0)
+/// - `c`: Chroma (0.0+, typically 0 to ~0.4)
+/// - `h`: Hue angle in degrees (0 to 360)
+#[inline]
+fn oklch(l: f32, c: f32, h: f32) -> Color {
+    AlphaColor::<Oklch>::new([l, c, h, 1.0]).convert::<Srgb>()
+}
+
+/// Create a Color from OKLCH values with alpha.
+#[inline]
+fn oklcha(l: f32, c: f32, h: f32, a: f32) -> Color {
+    AlphaColor::<Oklch>::new([l, c, h, a]).convert::<Srgb>()
+}
 
 /// Theme mode (light or dark)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -75,51 +91,38 @@ impl Default for ShadcnTheme {
 
 impl ShadcnTheme {
     /// Create a light theme (shadcn default)
+    /// Colors from: https://ui.shadcn.com/themes (Zinc, default)
     pub fn light() -> Self {
         Self {
             mode: ThemeMode::Light,
 
-            // HSL: 0 0% 100% -> white
-            background: Color::from_rgba8(255, 255, 255, 255),
-            // HSL: 240 10% 3.9% -> near black
-            foreground: Color::from_rgba8(10, 10, 11, 255),
+            background: oklch(1.0, 0.0, 0.0),           // --background: oklch(1 0 0)
+            foreground: oklch(0.145, 0.0, 0.0),        // --foreground: oklch(0.145 0 0)
 
-            // Card same as background in light mode
-            card: Color::from_rgba8(255, 255, 255, 255),
-            card_foreground: Color::from_rgba8(10, 10, 11, 255),
+            card: oklch(1.0, 0.0, 0.0),                // --card: oklch(1 0 0)
+            card_foreground: oklch(0.145, 0.0, 0.0),  // --card-foreground: oklch(0.145 0 0)
 
-            // Popover same as card
-            popover: Color::from_rgba8(255, 255, 255, 255),
-            popover_foreground: Color::from_rgba8(10, 10, 11, 255),
+            popover: oklch(1.0, 0.0, 0.0),             // --popover: oklch(1 0 0)
+            popover_foreground: oklch(0.145, 0.0, 0.0), // --popover-foreground: oklch(0.145 0 0)
 
-            // Primary: HSL 240 5.9% 10% -> dark gray
-            primary: Color::from_rgba8(24, 24, 27, 255),
-            // Primary foreground: HSL 0 0% 98% -> near white
-            primary_foreground: Color::from_rgba8(250, 250, 250, 255),
+            primary: oklch(0.205, 0.0, 0.0),           // --primary: oklch(0.205 0 0)
+            primary_foreground: oklch(0.985, 0.0, 0.0), // --primary-foreground: oklch(0.985 0 0)
 
-            // Secondary: HSL 240 4.8% 95.9% -> light gray
-            secondary: Color::from_rgba8(244, 244, 245, 255),
-            secondary_foreground: Color::from_rgba8(24, 24, 27, 255),
+            secondary: oklch(0.97, 0.0, 0.0),          // --secondary: oklch(0.97 0 0)
+            secondary_foreground: oklch(0.205, 0.0, 0.0), // --secondary-foreground: oklch(0.205 0 0)
 
-            // Muted: HSL 240 4.8% 95.9%
-            muted: Color::from_rgba8(244, 244, 245, 255),
-            // Muted foreground: HSL 240 3.8% 46.1%
-            muted_foreground: Color::from_rgba8(113, 113, 122, 255),
+            muted: oklch(0.97, 0.0, 0.0),              // --muted: oklch(0.97 0 0)
+            muted_foreground: oklch(0.556, 0.0, 0.0), // --muted-foreground: oklch(0.556 0 0)
 
-            // Accent: HSL 240 4.8% 95.9%
-            accent: Color::from_rgba8(244, 244, 245, 255),
-            accent_foreground: Color::from_rgba8(24, 24, 27, 255),
+            accent: oklch(0.97, 0.0, 0.0),             // --accent: oklch(0.97 0 0)
+            accent_foreground: oklch(0.205, 0.0, 0.0), // --accent-foreground: oklch(0.205 0 0)
 
-            // Destructive: HSL 0 84.2% 60.2% -> red
-            destructive: Color::from_rgba8(239, 68, 68, 255),
-            destructive_foreground: Color::from_rgba8(250, 250, 250, 255),
+            destructive: oklch(0.577, 0.245, 27.325), // --destructive: oklch(0.577 0.245 27.325)
+            destructive_foreground: oklch(0.985, 0.0, 0.0), // --destructive-foreground: oklch(0.985 0 0)
 
-            // Border: HSL 240 5.9% 90%
-            border: Color::from_rgba8(228, 228, 231, 255),
-            // Input border same as border
-            input: Color::from_rgba8(228, 228, 231, 255),
-            // Ring: HSL 240 5.9% 10%
-            ring: Color::from_rgba8(24, 24, 27, 255),
+            border: oklch(0.922, 0.0, 0.0),            // --border: oklch(0.922 0 0)
+            input: oklch(0.922, 0.0, 0.0),             // --input: oklch(0.922 0 0)
+            ring: oklch(0.708, 0.0, 0.0),              // --ring: oklch(0.708 0 0)
 
             // Radius values (in pixels)
             radius: 6.0,
@@ -130,49 +133,38 @@ impl ShadcnTheme {
     }
 
     /// Create a dark theme
+    /// Colors from: https://ui.shadcn.com/themes (Zinc, default)
     pub fn dark() -> Self {
         Self {
             mode: ThemeMode::Dark,
 
-            // HSL: 240 10% 3.9% -> near black
-            background: Color::from_rgba8(10, 10, 11, 255),
-            // HSL: 0 0% 98% -> near white
-            foreground: Color::from_rgba8(250, 250, 250, 255),
+            background: oklch(0.145, 0.0, 0.0),         // --background: oklch(0.145 0 0)
+            foreground: oklch(0.985, 0.0, 0.0),        // --foreground: oklch(0.985 0 0)
 
-            // Card: slightly lighter than background
-            card: Color::from_rgba8(10, 10, 11, 255),
-            card_foreground: Color::from_rgba8(250, 250, 250, 255),
+            card: oklch(0.205, 0.0, 0.0),              // --card: oklch(0.205 0 0)
+            card_foreground: oklch(0.985, 0.0, 0.0),  // --card-foreground: oklch(0.985 0 0)
 
-            // Popover
-            popover: Color::from_rgba8(10, 10, 11, 255),
-            popover_foreground: Color::from_rgba8(250, 250, 250, 255),
+            popover: oklch(0.205, 0.0, 0.0),           // --popover: oklch(0.205 0 0)
+            popover_foreground: oklch(0.985, 0.0, 0.0), // --popover-foreground: oklch(0.985 0 0)
 
-            // Primary: near white in dark mode
-            primary: Color::from_rgba8(250, 250, 250, 255),
-            primary_foreground: Color::from_rgba8(24, 24, 27, 255),
+            primary: oklch(0.922, 0.0, 0.0),           // --primary: oklch(0.922 0 0)
+            primary_foreground: oklch(0.205, 0.0, 0.0), // --primary-foreground: oklch(0.205 0 0)
 
-            // Secondary: HSL 240 3.7% 15.9%
-            secondary: Color::from_rgba8(39, 39, 42, 255),
-            secondary_foreground: Color::from_rgba8(250, 250, 250, 255),
+            secondary: oklch(0.269, 0.0, 0.0),         // --secondary: oklch(0.269 0 0)
+            secondary_foreground: oklch(0.985, 0.0, 0.0), // --secondary-foreground: oklch(0.985 0 0)
 
-            // Muted: HSL 240 3.7% 15.9%
-            muted: Color::from_rgba8(39, 39, 42, 255),
-            // Muted foreground: HSL 240 5% 64.9%
-            muted_foreground: Color::from_rgba8(161, 161, 170, 255),
+            muted: oklch(0.269, 0.0, 0.0),             // --muted: oklch(0.269 0 0)
+            muted_foreground: oklch(0.708, 0.0, 0.0), // --muted-foreground: oklch(0.708 0 0)
 
-            // Accent: HSL 240 3.7% 15.9%
-            accent: Color::from_rgba8(39, 39, 42, 255),
-            accent_foreground: Color::from_rgba8(250, 250, 250, 255),
+            accent: oklch(0.269, 0.0, 0.0),            // --accent: oklch(0.269 0 0)
+            accent_foreground: oklch(0.985, 0.0, 0.0), // --accent-foreground: oklch(0.985 0 0)
 
-            // Destructive: HSL 0 62.8% 30.6% -> darker red
-            destructive: Color::from_rgba8(127, 29, 29, 255),
-            destructive_foreground: Color::from_rgba8(250, 250, 250, 255),
+            destructive: oklch(0.704, 0.191, 22.216), // --destructive: oklch(0.704 0.191 22.216)
+            destructive_foreground: oklch(0.985, 0.0, 0.0), // --destructive-foreground: oklch(0.985 0 0)
 
-            // Border: HSL 240 3.7% 15.9%
-            border: Color::from_rgba8(39, 39, 42, 255),
-            input: Color::from_rgba8(39, 39, 42, 255),
-            // Ring: HSL 240 4.9% 83.9%
-            ring: Color::from_rgba8(212, 212, 216, 255),
+            border: oklcha(1.0, 0.0, 0.0, 0.1),        // --border: oklch(1 0 0 / 10%)
+            input: oklcha(1.0, 0.0, 0.0, 0.1),         // --input: oklch(1 0 0 / 10%)
+            ring: oklch(0.556, 0.0, 0.0),              // --ring: oklch(0.556 0 0)
 
             // Radius values (same as light)
             radius: 6.0,
@@ -182,26 +174,25 @@ impl ShadcnTheme {
         }
     }
 
+    /// Adjust the lightness of a color in OKLCH space.
+    /// Positive delta increases lightness, negative decreases.
+    fn adjust_lightness(color: Color, delta: f32) -> Color {
+        let oklch: AlphaColor<Oklch> = color.convert();
+        let [l, c, h, a] = oklch.components;
+        let new_l = (l + delta).clamp(0.0, 1.0);
+        AlphaColor::<Oklch>::new([new_l, c, h, a]).convert::<Srgb>()
+    }
+
     /// Get a slightly darker version of a color (for hover states)
+    /// Uses OKLCH for perceptually uniform darkening.
     pub fn darken(&self, color: Color) -> Color {
-        let rgba = color.to_rgba8();
-        Color::from_rgba8(
-            (rgba.r as f32 * 0.9) as u8,
-            (rgba.g as f32 * 0.9) as u8,
-            (rgba.b as f32 * 0.9) as u8,
-            rgba.a,
-        )
+        Self::adjust_lightness(color, -0.05)
     }
 
     /// Get a slightly lighter version of a color (for hover states in dark mode)
+    /// Uses OKLCH for perceptually uniform lightening.
     pub fn lighten(&self, color: Color) -> Color {
-        let rgba = color.to_rgba8();
-        Color::from_rgba8(
-            (rgba.r as f32 * 1.1).min(255.0) as u8,
-            (rgba.g as f32 * 1.1).min(255.0) as u8,
-            (rgba.b as f32 * 1.1).min(255.0) as u8,
-            rgba.a,
-        )
+        Self::adjust_lightness(color, 0.05)
     }
 
     /// Get hover color based on theme mode
@@ -214,49 +205,17 @@ impl ShadcnTheme {
 
     /// Get active/pressed color based on theme mode (more pronounced than hover)
     pub fn active_color(&self, color: Color) -> Color {
-        let rgba = color.to_rgba8();
         match self.mode {
-            ThemeMode::Light => {
-                // Darken more than hover (0.8 vs 0.9)
-                Color::from_rgba8(
-                    (rgba.r as f32 * 0.8) as u8,
-                    (rgba.g as f32 * 0.8) as u8,
-                    (rgba.b as f32 * 0.8) as u8,
-                    rgba.a,
-                )
-            }
-            ThemeMode::Dark => {
-                // Lighten more than hover (1.2 vs 1.1)
-                Color::from_rgba8(
-                    (rgba.r as f32 * 1.2).min(255.0) as u8,
-                    (rgba.g as f32 * 1.2).min(255.0) as u8,
-                    (rgba.b as f32 * 1.2).min(255.0) as u8,
-                    rgba.a,
-                )
-            }
+            ThemeMode::Light => Self::adjust_lightness(color, -0.10),
+            ThemeMode::Dark => Self::adjust_lightness(color, 0.10),
         }
     }
 
     /// Get a more pronounced active color (for primary buttons)
     pub fn strong_active_color(&self, color: Color) -> Color {
-        let rgba = color.to_rgba8();
         match self.mode {
-            ThemeMode::Light => {
-                Color::from_rgba8(
-                    (rgba.r as f32 * 0.65) as u8,
-                    (rgba.g as f32 * 0.65) as u8,
-                    (rgba.b as f32 * 0.65) as u8,
-                    rgba.a,
-                )
-            }
-            ThemeMode::Dark => {
-                Color::from_rgba8(
-                    (rgba.r as f32 * 1.35).min(255.0) as u8,
-                    (rgba.g as f32 * 1.35).min(255.0) as u8,
-                    (rgba.b as f32 * 1.35).min(255.0) as u8,
-                    rgba.a,
-                )
-            }
+            ThemeMode::Light => Self::adjust_lightness(color, -0.15),
+            ThemeMode::Dark => Self::adjust_lightness(color, 0.15),
         }
     }
 }

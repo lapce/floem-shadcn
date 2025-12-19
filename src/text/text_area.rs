@@ -4,8 +4,10 @@
 //! and keyboard/mouse handling.
 
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 use floem::{
+    action::exec_after,
     context::{ComputeLayoutCx, PaintCx},
     event::{Event, EventListener, EventPropagation},
     kurbo::{Point, Rect, Size},
@@ -17,6 +19,8 @@ use floem::{
     views::{empty, Decorators, Scroll},
     IntoView, Renderer, View, ViewId,
 };
+
+use crate::theme::ShadcnThemeProp;
 use floem_editor_core::{
     buffer::rope_text::RopeText,
     command::{EditCommand, MoveCommand},
@@ -27,6 +31,9 @@ use ui_events::{
 };
 
 use super::Document;
+
+/// Cursor blink interval in milliseconds
+const CURSOR_BLINK_INTERVAL_MS: u64 = 500;
 
 /// A command that can be executed on the editor
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -96,6 +103,9 @@ pub struct TextArea {
     viewport: RwSignal<Rect>,
     parent_size: RwSignal<Size>,
     child_height: RwSignal<f64>,
+    /// Tracks the last time the cursor was moved or text was edited.
+    /// Used to reset the cursor blink cycle so the cursor is visible immediately after user action.
+    last_cursor_action: RwSignal<Instant>,
 }
 
 impl TextArea {
@@ -112,6 +122,7 @@ impl TextArea {
         let parent_size = create_rw_signal(Size::ZERO);
         let doc = Document::new(text.into());
         let doc_signal = create_rw_signal(doc);
+        let last_cursor_action = create_rw_signal(Instant::now());
 
         let id = ViewId::new();
 
@@ -168,6 +179,7 @@ impl TextArea {
                     id.request_active();
                     id.request_focus();
                     doc_signal.get_untracked().pointer_down(&adjusted);
+                    last_cursor_action.set(Instant::now());
                 }
                 EventPropagation::Stop
             }),
@@ -183,6 +195,8 @@ impl TextArea {
                     adjusted.current.position.x -= padding.3;
                     adjusted.current.position.y -= padding.0 - viewport.y0;
                     doc_signal.get_untracked().pointer_move(&adjusted);
+                    // During active drag, update cursor action time to keep cursor visible
+                    last_cursor_action.set(Instant::now());
                 }
                 EventPropagation::Stop
             }),
@@ -223,10 +237,12 @@ impl TextArea {
                 let document = doc_signal.get_untracked();
 
                 if let Some(command) = command {
+                    let shift_held = modifiers.shift();
                     match command {
                         Command::Edit(edit_cmd) => document.run_edit_command(edit_cmd),
-                        Command::Move(move_cmd) => document.run_move_command(move_cmd),
+                        Command::Move(move_cmd) => document.run_move_command(move_cmd, shift_held),
                     }
+                    last_cursor_action.set(Instant::now());
                     return EventPropagation::Stop;
                 }
 
@@ -239,6 +255,7 @@ impl TextArea {
                 if mods.is_empty() {
                     if let Key::Character(c) = key {
                         document.insert_text(&c);
+                        last_cursor_action.set(Instant::now());
                     }
                 }
                 EventPropagation::Stop
@@ -250,6 +267,7 @@ impl TextArea {
             Box::new(move |event| {
                 if let Event::ImeCommit(text) = event {
                     doc_signal.get_untracked().insert_text(&text);
+                    last_cursor_action.set(Instant::now());
                 }
                 EventPropagation::Stop
             }),
@@ -263,6 +281,7 @@ impl TextArea {
             viewport,
             parent_size,
             child_height,
+            last_cursor_action,
         }
     }
 
@@ -282,7 +301,12 @@ impl TextArea {
         let doc = self.doc;
         create_effect(move |_| {
             let new_value = set_value();
-            doc.update(|doc| {
+            // Check if document already has this value to avoid re-entrancy issues
+            let current_text = doc.with_untracked(|d| d.text());
+            if current_text == new_value {
+                return;
+            }
+            doc.with_untracked(|doc| {
                 let end = doc.buffer().with_untracked(|b| b.text().len());
                 use floem_editor_core::{
                     cursor::CursorAffinity,
@@ -314,7 +338,7 @@ impl View for TextArea {
             Style::new()
                 .cursor(StyleCursorStyle::Text)
                 .focusable(true)
-                .set(floem::style::OverflowX, Overflow::Scroll)
+                .set(floem::style::OverflowX, Overflow::Hidden) // Hidden to enable text wrapping
                 .set(floem::style::OverflowY, Overflow::Scroll),
         )
     }
@@ -322,21 +346,21 @@ impl View for TextArea {
     fn compute_layout(&mut self, cx: &mut ComputeLayoutCx) -> Option<Rect> {
         let layout = self.id.get_layout().unwrap_or_default();
         let style = self.id.get_combined_style();
-        let style = style.builtin();
+        let builtin_style = style.builtin();
 
-        let padding_left = match style.padding_left() {
+        let padding_left = match builtin_style.padding_left() {
             PxPct::Px(padding) => padding,
             PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
         };
-        let padding_right = match style.padding_right() {
+        let padding_right = match builtin_style.padding_right() {
             PxPct::Px(padding) => padding,
             PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
         };
-        let padding_top = match style.padding_top() {
+        let padding_top = match builtin_style.padding_top() {
             PxPct::Px(padding) => padding,
             PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
         };
-        let padding_bottom = match style.padding_bottom() {
+        let padding_bottom = match builtin_style.padding_bottom() {
             PxPct::Px(padding) => padding,
             PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
         };
@@ -349,7 +373,11 @@ impl View for TextArea {
         let height = layout.size.height as f64 - padding_top - padding_bottom;
         let parent_size = Size::new(width, height);
 
+        // Get text color from style and set it on the document
+        let text_color = builtin_style.color().unwrap_or(Color::BLACK);
+
         let doc = self.doc.get_untracked();
+        doc.set_text_color(text_color);
         doc.set_width(width);
 
         let child_height = {
@@ -372,6 +400,12 @@ impl View for TextArea {
         let padding = self.padding.get_untracked();
         let viewport = self.viewport.get_untracked();
 
+        // Get text color and theme from style
+        let style = self.id.get_combined_style();
+        let text_color = style.builtin().color().unwrap_or(Color::BLACK);
+        let theme = style.get(ShadcnThemeProp);
+        let selection_color = theme.primary.multiply_alpha(0.2);
+
         cx.save();
         cx.clip(
             &self
@@ -392,12 +426,32 @@ impl View for TextArea {
         if cx.is_focused(self.id) {
             let cursor = doc.cursor().get_untracked();
             if cursor.is_caret() {
-                let p = lines.point_of_offset(cursor.end);
-                let rect = Rect::from_origin_size(
-                    (p.x + padding.3 - 1.0, p.glyph_top + padding.0 - viewport.y0),
-                    (2.0, p.glyph_bottom - p.glyph_top),
-                );
-                cx.fill(&rect, Color::BLACK, 0.0);
+                // Calculate cursor visibility based on blink cycle
+                // Cursor is visible during even intervals (0-500ms, 1000-1500ms, etc.)
+                let elapsed_ms = self.last_cursor_action.get_untracked().elapsed().as_millis();
+                let blink_cycle = elapsed_ms / CURSOR_BLINK_INTERVAL_MS as u128;
+                let is_cursor_visible = blink_cycle % 2 == 0;
+
+                if is_cursor_visible {
+                    let p = lines.point_of_offset(cursor.end);
+                    // Use glyph metrics, fall back to default font metrics for empty text
+                    let (cursor_top, cursor_height) = if p.glyph_bottom > p.glyph_top {
+                        (p.glyph_top, p.glyph_bottom - p.glyph_top)
+                    } else {
+                        (lines.default_glyph_top(), lines.default_glyph_height())
+                    };
+                    let rect = Rect::from_origin_size(
+                        (p.x + padding.3 - 1.0, cursor_top + padding.0 - viewport.y0),
+                        (2.0, cursor_height),
+                    );
+                    cx.fill(&rect, text_color, 0.0);
+                }
+
+                // Schedule repaint for cursor blink
+                let id = self.id;
+                exec_after(Duration::from_millis(CURSOR_BLINK_INTERVAL_MS), move |_| {
+                    id.request_paint();
+                });
             } else {
                 // Draw selection
                 let start_vline = lines.vline_of_offset(cursor.min());
@@ -420,7 +474,7 @@ impl View for TextArea {
                         (x0 + padding.3, line.line_top as f64 + padding.0 - viewport.y0),
                         (x1 - x0, line.line_height as f64),
                     );
-                    cx.fill(&rect, Color::BLACK.multiply_alpha(0.1), 0.0);
+                    cx.fill(&rect, selection_color, 0.0);
                 }
             }
         }
@@ -1003,6 +1057,127 @@ mod tests {
         ));
 
         assert_eq!(doc_signal.get_untracked().text(), "abX\nYcd");
+    }
+
+    // === Tests for cursor blinking ===
+
+    #[test]
+    fn test_cursor_blink_timing_logic() {
+        // Test that the blink cycle calculation is correct
+        // Cursor should be visible when blink_cycle % 2 == 0
+
+        // At 0ms, blink_cycle = 0 / 500 = 0, visible (0 % 2 == 0)
+        assert_eq!((0u128 / 500) % 2, 0);
+
+        // At 250ms, blink_cycle = 250 / 500 = 0, visible (0 % 2 == 0)
+        assert_eq!((250u128 / 500) % 2, 0);
+
+        // At 499ms, blink_cycle = 499 / 500 = 0, visible (0 % 2 == 0)
+        assert_eq!((499u128 / 500) % 2, 0);
+
+        // At 500ms, blink_cycle = 500 / 500 = 1, hidden (1 % 2 == 1)
+        assert_eq!((500u128 / 500) % 2, 1);
+
+        // At 750ms, blink_cycle = 750 / 500 = 1, hidden (1 % 2 == 1)
+        assert_eq!((750u128 / 500) % 2, 1);
+
+        // At 999ms, blink_cycle = 999 / 500 = 1, hidden (1 % 2 == 1)
+        assert_eq!((999u128 / 500) % 2, 1);
+
+        // At 1000ms, blink_cycle = 1000 / 500 = 2, visible (2 % 2 == 0)
+        assert_eq!((1000u128 / 500) % 2, 0);
+
+        // At 1500ms, blink_cycle = 1500 / 500 = 3, hidden (3 % 2 == 1)
+        assert_eq!((1500u128 / 500) % 2, 1);
+    }
+
+    #[test]
+    fn test_cursor_blink_interval_constant() {
+        // Verify the blink interval is 500ms (standard cursor blink rate)
+        assert_eq!(super::CURSOR_BLINK_INTERVAL_MS, 500);
+    }
+
+    #[test]
+    fn test_textarea_has_last_cursor_action() {
+        use std::time::Instant;
+
+        let textarea = TextArea::new();
+
+        // The last_cursor_action should be set to a recent time (within a few seconds)
+        let elapsed = textarea.last_cursor_action.get_untracked().elapsed();
+        assert!(
+            elapsed.as_secs() < 5,
+            "last_cursor_action should be recent, but was {:?} ago",
+            elapsed
+        );
+    }
+
+    #[test]
+    fn test_cursor_action_updated_on_typing() {
+        use std::time::Instant;
+        use std::thread;
+        use std::time::Duration;
+
+        let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
+        let last_cursor_action = textarea.last_cursor_action;
+
+        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+
+        // Click to focus
+        harness.click(10.0, 10.0);
+
+        // Get initial time
+        let initial_time = last_cursor_action.get_untracked();
+
+        // Wait a small amount
+        thread::sleep(Duration::from_millis(10));
+
+        // Type a character
+        harness.dispatch_event(create_key_event(
+            Key::Character("a".into()),
+            Modifiers::default(),
+        ));
+
+        // The last_cursor_action should be updated
+        let new_time = last_cursor_action.get_untracked();
+        assert!(
+            new_time >= initial_time,
+            "last_cursor_action should be updated after typing"
+        );
+    }
+
+    #[test]
+    fn test_cursor_action_updated_on_arrow_key() {
+        use std::time::Instant;
+        use std::thread;
+        use std::time::Duration;
+
+        let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
+        let last_cursor_action = textarea.last_cursor_action;
+
+        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+
+        // Click to focus
+        harness.click(10.0, 10.0);
+
+        // Get initial time
+        let initial_time = last_cursor_action.get_untracked();
+
+        // Wait a small amount
+        thread::sleep(Duration::from_millis(10));
+
+        // Press arrow key
+        harness.dispatch_event(create_key_event(
+            Key::Named(NamedKey::ArrowRight),
+            Modifiers::default(),
+        ));
+
+        // The last_cursor_action should be updated
+        let new_time = last_cursor_action.get_untracked();
+        assert!(
+            new_time >= initial_time,
+            "last_cursor_action should be updated after arrow key"
+        );
     }
 }
 

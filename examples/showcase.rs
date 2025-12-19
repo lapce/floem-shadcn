@@ -462,14 +462,12 @@ fn alert_demo() -> impl IntoView {
 }
 
 fn textarea_demo() -> impl IntoView {
-    let content = RwSignal::new(String::new());
-
     demo_section(
         "Textarea",
         "A multi-line text input component.",
         v_stack((subsection(
             "Basic",
-            Textarea::new(content)
+            Textarea::new("")
                 .placeholder("Type your message here...")
                 .rows(4),
         ),))
