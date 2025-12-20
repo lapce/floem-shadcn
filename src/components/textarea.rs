@@ -32,6 +32,7 @@ pub struct Textarea {
     placeholder: Option<String>,
     rows: u32,
     on_change: Option<Box<dyn Fn(&str)>>,
+    resizable: bool,
 }
 
 impl Textarea {
@@ -43,6 +44,7 @@ impl Textarea {
             placeholder: None,
             rows: 3,
             on_change: None,
+            resizable: false,
         }
     }
 
@@ -64,12 +66,19 @@ impl Textarea {
         self
     }
 
+    /// Enable or disable the resize handle (drag grip at bottom-right corner)
+    pub fn resizable(mut self, enabled: bool) -> Self {
+        self.resizable = enabled;
+        self
+    }
+
     /// Build the textarea view
     pub fn build(self) -> impl IntoView {
         let min_height = (self.rows as f64) * 24.0 + 16.0; // line height * rows + padding
 
         // Use our custom multi-line TextArea
-        let mut textarea = TextAreaView::with_text(self.initial_value);
+        let mut textarea = TextAreaView::with_text(self.initial_value)
+            .resizable(self.resizable);
 
         if let Some(on_change) = self.on_change {
             textarea = textarea.on_update(move |text| {

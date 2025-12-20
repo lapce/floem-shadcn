@@ -319,6 +319,59 @@ impl Document {
                 drop(lines);
                 self.set_offset(new_offset, modify);
             }
+            MoveCommand::LineStart => {
+                let region = self.cursor.get_untracked();
+                let lines = self.text_layouts.borrow();
+                let vline = lines.vline_of_offset(region.end);
+                let new_offset = lines.offset_of_vline(vline);
+                drop(lines);
+                self.set_offset(new_offset, modify);
+                self.horiz.set(Some(ColPosition::Start));
+            }
+            MoveCommand::LineEnd => {
+                let region = self.cursor.get_untracked();
+                let lines = self.text_layouts.borrow();
+                let vline = lines.vline_of_offset(region.end);
+                let last_vline = lines.vline_of_offset(lines.utf8_len());
+                let doc_len = lines.utf8_len();
+
+                let new_offset = if vline >= last_vline {
+                    // On the last line, go to end of document
+                    doc_len
+                } else {
+                    // Go to the start of the next line, minus 1 (which is before the newline)
+                    let next_vline_offset = lines.offset_of_vline(vline + 1);
+                    next_vline_offset.saturating_sub(1).min(doc_len)
+                };
+                drop(lines);
+                self.set_offset(new_offset, modify);
+                self.horiz.set(Some(ColPosition::End));
+            }
+            MoveCommand::DocumentStart => {
+                self.set_offset(0, modify);
+                self.horiz.set(None);
+            }
+            MoveCommand::DocumentEnd => {
+                let doc_len = self.text_layouts.borrow().utf8_len();
+                self.set_offset(doc_len, modify);
+                self.horiz.set(None);
+            }
+            MoveCommand::WordBackward => {
+                let region = self.cursor.get_untracked();
+                let new_offset = self.buffer.with_untracked(|b| {
+                    b.move_word_backward(region.end, Mode::Insert)
+                });
+                self.set_offset(new_offset, modify);
+                self.horiz.set(None);
+            }
+            MoveCommand::WordForward => {
+                let region = self.cursor.get_untracked();
+                let new_offset = self.buffer.with_untracked(|b| {
+                    b.move_word_forward(region.end)
+                });
+                self.set_offset(new_offset, modify);
+                self.horiz.set(None);
+            }
             _ => {}
         }
     }
@@ -330,6 +383,12 @@ impl Document {
                 self.edit(
                     [(self.cursor.get_untracked(), "\n")],
                     EditType::InsertNewline,
+                );
+            }
+            EditCommand::InsertTab => {
+                self.edit(
+                    [(self.cursor.get_untracked(), "\t")],
+                    EditType::InsertChars,
                 );
             }
             EditCommand::DeleteBackward => {
@@ -344,6 +403,54 @@ impl Document {
                 };
                 self.edit([(region, "")], EditType::Delete);
             }
+            EditCommand::DeleteForward => {
+                let region = self.cursor.get_untracked();
+                let region = if region.is_caret() {
+                    let new_offset = self
+                        .buffer
+                        .with_untracked(|b| b.move_right(region.start, Mode::Insert, 1));
+                    SelRegion::new(region.start, new_offset, CursorAffinity::Forward, None)
+                } else {
+                    region
+                };
+                self.edit([(region, "")], EditType::Delete);
+            }
+            EditCommand::DeleteWordBackward => {
+                let region = self.cursor.get_untracked();
+                let region = if region.is_caret() {
+                    let new_offset = self
+                        .buffer
+                        .with_untracked(|b| b.move_word_backward(region.start, Mode::Insert));
+                    SelRegion::new(region.start, new_offset, CursorAffinity::Forward, None)
+                } else {
+                    region
+                };
+                self.edit([(region, "")], EditType::Delete);
+            }
+            EditCommand::DeleteWordForward => {
+                let region = self.cursor.get_untracked();
+                let region = if region.is_caret() {
+                    let new_offset = self
+                        .buffer
+                        .with_untracked(|b| b.move_word_forward(region.start));
+                    SelRegion::new(region.start, new_offset, CursorAffinity::Forward, None)
+                } else {
+                    region
+                };
+                self.edit([(region, "")], EditType::Delete);
+            }
+            EditCommand::DeleteToBeginningOfLine => {
+                let region = self.cursor.get_untracked();
+                let lines = self.text_layouts.borrow();
+                let vline = lines.vline_of_offset(region.end);
+                let line_start = lines.offset_of_vline(vline);
+                drop(lines);
+
+                if region.end > line_start {
+                    let delete_region = SelRegion::new(line_start, region.end, CursorAffinity::Forward, None);
+                    self.edit([(delete_region, "")], EditType::Delete);
+                }
+            }
             _ => {}
         }
     }
@@ -356,6 +463,13 @@ impl Document {
         } else {
             SelRegion::caret(offset, CursorAffinity::Forward)
         };
+        self.cursor.set(region);
+    }
+
+    /// Selects all text in the document.
+    pub fn select_all(&self) {
+        let doc_len = self.text_layouts.borrow().utf8_len();
+        let region = SelRegion::new(0, doc_len, CursorAffinity::Forward, None);
         self.cursor.set(region);
     }
 
@@ -1445,5 +1559,258 @@ mod tests {
         let cursor = doc.cursor().get_untracked();
         assert_eq!(cursor.start, 2, "Selection should not change after pointer up");
         assert_eq!(cursor.end, 6, "Selection should not change after pointer up");
+    }
+
+    // ==========================================================================
+    // Tests for new navigation commands (Home, End, Cmd+arrows, word movement)
+    // ==========================================================================
+
+    #[test]
+    fn test_line_start() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(5, false); // Middle of line
+
+        doc.run_move_command(&MoveCommand::LineStart, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(cursor.is_caret());
+        assert_eq!(cursor.end, 0, "LineStart should move to beginning of line");
+    }
+
+    #[test]
+    fn test_line_end() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(0, false);
+
+        doc.run_move_command(&MoveCommand::LineEnd, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(cursor.is_caret());
+        assert_eq!(cursor.end, 11, "LineEnd should move to end of line");
+    }
+
+    #[test]
+    fn test_line_start_multiline() {
+        let doc = Document::new("first\nsecond\nthird");
+        doc.set_width(200.0);
+        doc.set_offset(9, false); // 'c' in second
+
+        doc.run_move_command(&MoveCommand::LineStart, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert_eq!(cursor.end, 6, "LineStart should move to start of current line (second)");
+    }
+
+    #[test]
+    fn test_line_end_multiline() {
+        let doc = Document::new("first\nsecond\nthird");
+        doc.set_width(200.0);
+        doc.set_offset(6, false); // 's' in second
+
+        doc.run_move_command(&MoveCommand::LineEnd, false);
+
+        let cursor = doc.cursor().get_untracked();
+        // Line end should be before the newline (position 12)
+        assert_eq!(cursor.end, 12, "LineEnd should move to end of current line (before newline)");
+    }
+
+    #[test]
+    fn test_document_start() {
+        let doc = Document::new("first\nsecond\nthird");
+        doc.set_width(200.0);
+        doc.set_offset(15, false); // Somewhere in third
+
+        doc.run_move_command(&MoveCommand::DocumentStart, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(cursor.is_caret());
+        assert_eq!(cursor.end, 0, "DocumentStart should move to beginning of document");
+    }
+
+    #[test]
+    fn test_document_end() {
+        let doc = Document::new("first\nsecond\nthird");
+        doc.set_width(200.0);
+        doc.set_offset(0, false);
+
+        doc.run_move_command(&MoveCommand::DocumentEnd, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(cursor.is_caret());
+        assert_eq!(cursor.end, 18, "DocumentEnd should move to end of document");
+    }
+
+    #[test]
+    fn test_word_forward() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(0, false);
+
+        doc.run_move_command(&MoveCommand::WordForward, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(cursor.is_caret());
+        // Word forward should move past "hello " to start of "world"
+        assert!(cursor.end >= 5, "WordForward should move past 'hello'");
+    }
+
+    #[test]
+    fn test_word_backward() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(11, false); // End
+
+        doc.run_move_command(&MoveCommand::WordBackward, false);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(cursor.is_caret());
+        // Word backward should move to start of "world"
+        assert!(cursor.end <= 6, "WordBackward should move to start of 'world'");
+    }
+
+    #[test]
+    fn test_line_start_with_selection() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(7, false); // 'o' in world
+
+        // Shift+Home should select from cursor to line start
+        doc.run_move_command(&MoveCommand::LineStart, true);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(!cursor.is_caret(), "Should create selection");
+        assert_eq!(cursor.start, 7, "Selection anchor should stay at original position");
+        assert_eq!(cursor.end, 0, "Selection end should be at line start");
+    }
+
+    #[test]
+    fn test_document_end_with_selection() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(3, false);
+
+        // Shift+Cmd+Down should select from cursor to document end
+        doc.run_move_command(&MoveCommand::DocumentEnd, true);
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(!cursor.is_caret(), "Should create selection");
+        assert_eq!(cursor.start, 3, "Selection anchor should stay at original position");
+        assert_eq!(cursor.end, 11, "Selection end should be at document end");
+    }
+
+    // ==========================================================================
+    // Tests for new editing commands (Tab, word delete, line delete, select all)
+    // ==========================================================================
+
+    #[test]
+    fn test_insert_tab() {
+        let doc = Document::new("hello");
+        doc.set_width(200.0);
+        doc.set_offset(5, false);
+
+        doc.run_edit_command(&EditCommand::InsertTab);
+
+        assert_eq!(doc.text(), "hello\t");
+    }
+
+    #[test]
+    fn test_delete_word_backward() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(11, false); // End
+
+        doc.run_edit_command(&EditCommand::DeleteWordBackward);
+
+        // Should delete "world"
+        let text = doc.text();
+        assert!(text.starts_with("hello"), "Should keep 'hello', got: {}", text);
+        assert!(text.len() < 11, "Should have deleted some text");
+    }
+
+    #[test]
+    fn test_delete_word_forward() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(0, false);
+
+        doc.run_edit_command(&EditCommand::DeleteWordForward);
+
+        // Should delete "hello"
+        let text = doc.text();
+        assert!(!text.starts_with("hello"), "Should have deleted 'hello', got: {}", text);
+    }
+
+    #[test]
+    fn test_delete_to_beginning_of_line() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(6, false); // 'w' in world
+
+        doc.run_edit_command(&EditCommand::DeleteToBeginningOfLine);
+
+        assert_eq!(doc.text(), "world");
+    }
+
+    #[test]
+    fn test_delete_to_beginning_of_line_multiline() {
+        let doc = Document::new("first\nsecond");
+        doc.set_width(200.0);
+        doc.set_offset(8, false); // 'c' in second (f=0,i=1,r=2,s=3,t=4,\n=5,s=6,e=7,c=8)
+
+        doc.run_edit_command(&EditCommand::DeleteToBeginningOfLine);
+
+        assert_eq!(doc.text(), "first\ncond");
+    }
+
+    #[test]
+    fn test_select_all() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(5, false); // Middle
+
+        doc.select_all();
+
+        let cursor = doc.cursor().get_untracked();
+        assert!(!cursor.is_caret(), "Should create selection");
+        assert_eq!(cursor.min(), 0, "Selection should start at 0");
+        assert_eq!(cursor.max(), 11, "Selection should end at document length");
+    }
+
+    #[test]
+    fn test_select_all_empty() {
+        let doc = Document::new("");
+        doc.set_width(200.0);
+
+        doc.select_all();
+
+        let cursor = doc.cursor().get_untracked();
+        // Empty document should result in selection from 0 to 0
+        assert_eq!(cursor.min(), 0);
+        assert_eq!(cursor.max(), 0);
+    }
+
+    #[test]
+    fn test_delete_forward() {
+        let doc = Document::new("hello");
+        doc.set_width(200.0);
+        doc.set_offset(0, false);
+
+        doc.run_edit_command(&EditCommand::DeleteForward);
+
+        assert_eq!(doc.text(), "ello");
+    }
+
+    #[test]
+    fn test_delete_forward_with_selection() {
+        let doc = Document::new("hello world");
+        doc.set_width(200.0);
+        doc.set_offset(0, false);
+        doc.set_offset(5, true); // Select "hello"
+
+        doc.run_edit_command(&EditCommand::DeleteForward);
+
+        assert_eq!(doc.text(), " world");
     }
 }

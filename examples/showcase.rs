@@ -465,12 +465,21 @@ fn textarea_demo() -> impl IntoView {
     demo_section(
         "Textarea",
         "A multi-line text input component.",
-        v_stack((subsection(
-            "Basic",
-            Textarea::new("")
-                .placeholder("Type your message here...")
-                .rows(4),
-        ),))
+        v_stack((
+            subsection(
+                "Basic",
+                Textarea::new("")
+                    .placeholder("Type your message here...")
+                    .rows(4),
+            ),
+            subsection(
+                "Resizable",
+                Textarea::new("")
+                    .placeholder("Drag the bottom-right corner to resize...")
+                    .rows(4)
+                    .resizable(true),
+            ),
+        ))
         .style(|s| s.gap_8().max_w_md()),
     )
 }
