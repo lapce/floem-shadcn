@@ -3,7 +3,6 @@
 //! A multi-line text area with visual line support, cursor/selection rendering,
 //! and keyboard/mouse handling.
 
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use floem::{
@@ -18,412 +17,24 @@ use floem::{
     },
     style::{CursorStyle as StyleCursorStyle, Style},
     taffy::{Dimension, Overflow},
-    text::{FamilyOwned, LineHeightValue, Weight},
-    unit::PxPct,
     views::{Decorators, Scroll, empty},
 };
 
 use crate::theme::ShadcnThemeProp;
-use floem_editor_core::{
-    buffer::rope_text::RopeText,
-    command::{EditCommand, MoveCommand},
-};
+use floem_editor_core::buffer::rope_text::RopeText;
 use ui_events::{
-    keyboard::{Key, KeyState, KeyboardEvent, Modifiers, NamedKey},
+    keyboard::{Key, KeyState, KeyboardEvent, Modifiers},
     pointer::PointerEvent,
 };
 
-use super::Document;
-
-/// Cursor blink interval in milliseconds
-const CURSOR_BLINK_INTERVAL_MS: u64 = 500;
-
-/// A command that can be executed on the editor
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Command {
-    Edit(EditCommand),
-    Move(MoveCommand),
-    /// Select all text in the document
-    SelectAll,
-    /// Copy selected text to clipboard
-    Copy,
-    /// Cut selected text to clipboard
-    Cut,
-    /// Paste text from clipboard
-    Paste,
-}
-
-/// A key press with modifiers
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct KeyPress {
-    pub key: Key,
-    pub modifiers: Modifiers,
-}
-
-/// Default keymap for the text editor
-pub struct KeypressMap {
-    pub keymaps: HashMap<KeyPress, Command>,
-}
-
-impl Default for KeypressMap {
-    fn default() -> Self {
-        let mut keymaps = HashMap::new();
-
-        // Platform-specific modifier for common shortcuts
-        // On macOS: Meta (Cmd), on other platforms: Control
-        #[cfg(target_os = "macos")]
-        let cmd_or_ctrl = Modifiers::META;
-        #[cfg(not(target_os = "macos"))]
-        let cmd_or_ctrl = Modifiers::CONTROL;
-
-        // =======================================================================
-        // Basic navigation (arrow keys)
-        // =======================================================================
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::default(),
-            },
-            Command::Move(MoveCommand::Left),
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::default(),
-            },
-            Command::Move(MoveCommand::Right),
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowUp),
-                modifiers: Modifiers::default(),
-            },
-            Command::Move(MoveCommand::Up),
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowDown),
-                modifiers: Modifiers::default(),
-            },
-            Command::Move(MoveCommand::Down),
-        );
-
-        // =======================================================================
-        // Line start/end navigation
-        // =======================================================================
-        // Home -> Line Start
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Home),
-                modifiers: Modifiers::default(),
-            },
-            Command::Move(MoveCommand::LineStart),
-        );
-        // End -> Line End
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::End),
-                modifiers: Modifiers::default(),
-            },
-            Command::Move(MoveCommand::LineEnd),
-        );
-        // Cmd+Left (macOS) -> Line Start
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::META,
-            },
-            Command::Move(MoveCommand::LineStart),
-        );
-        // Cmd+Right (macOS) -> Line End
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::META,
-            },
-            Command::Move(MoveCommand::LineEnd),
-        );
-
-        // =======================================================================
-        // Document start/end navigation
-        // =======================================================================
-        // Cmd+Up (macOS) / Ctrl+Home -> Document Start
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowUp),
-                modifiers: Modifiers::META,
-            },
-            Command::Move(MoveCommand::DocumentStart),
-        );
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Home),
-                modifiers: Modifiers::CONTROL,
-            },
-            Command::Move(MoveCommand::DocumentStart),
-        );
-        // Cmd+Down (macOS) / Ctrl+End -> Document End
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowDown),
-                modifiers: Modifiers::META,
-            },
-            Command::Move(MoveCommand::DocumentEnd),
-        );
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::End),
-                modifiers: Modifiers::CONTROL,
-            },
-            Command::Move(MoveCommand::DocumentEnd),
-        );
-
-        // =======================================================================
-        // Word navigation (Alt/Option + arrows)
-        // =======================================================================
-        // Alt+Left -> Word Backward
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::ALT,
-            },
-            Command::Move(MoveCommand::WordBackward),
-        );
-        // Alt+Right -> Word Forward
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::ALT,
-            },
-            Command::Move(MoveCommand::WordForward),
-        );
-        // Ctrl+Left (non-macOS) -> Word Backward
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::CONTROL,
-            },
-            Command::Move(MoveCommand::WordBackward),
-        );
-        // Ctrl+Right (non-macOS) -> Word Forward
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::CONTROL,
-            },
-            Command::Move(MoveCommand::WordForward),
-        );
-
-        // =======================================================================
-        // Basic editing
-        // =======================================================================
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Enter),
-                modifiers: Modifiers::default(),
-            },
-            Command::Edit(EditCommand::InsertNewLine),
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::default(),
-            },
-            Command::Edit(EditCommand::DeleteBackward),
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Delete),
-                modifiers: Modifiers::default(),
-            },
-            Command::Edit(EditCommand::DeleteForward),
-        );
-        // Tab -> Insert Tab
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Tab),
-                modifiers: Modifiers::default(),
-            },
-            Command::Edit(EditCommand::InsertTab),
-        );
-
-        // =======================================================================
-        // Word deletion
-        // =======================================================================
-        // Alt+Backspace -> Delete Word Backward
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::ALT,
-            },
-            Command::Edit(EditCommand::DeleteWordBackward),
-        );
-        // Alt+Delete -> Delete Word Forward
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Delete),
-                modifiers: Modifiers::ALT,
-            },
-            Command::Edit(EditCommand::DeleteWordForward),
-        );
-        // Ctrl+Backspace (non-macOS) -> Delete Word Backward
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::CONTROL,
-            },
-            Command::Edit(EditCommand::DeleteWordBackward),
-        );
-        // Ctrl+Delete (non-macOS) -> Delete Word Forward
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Delete),
-                modifiers: Modifiers::CONTROL,
-            },
-            Command::Edit(EditCommand::DeleteWordForward),
-        );
-
-        // =======================================================================
-        // Line deletion
-        // =======================================================================
-        // Cmd+Backspace (macOS) -> Delete to Beginning of Line
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            KeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::META,
-            },
-            Command::Edit(EditCommand::DeleteToBeginningOfLine),
-        );
-
-        // =======================================================================
-        // Select All (Cmd/Ctrl+A)
-        // =======================================================================
-        keymaps.insert(
-            KeyPress {
-                key: Key::Character("a".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            Command::SelectAll,
-        );
-
-        // =======================================================================
-        // Clipboard operations (Cmd/Ctrl+C, Cmd/Ctrl+X, Cmd/Ctrl+V)
-        // =======================================================================
-        keymaps.insert(
-            KeyPress {
-                key: Key::Character("c".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            Command::Copy,
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Character("x".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            Command::Cut,
-        );
-        keymaps.insert(
-            KeyPress {
-                key: Key::Character("v".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            Command::Paste,
-        );
-
-        // =======================================================================
-        // Unix Emacs-style keybindings (Ctrl+letter) - macOS and Linux
-        // =======================================================================
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
-        {
-            // Ctrl+H -> Delete backward (backspace)
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("h".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Edit(EditCommand::DeleteBackward),
-            );
-            // Ctrl+D -> Delete forward
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("d".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Edit(EditCommand::DeleteForward),
-            );
-            // Ctrl+A -> Move to beginning of line
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("a".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Move(MoveCommand::LineStart),
-            );
-            // Ctrl+E -> Move to end of line
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("e".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Move(MoveCommand::LineEnd),
-            );
-            // Ctrl+F -> Move forward (right)
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("f".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Move(MoveCommand::Right),
-            );
-            // Ctrl+B -> Move backward (left)
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("b".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Move(MoveCommand::Left),
-            );
-            // Ctrl+N -> Move down
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("n".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Move(MoveCommand::Down),
-            );
-            // Ctrl+P -> Move up
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("p".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Move(MoveCommand::Up),
-            );
-            // Ctrl+K -> Kill to end of line
-            keymaps.insert(
-                KeyPress {
-                    key: Key::Character("k".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                Command::Edit(EditCommand::DeleteToEndOfLine),
-            );
-        }
-
-        Self { keymaps }
-    }
-}
+use super::{
+    Command, Document, Keymap, apply_styles_to_document, extract_padding, extract_text_styles,
+    get_glyph_dimensions, is_cursor_visible, CURSOR_BLINK_INTERVAL_MS,
+};
+#[cfg(test)]
+use super::KeyPress;
+#[cfg(test)]
+use ui_events::keyboard::NamedKey;
 
 /// Size of the resize handle grip area
 const RESIZE_HANDLE_SIZE: f64 = 16.0;
@@ -539,8 +150,8 @@ impl TextArea {
         id.set_children_vec(vec![scroll_view.into_any()]);
 
         // Set up event handlers
-        let keypress_map = std::sync::Arc::new(KeypressMap::default());
-        let keypress_map_clone = keypress_map.clone();
+        let keymap = std::sync::Arc::new(Keymap::multi_line());
+        let keymap_clone = keymap.clone();
 
         id.add_event_listener(
             EventListener::PointerDown,
@@ -655,17 +266,8 @@ impl TextArea {
                     return EventPropagation::Continue;
                 };
 
-                let keypress = KeyPress {
-                    key: key.clone(),
-                    modifiers: modifiers.clone(),
-                };
-
                 // Try to find command
-                let command = keypress_map_clone.keymaps.get(&keypress).or_else(|| {
-                    let mut modified = keypress.clone();
-                    modified.modifiers.set(Modifiers::SHIFT, false);
-                    keypress_map_clone.keymaps.get(&modified)
-                });
+                let command = keymap_clone.get(key, modifiers);
 
                 let document = doc_signal.get_untracked();
 
@@ -865,57 +467,24 @@ impl View for TextArea {
         let style = self.id.get_combined_style();
         let builtin_style = style.builtin();
 
-        let padding_left = match builtin_style.padding_left() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-        let padding_right = match builtin_style.padding_right() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-        let padding_top = match builtin_style.padding_top() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-        let padding_bottom = match builtin_style.padding_bottom() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-
-        if (padding_top, padding_right, padding_bottom, padding_left)
-            != self.padding.get_untracked()
-        {
-            self.padding
-                .set((padding_top, padding_right, padding_bottom, padding_left));
+        let padding = extract_padding(&builtin_style, layout.size.width as f64);
+        if padding != self.padding.get_untracked() {
+            self.padding.set(padding);
         }
 
-        let width = layout.size.width as f64 - padding_left - padding_right;
-        let height = layout.size.height as f64 - padding_top - padding_bottom;
+        let width = layout.size.width as f64 - padding.3 - padding.1;
+        let height = layout.size.height as f64 - padding.0 - padding.2;
         let parent_size = Size::new(width, height);
 
         // Get text styling from style and set them on the document
-        let text_color = builtin_style.color().unwrap_or(Color::BLACK);
-        let font_size = builtin_style.font_size().unwrap_or(14.0);
-        let line_height = builtin_style
-            .line_height()
-            .unwrap_or(LineHeightValue::Normal(1.5));
-        let font_weight = builtin_style.font_weight().unwrap_or(Weight::NORMAL);
-        let font_family = builtin_style
-            .font_family()
-            .map(|f| vec![FamilyOwned::Name(f)])
-            .unwrap_or_default();
-
+        let text_styles = extract_text_styles(&builtin_style);
         let doc = self.doc.get_untracked();
-        doc.set_text_color(text_color);
-        doc.set_font_size(font_size);
-        doc.set_line_height(line_height);
-        doc.set_font_weight(font_weight);
-        doc.set_font_family(font_family);
+        apply_styles_to_document(&doc, &text_styles);
         doc.set_width(width);
 
         let child_height = {
             let lines = doc.text_layouts().borrow();
-            lines.point_of_offset(lines.utf8_len()).line_bottom + padding_top + padding_bottom
+            lines.point_of_offset(lines.utf8_len()).line_bottom + padding.0 + padding.2
         };
 
         if child_height != self.child_height.get_untracked() {
@@ -941,7 +510,7 @@ impl View for TextArea {
 
         // Get text color and theme from style
         let style = self.id.get_combined_style();
-        let text_color = style.builtin().color().unwrap_or(Color::BLACK);
+        let text_styles = extract_text_styles(&style.builtin());
         let theme = style.get(ShadcnThemeProp);
         let selection_color = theme.primary.multiply_alpha(0.2);
 
@@ -965,29 +534,21 @@ impl View for TextArea {
         if cx.is_focused(self.id) {
             let cursor = doc.cursor().get_untracked();
             if cursor.is_caret() {
-                // Calculate cursor visibility based on blink cycle
-                // Cursor is visible during even intervals (0-500ms, 1000-1500ms, etc.)
-                let elapsed_ms = self
-                    .last_cursor_action
-                    .get_untracked()
-                    .elapsed()
-                    .as_millis();
-                let blink_cycle = elapsed_ms / CURSOR_BLINK_INTERVAL_MS as u128;
-                let is_cursor_visible = blink_cycle % 2 == 0;
+                let elapsed_ms = self.last_cursor_action.get_untracked().elapsed().as_millis();
 
-                if is_cursor_visible {
+                if is_cursor_visible(elapsed_ms) {
                     let p = lines.point_of_offset(cursor.end);
-                    // Use glyph metrics, fall back to default font metrics for empty text
-                    let (cursor_top, cursor_height) = if p.glyph_bottom > p.glyph_top {
-                        (p.glyph_top, p.glyph_bottom - p.glyph_top)
-                    } else {
-                        (lines.default_glyph_top(), lines.default_glyph_height())
-                    };
+                    let (cursor_top, cursor_height) = get_glyph_dimensions(
+                        p.glyph_top,
+                        p.glyph_bottom,
+                        lines.default_glyph_top(),
+                        lines.default_glyph_height(),
+                    );
                     let rect = Rect::from_origin_size(
                         (p.x + padding.3 - 1.0, cursor_top + padding.0 - viewport.y0),
                         (2.0, cursor_height),
                     );
-                    cx.fill(&rect, text_color, 0.0);
+                    cx.fill(&rect, text_styles.text_color, 0.0);
                 }
 
                 // Schedule repaint for cursor blink
@@ -2066,12 +1627,12 @@ mod tests {
     }
 
     // ==========================================================================
-    // KeypressMap unit tests
+    // Keymap unit tests
     // ==========================================================================
 
     #[test]
     fn test_keypressmap_basic_arrows() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Left arrow
         let key = KeyPress {
@@ -2116,7 +1677,7 @@ mod tests {
 
     #[test]
     fn test_keypressmap_home_end() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Home -> LineStart
         let key = KeyPress {
@@ -2141,7 +1702,7 @@ mod tests {
 
     #[test]
     fn test_keypressmap_word_navigation() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Alt+Left -> WordBackward
         let key = KeyPress {
@@ -2166,7 +1727,7 @@ mod tests {
 
     #[test]
     fn test_keypressmap_basic_editing() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Enter -> InsertNewLine
         let key = KeyPress {
@@ -2211,7 +1772,7 @@ mod tests {
 
     #[test]
     fn test_keypressmap_word_deletion() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Alt+Backspace -> DeleteWordBackward
         let key = KeyPress {
@@ -2236,7 +1797,7 @@ mod tests {
 
     #[test]
     fn test_keypressmap_select_all() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Cmd/Ctrl+A -> SelectAll
         #[cfg(target_os = "macos")]
@@ -2254,7 +1815,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn test_keypressmap_macos_line_navigation() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Cmd+Left -> LineStart
         let key = KeyPress {
@@ -2280,7 +1841,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn test_keypressmap_macos_document_navigation() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Cmd+Up -> DocumentStart
         let key = KeyPress {
@@ -2306,7 +1867,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn test_keypressmap_macos_line_deletion() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Cmd+Backspace -> DeleteToBeginningOfLine
         let key = KeyPress {
@@ -2322,7 +1883,7 @@ mod tests {
     #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_keypressmap_non_macos_document_navigation() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Ctrl+Home -> DocumentStart
         let key = KeyPress {
@@ -2348,7 +1909,7 @@ mod tests {
     #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_keypressmap_non_macos_word_navigation() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Ctrl+Left -> WordBackward
         let key = KeyPress {
@@ -2374,7 +1935,7 @@ mod tests {
     #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_keypressmap_non_macos_word_deletion() {
-        let keymap = KeypressMap::default();
+        let keymap = Keymap::multi_line();
 
         // Ctrl+Backspace -> DeleteWordBackward
         let key = KeyPress {

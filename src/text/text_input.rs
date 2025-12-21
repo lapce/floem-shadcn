@@ -3,7 +3,6 @@
 //! A single-line text input with horizontal scrolling, cursor/selection rendering,
 //! and keyboard/mouse handling. Reuses Document for text editing logic.
 
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use floem::{
@@ -15,314 +14,19 @@ use floem::{
     peniko::Color,
     reactive::{RwSignal, SignalGet, SignalUpdate, SignalWith, create_effect, create_rw_signal},
     style::{CursorStyle as StyleCursorStyle, Style},
-    text::{FamilyOwned, LineHeightValue, Weight},
-    unit::PxPct,
 };
 
 use crate::theme::ShadcnThemeProp;
 use floem_editor_core::buffer::rope_text::RopeText;
-use floem_editor_core::command::{EditCommand, MoveCommand};
 use ui_events::{
     keyboard::{Key, KeyState, KeyboardEvent, Modifiers, NamedKey},
     pointer::PointerEvent,
 };
 
-use super::Document;
-
-/// Cursor blink interval in milliseconds
-const CURSOR_BLINK_INTERVAL_MS: u64 = 500;
-
-/// A command that can be executed on the text input
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum InputCommand {
-    Edit(EditCommand),
-    Move(MoveCommand),
-    /// Select all text
-    SelectAll,
-    /// Copy selected text to clipboard
-    Copy,
-    /// Cut selected text to clipboard
-    Cut,
-    /// Paste text from clipboard
-    Paste,
-}
-
-/// A key press with modifiers
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct InputKeyPress {
-    pub key: Key,
-    pub modifiers: Modifiers,
-}
-
-/// Keymap for single-line text input
-pub struct InputKeypressMap {
-    pub keymaps: HashMap<InputKeyPress, InputCommand>,
-}
-
-impl Default for InputKeypressMap {
-    fn default() -> Self {
-        let mut keymaps = HashMap::new();
-
-        // Platform-specific modifier for common shortcuts
-        #[cfg(target_os = "macos")]
-        let cmd_or_ctrl = Modifiers::META;
-        #[cfg(not(target_os = "macos"))]
-        let cmd_or_ctrl = Modifiers::CONTROL;
-
-        // =======================================================================
-        // Basic navigation (arrow keys) - no Up/Down for single-line
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::default(),
-            },
-            InputCommand::Move(MoveCommand::Left),
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::default(),
-            },
-            InputCommand::Move(MoveCommand::Right),
-        );
-
-        // =======================================================================
-        // Line start/end navigation (acts as document start/end for single line)
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Home),
-                modifiers: Modifiers::default(),
-            },
-            InputCommand::Move(MoveCommand::DocumentStart),
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::End),
-                modifiers: Modifiers::default(),
-            },
-            InputCommand::Move(MoveCommand::DocumentEnd),
-        );
-        // Cmd+Left (macOS) -> Start
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::META,
-            },
-            InputCommand::Move(MoveCommand::DocumentStart),
-        );
-        // Cmd+Right (macOS) -> End
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::META,
-            },
-            InputCommand::Move(MoveCommand::DocumentEnd),
-        );
-
-        // =======================================================================
-        // Word navigation
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::ALT,
-            },
-            InputCommand::Move(MoveCommand::WordBackward),
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::ALT,
-            },
-            InputCommand::Move(MoveCommand::WordForward),
-        );
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowLeft),
-                modifiers: Modifiers::CONTROL,
-            },
-            InputCommand::Move(MoveCommand::WordBackward),
-        );
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::ArrowRight),
-                modifiers: Modifiers::CONTROL,
-            },
-            InputCommand::Move(MoveCommand::WordForward),
-        );
-
-        // =======================================================================
-        // Basic editing (no newline for single-line input)
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::default(),
-            },
-            InputCommand::Edit(EditCommand::DeleteBackward),
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Delete),
-                modifiers: Modifiers::default(),
-            },
-            InputCommand::Edit(EditCommand::DeleteForward),
-        );
-
-        // =======================================================================
-        // Word deletion
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::ALT,
-            },
-            InputCommand::Edit(EditCommand::DeleteWordBackward),
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Delete),
-                modifiers: Modifiers::ALT,
-            },
-            InputCommand::Edit(EditCommand::DeleteWordForward),
-        );
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::CONTROL,
-            },
-            InputCommand::Edit(EditCommand::DeleteWordBackward),
-        );
-        #[cfg(not(target_os = "macos"))]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Delete),
-                modifiers: Modifiers::CONTROL,
-            },
-            InputCommand::Edit(EditCommand::DeleteWordForward),
-        );
-
-        // =======================================================================
-        // Line deletion (delete to beginning)
-        // =======================================================================
-        #[cfg(target_os = "macos")]
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Named(NamedKey::Backspace),
-                modifiers: Modifiers::META,
-            },
-            InputCommand::Edit(EditCommand::DeleteToBeginningOfLine),
-        );
-
-        // =======================================================================
-        // Select All
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Character("a".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            InputCommand::SelectAll,
-        );
-
-        // =======================================================================
-        // Clipboard operations (Cmd/Ctrl+C, Cmd/Ctrl+X, Cmd/Ctrl+V)
-        // =======================================================================
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Character("c".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            InputCommand::Copy,
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Character("x".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            InputCommand::Cut,
-        );
-        keymaps.insert(
-            InputKeyPress {
-                key: Key::Character("v".into()),
-                modifiers: cmd_or_ctrl,
-            },
-            InputCommand::Paste,
-        );
-
-        // =======================================================================
-        // Unix Emacs-style keybindings (Ctrl+letter) - macOS and Linux
-        // =======================================================================
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
-        {
-            // Ctrl+H -> Delete backward (backspace)
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("h".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Edit(EditCommand::DeleteBackward),
-            );
-            // Ctrl+D -> Delete forward
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("d".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Edit(EditCommand::DeleteForward),
-            );
-            // Ctrl+A -> Move to beginning of line (document start for single-line)
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("a".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Move(MoveCommand::DocumentStart),
-            );
-            // Ctrl+E -> Move to end of line (document end for single-line)
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("e".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Move(MoveCommand::DocumentEnd),
-            );
-            // Ctrl+F -> Move forward (right)
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("f".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Move(MoveCommand::Right),
-            );
-            // Ctrl+B -> Move backward (left)
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("b".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Move(MoveCommand::Left),
-            );
-            // Ctrl+K -> Kill to end of line
-            keymaps.insert(
-                InputKeyPress {
-                    key: Key::Character("k".into()),
-                    modifiers: Modifiers::CONTROL,
-                },
-                InputCommand::Edit(EditCommand::DeleteToEndOfLine),
-            );
-        }
-
-        Self { keymaps }
-    }
-}
+use super::{
+    Command, Document, Keymap, apply_styles_to_document, extract_padding, extract_text_styles,
+    get_glyph_dimensions, is_cursor_visible, CURSOR_BLINK_INTERVAL_MS,
+};
 
 /// A single-line text input view
 pub struct TextInput {
@@ -397,8 +101,8 @@ impl TextInput {
         });
 
         // Set up event handlers
-        let keypress_map = std::sync::Arc::new(InputKeypressMap::default());
-        let keypress_map_clone = keypress_map.clone();
+        let keymap = std::sync::Arc::new(Keymap::single_line());
+        let keymap_clone = keymap.clone();
 
         id.add_event_listener(
             EventListener::PointerDown,
@@ -476,44 +180,35 @@ impl TextInput {
                     return EventPropagation::Stop;
                 }
 
-                let keypress = InputKeyPress {
-                    key: key.clone(),
-                    modifiers: modifiers.clone(),
-                };
-
                 // Try to find command
-                let command = keypress_map_clone.keymaps.get(&keypress).or_else(|| {
-                    let mut modified = keypress.clone();
-                    modified.modifiers.set(Modifiers::SHIFT, false);
-                    keypress_map_clone.keymaps.get(&modified)
-                });
+                let command = keymap_clone.get(key, modifiers);
 
                 let document = doc_signal.get_untracked();
 
                 if let Some(command) = command {
                     let shift_held = modifiers.shift();
                     match command {
-                        InputCommand::Edit(edit_cmd) => {
+                        Command::Edit(edit_cmd) => {
                             document.run_edit_command(edit_cmd);
                             id.request_layout();
                         }
-                        InputCommand::Move(move_cmd) => {
+                        Command::Move(move_cmd) => {
                             document.run_move_command(move_cmd, shift_held);
                             id.request_paint();
                         }
-                        InputCommand::SelectAll => {
+                        Command::SelectAll => {
                             document.select_all();
                             id.request_paint();
                         }
-                        InputCommand::Copy => {
+                        Command::Copy => {
                             document.copy();
                         }
-                        InputCommand::Cut => {
+                        Command::Cut => {
                             if document.cut() {
                                 id.request_layout();
                             }
                         }
-                        InputCommand::Paste => {
+                        Command::Paste => {
                             // Filter newlines for single-line input
                             if document.paste(true) {
                                 id.request_layout();
@@ -655,54 +350,20 @@ impl View for TextInput {
         let style = self.id.get_combined_style();
         let builtin_style = style.builtin();
 
-        let padding_left = match builtin_style.padding_left() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-        let padding_right = match builtin_style.padding_right() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-        let padding_top = match builtin_style.padding_top() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-        let padding_bottom = match builtin_style.padding_bottom() {
-            PxPct::Px(padding) => padding,
-            PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
-        };
-
-        if (padding_top, padding_right, padding_bottom, padding_left)
-            != self.padding.get_untracked()
-        {
-            self.padding
-                .set((padding_top, padding_right, padding_bottom, padding_left));
+        let padding = extract_padding(&builtin_style, layout.size.width as f64);
+        if padding != self.padding.get_untracked() {
+            self.padding.set(padding);
         }
 
-        let width = layout.size.width as f64 - padding_left - padding_right;
-
+        let width = layout.size.width as f64 - padding.3 - padding.1;
         if width != self.visible_width.get_untracked() {
             self.visible_width.set(width);
         }
 
         // Get text styling from style and set them on the document
-        let text_color = builtin_style.color().unwrap_or(Color::BLACK);
-        let font_size = builtin_style.font_size().unwrap_or(14.0);
-        let line_height = builtin_style
-            .line_height()
-            .unwrap_or(LineHeightValue::Normal(1.5));
-        let font_weight = builtin_style.font_weight().unwrap_or(Weight::NORMAL);
-        let font_family = builtin_style
-            .font_family()
-            .map(|f| vec![FamilyOwned::Name(f)])
-            .unwrap_or_default();
-
+        let text_styles = extract_text_styles(&builtin_style);
         let doc = self.doc.get_untracked();
-        doc.set_text_color(text_color);
-        doc.set_font_size(font_size);
-        doc.set_line_height(line_height);
-        doc.set_font_weight(font_weight);
-        doc.set_font_family(font_family);
+        apply_styles_to_document(&doc, &text_styles);
         // Use a very large width to prevent wrapping
         doc.set_width(f64::MAX);
 
@@ -716,20 +377,10 @@ impl View for TextInput {
 
         // Get text styling and theme from style
         let style = self.id.get_combined_style();
-        let builtin = style.builtin();
-        let text_color = builtin.color().unwrap_or(Color::BLACK);
-        let font_size = builtin.font_size().unwrap_or(14.0);
-        let line_height = builtin
-            .line_height()
-            .unwrap_or(LineHeightValue::Normal(1.5));
-        let font_weight = builtin.font_weight().unwrap_or(Weight::NORMAL);
-        let font_family: Vec<FamilyOwned> = builtin
-            .font_family()
-            .map(|f| vec![FamilyOwned::Name(f)])
-            .unwrap_or_default();
+        let text_styles = extract_text_styles(&style.builtin());
         let theme = style.get(ShadcnThemeProp);
         let selection_color = theme.primary.multiply_alpha(0.2);
-        let placeholder_color = text_color.multiply_alpha(0.5);
+        let placeholder_color = text_styles.text_color.multiply_alpha(0.5);
 
         let layout = self.id.get_layout().unwrap_or_default();
         let height = layout.size.height as f64 - padding.0 - padding.2;
@@ -756,13 +407,13 @@ impl View for TextInput {
             if let Some(placeholder_text) = self.placeholder.get_untracked() {
                 // Draw placeholder text with same styling as main text
                 let mut placeholder_attrs = floem::text::Attrs::default()
-                    .font_size(font_size)
+                    .font_size(text_styles.font_size)
                     .color(placeholder_color)
-                    .line_height(line_height)
-                    .weight(font_weight);
+                    .line_height(text_styles.line_height.clone())
+                    .weight(text_styles.font_weight);
 
-                if !font_family.is_empty() {
-                    placeholder_attrs = placeholder_attrs.family(&font_family);
+                if !text_styles.font_family.is_empty() {
+                    placeholder_attrs = placeholder_attrs.family(&text_styles.font_family);
                 }
 
                 let placeholder_layout = floem::text::TextLayout::new_with_text(
@@ -793,22 +444,16 @@ impl View for TextInput {
         if cx.is_focused(self.id) {
             let cursor = doc.cursor().get_untracked();
             if cursor.is_caret() {
-                // Calculate cursor visibility based on blink cycle
-                let elapsed_ms = self
-                    .last_cursor_action
-                    .get_untracked()
-                    .elapsed()
-                    .as_millis();
-                let blink_cycle = elapsed_ms / CURSOR_BLINK_INTERVAL_MS as u128;
-                let is_cursor_visible = blink_cycle % 2 == 0;
+                let elapsed_ms = self.last_cursor_action.get_untracked().elapsed().as_millis();
 
-                if is_cursor_visible {
+                if is_cursor_visible(elapsed_ms) {
                     let p = lines.point_of_offset(cursor.end);
-                    let (cursor_top, cursor_height) = if p.glyph_bottom > p.glyph_top {
-                        (p.glyph_top, p.glyph_bottom - p.glyph_top)
-                    } else {
-                        (lines.default_glyph_top(), lines.default_glyph_height())
-                    };
+                    let (cursor_top, cursor_height) = get_glyph_dimensions(
+                        p.glyph_top,
+                        p.glyph_bottom,
+                        lines.default_glyph_top(),
+                        lines.default_glyph_height(),
+                    );
                     let rect = Rect::from_origin_size(
                         (
                             p.x + padding.3 - scroll_offset - 1.0,
@@ -816,7 +461,7 @@ impl View for TextInput {
                         ),
                         (2.0, cursor_height),
                     );
-                    cx.fill(&rect, text_color, 0.0);
+                    cx.fill(&rect, text_styles.text_color, 0.0);
                 }
 
                 // Schedule repaint for cursor blink
@@ -829,11 +474,12 @@ impl View for TextInput {
                 let start_x = lines.point_of_offset(cursor.min()).x;
                 let end_x = lines.point_of_offset(cursor.max()).x;
                 let p = lines.point_of_offset(cursor.min());
-                let (sel_top, sel_height) = if p.glyph_bottom > p.glyph_top {
-                    (p.glyph_top, p.glyph_bottom - p.glyph_top)
-                } else {
-                    (lines.default_glyph_top(), lines.default_glyph_height())
-                };
+                let (sel_top, sel_height) = get_glyph_dimensions(
+                    p.glyph_top,
+                    p.glyph_bottom,
+                    lines.default_glyph_top(),
+                    lines.default_glyph_height(),
+                );
 
                 let rect = Rect::from_origin_size(
                     (
