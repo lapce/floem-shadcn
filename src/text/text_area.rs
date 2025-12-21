@@ -7,17 +7,20 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use floem::{
+    IntoView, Renderer, View, ViewId,
     action::exec_after,
     context::{ComputeLayoutCx, PaintCx},
     event::{Event, EventListener, EventPropagation},
     kurbo::{Point, Rect, Size},
     peniko::Color,
-    reactive::{create_effect, create_rw_signal, RwSignal, SignalGet, SignalTrack, SignalUpdate, SignalWith},
+    reactive::{
+        RwSignal, SignalGet, SignalTrack, SignalUpdate, SignalWith, create_effect, create_rw_signal,
+    },
     style::{CursorStyle as StyleCursorStyle, Style},
-    taffy::Overflow,
+    taffy::{Dimension, Overflow},
+    text::{FamilyOwned, LineHeightValue, Weight},
     unit::PxPct,
-    views::{empty, Decorators, Scroll},
-    IntoView, Renderer, View, ViewId,
+    views::{Decorators, Scroll, empty},
 };
 
 use crate::theme::ShadcnThemeProp;
@@ -42,6 +45,12 @@ pub enum Command {
     Move(MoveCommand),
     /// Select all text in the document
     SelectAll,
+    /// Copy selected text to clipboard
+    Copy,
+    /// Cut selected text to clipboard
+    Cut,
+    /// Paste text from clipboard
+    Paste,
 }
 
 /// A key press with modifiers
@@ -71,19 +80,31 @@ impl Default for KeypressMap {
         // Basic navigation (arrow keys)
         // =======================================================================
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowLeft),
+                modifiers: Modifiers::default(),
+            },
             Command::Move(MoveCommand::Left),
         );
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowRight),
+                modifiers: Modifiers::default(),
+            },
             Command::Move(MoveCommand::Right),
         );
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowUp), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowUp),
+                modifiers: Modifiers::default(),
+            },
             Command::Move(MoveCommand::Up),
         );
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowDown), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowDown),
+                modifiers: Modifiers::default(),
+            },
             Command::Move(MoveCommand::Down),
         );
 
@@ -92,24 +113,36 @@ impl Default for KeypressMap {
         // =======================================================================
         // Home -> Line Start
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Home), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::Home),
+                modifiers: Modifiers::default(),
+            },
             Command::Move(MoveCommand::LineStart),
         );
         // End -> Line End
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::End), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::End),
+                modifiers: Modifiers::default(),
+            },
             Command::Move(MoveCommand::LineEnd),
         );
         // Cmd+Left (macOS) -> Line Start
         #[cfg(target_os = "macos")]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::META },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowLeft),
+                modifiers: Modifiers::META,
+            },
             Command::Move(MoveCommand::LineStart),
         );
         // Cmd+Right (macOS) -> Line End
         #[cfg(target_os = "macos")]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::META },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowRight),
+                modifiers: Modifiers::META,
+            },
             Command::Move(MoveCommand::LineEnd),
         );
 
@@ -119,23 +152,35 @@ impl Default for KeypressMap {
         // Cmd+Up (macOS) / Ctrl+Home -> Document Start
         #[cfg(target_os = "macos")]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowUp), modifiers: Modifiers::META },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowUp),
+                modifiers: Modifiers::META,
+            },
             Command::Move(MoveCommand::DocumentStart),
         );
         #[cfg(not(target_os = "macos"))]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Home), modifiers: Modifiers::CONTROL },
+            KeyPress {
+                key: Key::Named(NamedKey::Home),
+                modifiers: Modifiers::CONTROL,
+            },
             Command::Move(MoveCommand::DocumentStart),
         );
         // Cmd+Down (macOS) / Ctrl+End -> Document End
         #[cfg(target_os = "macos")]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowDown), modifiers: Modifiers::META },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowDown),
+                modifiers: Modifiers::META,
+            },
             Command::Move(MoveCommand::DocumentEnd),
         );
         #[cfg(not(target_os = "macos"))]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::End), modifiers: Modifiers::CONTROL },
+            KeyPress {
+                key: Key::Named(NamedKey::End),
+                modifiers: Modifiers::CONTROL,
+            },
             Command::Move(MoveCommand::DocumentEnd),
         );
 
@@ -144,24 +189,36 @@ impl Default for KeypressMap {
         // =======================================================================
         // Alt+Left -> Word Backward
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::ALT },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowLeft),
+                modifiers: Modifiers::ALT,
+            },
             Command::Move(MoveCommand::WordBackward),
         );
         // Alt+Right -> Word Forward
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::ALT },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowRight),
+                modifiers: Modifiers::ALT,
+            },
             Command::Move(MoveCommand::WordForward),
         );
         // Ctrl+Left (non-macOS) -> Word Backward
         #[cfg(not(target_os = "macos"))]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::CONTROL },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowLeft),
+                modifiers: Modifiers::CONTROL,
+            },
             Command::Move(MoveCommand::WordBackward),
         );
         // Ctrl+Right (non-macOS) -> Word Forward
         #[cfg(not(target_os = "macos"))]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::CONTROL },
+            KeyPress {
+                key: Key::Named(NamedKey::ArrowRight),
+                modifiers: Modifiers::CONTROL,
+            },
             Command::Move(MoveCommand::WordForward),
         );
 
@@ -169,20 +226,32 @@ impl Default for KeypressMap {
         // Basic editing
         // =======================================================================
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Enter), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::Enter),
+                modifiers: Modifiers::default(),
+            },
             Command::Edit(EditCommand::InsertNewLine),
         );
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::Backspace),
+                modifiers: Modifiers::default(),
+            },
             Command::Edit(EditCommand::DeleteBackward),
         );
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Delete), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::Delete),
+                modifiers: Modifiers::default(),
+            },
             Command::Edit(EditCommand::DeleteForward),
         );
         // Tab -> Insert Tab
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Tab), modifiers: Modifiers::default() },
+            KeyPress {
+                key: Key::Named(NamedKey::Tab),
+                modifiers: Modifiers::default(),
+            },
             Command::Edit(EditCommand::InsertTab),
         );
 
@@ -191,24 +260,36 @@ impl Default for KeypressMap {
         // =======================================================================
         // Alt+Backspace -> Delete Word Backward
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::ALT },
+            KeyPress {
+                key: Key::Named(NamedKey::Backspace),
+                modifiers: Modifiers::ALT,
+            },
             Command::Edit(EditCommand::DeleteWordBackward),
         );
         // Alt+Delete -> Delete Word Forward
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Delete), modifiers: Modifiers::ALT },
+            KeyPress {
+                key: Key::Named(NamedKey::Delete),
+                modifiers: Modifiers::ALT,
+            },
             Command::Edit(EditCommand::DeleteWordForward),
         );
         // Ctrl+Backspace (non-macOS) -> Delete Word Backward
         #[cfg(not(target_os = "macos"))]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::CONTROL },
+            KeyPress {
+                key: Key::Named(NamedKey::Backspace),
+                modifiers: Modifiers::CONTROL,
+            },
             Command::Edit(EditCommand::DeleteWordBackward),
         );
         // Ctrl+Delete (non-macOS) -> Delete Word Forward
         #[cfg(not(target_os = "macos"))]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Delete), modifiers: Modifiers::CONTROL },
+            KeyPress {
+                key: Key::Named(NamedKey::Delete),
+                modifiers: Modifiers::CONTROL,
+            },
             Command::Edit(EditCommand::DeleteWordForward),
         );
 
@@ -218,7 +299,10 @@ impl Default for KeypressMap {
         // Cmd+Backspace (macOS) -> Delete to Beginning of Line
         #[cfg(target_os = "macos")]
         keymaps.insert(
-            KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::META },
+            KeyPress {
+                key: Key::Named(NamedKey::Backspace),
+                modifiers: Modifiers::META,
+            },
             Command::Edit(EditCommand::DeleteToBeginningOfLine),
         );
 
@@ -226,9 +310,116 @@ impl Default for KeypressMap {
         // Select All (Cmd/Ctrl+A)
         // =======================================================================
         keymaps.insert(
-            KeyPress { key: Key::Character("a".into()), modifiers: cmd_or_ctrl },
+            KeyPress {
+                key: Key::Character("a".into()),
+                modifiers: cmd_or_ctrl,
+            },
             Command::SelectAll,
         );
+
+        // =======================================================================
+        // Clipboard operations (Cmd/Ctrl+C, Cmd/Ctrl+X, Cmd/Ctrl+V)
+        // =======================================================================
+        keymaps.insert(
+            KeyPress {
+                key: Key::Character("c".into()),
+                modifiers: cmd_or_ctrl,
+            },
+            Command::Copy,
+        );
+        keymaps.insert(
+            KeyPress {
+                key: Key::Character("x".into()),
+                modifiers: cmd_or_ctrl,
+            },
+            Command::Cut,
+        );
+        keymaps.insert(
+            KeyPress {
+                key: Key::Character("v".into()),
+                modifiers: cmd_or_ctrl,
+            },
+            Command::Paste,
+        );
+
+        // =======================================================================
+        // Unix Emacs-style keybindings (Ctrl+letter) - macOS and Linux
+        // =======================================================================
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        {
+            // Ctrl+H -> Delete backward (backspace)
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("h".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Edit(EditCommand::DeleteBackward),
+            );
+            // Ctrl+D -> Delete forward
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("d".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Edit(EditCommand::DeleteForward),
+            );
+            // Ctrl+A -> Move to beginning of line
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("a".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Move(MoveCommand::LineStart),
+            );
+            // Ctrl+E -> Move to end of line
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("e".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Move(MoveCommand::LineEnd),
+            );
+            // Ctrl+F -> Move forward (right)
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("f".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Move(MoveCommand::Right),
+            );
+            // Ctrl+B -> Move backward (left)
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("b".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Move(MoveCommand::Left),
+            );
+            // Ctrl+N -> Move down
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("n".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Move(MoveCommand::Down),
+            );
+            // Ctrl+P -> Move up
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("p".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Move(MoveCommand::Up),
+            );
+            // Ctrl+K -> Kill to end of line
+            keymaps.insert(
+                KeyPress {
+                    key: Key::Character("k".into()),
+                    modifiers: Modifiers::CONTROL,
+                },
+                Command::Edit(EditCommand::DeleteToEndOfLine),
+            );
+        }
 
         Self { keymaps }
     }
@@ -241,6 +432,8 @@ const RESIZE_HANDLE_SIZE: f64 = 16.0;
 pub struct TextArea {
     id: ViewId,
     scroll_id: ViewId,
+    /// The dummy child view inside Scroll, used to set content height directly
+    dummy_child_id: ViewId,
     doc: RwSignal<Document>,
     padding: RwSignal<(f64, f64, f64, f64)>,
     viewport: RwSignal<Rect>,
@@ -273,6 +466,11 @@ impl TextArea {
 
     /// Creates a new text editor with the given initial text
     pub fn with_text(text: impl Into<String>) -> Self {
+        Self::with_text_and_id(text, ViewId::new())
+    }
+
+    /// Creates a new text editor with the given initial text and a specific ViewId
+    pub fn with_text_and_id(text: impl Into<String>, id: ViewId) -> Self {
         let child_height = create_rw_signal(0.0);
         let padding = create_rw_signal((0.0, 0.0, 0.0, 0.0));
         let viewport = create_rw_signal(Rect::ZERO);
@@ -290,13 +488,18 @@ impl TextArea {
         let min_size = create_rw_signal(Size::new(50.0, 30.0));
         let max_size = create_rw_signal(None);
 
-        let id = ViewId::new();
-
         // Capture cursor signal directly for reactive tracking in ensure_visible
         let cursor_signal = doc_signal.get_untracked().cursor();
 
-        // Create scroll view with ensure_visible to keep cursor in view
-        let scroll_view = Scroll::new(empty().style(move |s| s.width(10.0).height(child_height.get())))
+        // Create dummy child view for Scroll - we'll set its height directly in compute_layout
+        let dummy_child = empty().style(|s| s.width(10.0).height(0.0));
+        let dummy_child_id = dummy_child.id();
+
+        // Signal to track scroll's child size, updated via on_child_size callback
+        let scroll_child_size = create_rw_signal(Size::ZERO);
+
+        // Create scroll view with the dummy child and callbacks
+        let scroll_view = Scroll::new(dummy_child)
             .style(move |s| {
                 let padding = padding.get();
                 s.absolute()
@@ -304,11 +507,16 @@ impl TextArea {
                     .margin_top(-padding.0)
                     .margin_left(-padding.3)
             })
+            .on_child_size(move |size| {
+                scroll_child_size.set(size);
+            })
             .ensure_visible(move || {
-                // Track cursor signal directly to trigger scroll when cursor moves
+                // Track cursor signal to trigger scroll when cursor moves
                 let cursor = cursor_signal.get();
                 let padding = padding.get_untracked();
-                child_height.track();
+                // Track scroll's child size - this re-runs ensure_visible
+                // after Scroll's layout completes with updated child size
+                scroll_child_size.track();
 
                 let offset = cursor.end;
                 let doc = doc_signal.get_untracked();
@@ -317,7 +525,10 @@ impl TextArea {
                 // Return a rect representing the cursor line that should be visible
                 Rect::from_origin_size(
                     (0.0, point.line_top),
-                    (1.0, point.line_bottom - point.line_top + padding.0 + padding.2),
+                    (
+                        1.0,
+                        point.line_bottom - point.line_top + padding.0 + padding.2,
+                    ),
                 )
             })
             .on_scroll(move |new_viewport| {
@@ -434,12 +645,20 @@ impl TextArea {
         id.add_event_listener(
             EventListener::KeyDown,
             Box::new(move |event| {
-                let Event::Key(KeyboardEvent { state: KeyState::Down, key, modifiers, .. }) = event
+                let Event::Key(KeyboardEvent {
+                    state: KeyState::Down,
+                    key,
+                    modifiers,
+                    ..
+                }) = event
                 else {
                     return EventPropagation::Continue;
                 };
 
-                let keypress = KeyPress { key: key.clone(), modifiers: modifiers.clone() };
+                let keypress = KeyPress {
+                    key: key.clone(),
+                    modifiers: modifiers.clone(),
+                };
 
                 // Try to find command
                 let command = keypress_map_clone.keymaps.get(&keypress).or_else(|| {
@@ -462,6 +681,19 @@ impl TextArea {
                             scroll_id.request_layout();
                         }
                         Command::SelectAll => document.select_all(),
+                        Command::Copy => {
+                            document.copy();
+                        }
+                        Command::Cut => {
+                            if document.cut() {
+                                id.request_layout();
+                            }
+                        }
+                        Command::Paste => {
+                            if document.paste(false) {
+                                id.request_layout();
+                            }
+                        }
                     }
                     last_cursor_action.set(Instant::now());
                     return EventPropagation::Stop;
@@ -499,6 +731,7 @@ impl TextArea {
         Self {
             id,
             scroll_id,
+            dummy_child_id,
             doc: doc_signal,
             padding,
             viewport,
@@ -554,12 +787,13 @@ impl TextArea {
             doc.with_untracked(|doc| {
                 let end = doc.buffer().with_untracked(|b| b.text().len());
                 use floem_editor_core::{
-                    cursor::CursorAffinity,
-                    editor::EditType,
-                    selection::SelRegion,
+                    cursor::CursorAffinity, editor::EditType, selection::SelRegion,
                 };
                 doc.edit(
-                    [(SelRegion::new(0, end, CursorAffinity::Forward, None), new_value.as_str())],
+                    [(
+                        SelRegion::new(0, end, CursorAffinity::Forward, None),
+                        new_value.as_str(),
+                    )],
                     EditType::Other,
                 );
             });
@@ -648,19 +882,35 @@ impl View for TextArea {
             PxPct::Pct(pct) => (pct / 100.) * layout.size.width as f64,
         };
 
-        if (padding_top, padding_right, padding_bottom, padding_left) != self.padding.get_untracked() {
-            self.padding.set((padding_top, padding_right, padding_bottom, padding_left));
+        if (padding_top, padding_right, padding_bottom, padding_left)
+            != self.padding.get_untracked()
+        {
+            self.padding
+                .set((padding_top, padding_right, padding_bottom, padding_left));
         }
 
         let width = layout.size.width as f64 - padding_left - padding_right;
         let height = layout.size.height as f64 - padding_top - padding_bottom;
         let parent_size = Size::new(width, height);
 
-        // Get text color from style and set it on the document
+        // Get text styling from style and set them on the document
         let text_color = builtin_style.color().unwrap_or(Color::BLACK);
+        let font_size = builtin_style.font_size().unwrap_or(14.0);
+        let line_height = builtin_style
+            .line_height()
+            .unwrap_or(LineHeightValue::Normal(1.5));
+        let font_weight = builtin_style.font_weight().unwrap_or(Weight::NORMAL);
+        let font_family = builtin_style
+            .font_family()
+            .map(|f| vec![FamilyOwned::Name(f)])
+            .unwrap_or_default();
 
         let doc = self.doc.get_untracked();
         doc.set_text_color(text_color);
+        doc.set_font_size(font_size);
+        doc.set_line_height(line_height);
+        doc.set_font_weight(font_weight);
+        doc.set_font_family(font_family);
         doc.set_width(width);
 
         let child_height = {
@@ -670,6 +920,11 @@ impl View for TextArea {
 
         if child_height != self.child_height.get_untracked() {
             self.child_height.set(child_height);
+            // Set the dummy child's height directly via taffy to bypass reactive delay
+            let node = self.dummy_child_id.taffy_node();
+            let mut style = self.id.taffy().borrow().style(node).cloned().unwrap_or_default();
+            style.size.height = Dimension::length(child_height as f32);
+            self.id.set_taffy_style(node, style);
         }
         if self.parent_size.get_untracked() != parent_size {
             self.parent_size.set(parent_size);
@@ -712,7 +967,11 @@ impl View for TextArea {
             if cursor.is_caret() {
                 // Calculate cursor visibility based on blink cycle
                 // Cursor is visible during even intervals (0-500ms, 1000-1500ms, etc.)
-                let elapsed_ms = self.last_cursor_action.get_untracked().elapsed().as_millis();
+                let elapsed_ms = self
+                    .last_cursor_action
+                    .get_untracked()
+                    .elapsed()
+                    .as_millis();
                 let blink_cycle = elapsed_ms / CURSOR_BLINK_INTERVAL_MS as u128;
                 let is_cursor_visible = blink_cycle % 2 == 0;
 
@@ -755,7 +1014,10 @@ impl View for TextArea {
                         line.line_w as f64
                     };
                     let rect = Rect::from_origin_size(
-                        (x0 + padding.3, line.line_top as f64 + padding.0 - viewport.y0),
+                        (
+                            x0 + padding.3,
+                            line.line_top as f64 + padding.0 - viewport.y0,
+                        ),
                         (x1 - x0, line.line_height as f64),
                     );
                     cx.fill(&rect, selection_color, 0.0);
@@ -832,20 +1094,41 @@ mod tests {
         });
 
         // Effect should have run once initially
-        println!("After creation: effect_run_count = {}", effect_run_count.get());
-        assert_eq!(effect_run_count.get(), 1, "Effect should run once on creation");
+        println!(
+            "After creation: effect_run_count = {}",
+            effect_run_count.get()
+        );
+        assert_eq!(
+            effect_run_count.get(),
+            1,
+            "Effect should run once on creation"
+        );
 
         // Update the signal
         source.set(1);
 
         // Effect should have run again
-        println!("After signal.set(1): effect_run_count = {}", effect_run_count.get());
-        assert_eq!(effect_run_count.get(), 2, "Effect should run when signal changes");
+        println!(
+            "After signal.set(1): effect_run_count = {}",
+            effect_run_count.get()
+        );
+        assert_eq!(
+            effect_run_count.get(),
+            2,
+            "Effect should run when signal changes"
+        );
 
         // Update again
         source.set(2);
-        println!("After signal.set(2): effect_run_count = {}", effect_run_count.get());
-        assert_eq!(effect_run_count.get(), 3, "Effect should run on each signal change");
+        println!(
+            "After signal.set(2): effect_run_count = {}",
+            effect_run_count.get()
+        );
+        assert_eq!(
+            effect_run_count.get(),
+            3,
+            "Effect should run on each signal change"
+        );
     }
 
     /// Test to verify that ensure_visible Effect runs when cursor changes
@@ -862,29 +1145,53 @@ mod tests {
         let ensure_visible_run_count_clone = ensure_visible_run_count.clone();
 
         // Create a dummy Scroll view with ensure_visible that tracks the cursor
-        let scroll = Scroll::new(floem::views::Empty::new())
-            .ensure_visible(move || {
-                let cursor = cursor_signal.get(); // Track cursor
-                ensure_visible_run_count_clone.set(ensure_visible_run_count_clone.get() + 1);
-                println!("ensure_visible ran, cursor={}, count={}", cursor, ensure_visible_run_count_clone.get());
-                Rect::new(0.0, 0.0, 1.0, 20.0)
-            });
+        let scroll = Scroll::new(floem::views::Empty::new()).ensure_visible(move || {
+            let cursor = cursor_signal.get(); // Track cursor
+            ensure_visible_run_count_clone.set(ensure_visible_run_count_clone.get() + 1);
+            println!(
+                "ensure_visible ran, cursor={}, count={}",
+                cursor,
+                ensure_visible_run_count_clone.get()
+            );
+            Rect::new(0.0, 0.0, 1.0, 20.0)
+        });
 
         // Effect should have run once initially
-        println!("After Scroll creation: ensure_visible_run_count = {}", ensure_visible_run_count.get());
-        assert_eq!(ensure_visible_run_count.get(), 1, "ensure_visible Effect should run once on creation");
+        println!(
+            "After Scroll creation: ensure_visible_run_count = {}",
+            ensure_visible_run_count.get()
+        );
+        assert_eq!(
+            ensure_visible_run_count.get(),
+            1,
+            "ensure_visible Effect should run once on creation"
+        );
 
         // Update cursor
         cursor_signal.set(10);
 
         // Effect should have run again
-        println!("After cursor.set(10): ensure_visible_run_count = {}", ensure_visible_run_count.get());
-        assert_eq!(ensure_visible_run_count.get(), 2, "ensure_visible Effect should run when cursor changes");
+        println!(
+            "After cursor.set(10): ensure_visible_run_count = {}",
+            ensure_visible_run_count.get()
+        );
+        assert_eq!(
+            ensure_visible_run_count.get(),
+            2,
+            "ensure_visible Effect should run when cursor changes"
+        );
 
         // Update cursor again
         cursor_signal.set(20);
-        println!("After cursor.set(20): ensure_visible_run_count = {}", ensure_visible_run_count.get());
-        assert_eq!(ensure_visible_run_count.get(), 3, "ensure_visible Effect should run on each cursor change");
+        println!(
+            "After cursor.set(20): ensure_visible_run_count = {}",
+            ensure_visible_run_count.get()
+        );
+        assert_eq!(
+            ensure_visible_run_count.get(),
+            3,
+            "ensure_visible Effect should run on each cursor change"
+        );
 
         // Prevent scroll from being optimized away
         drop(scroll);
@@ -893,8 +1200,9 @@ mod tests {
     /// Test to verify that ensure_visible actually updates scroll position via TestHarness
     #[test]
     fn test_ensure_visible_with_harness() {
+        use floem::HasViewId;
         use floem::reactive::{RwSignal, SignalUpdate};
-        use floem::views::{Scroll, stack, Empty};
+        use floem::views::{Empty, Scroll};
         use std::cell::Cell;
         use std::rc::Rc;
 
@@ -906,20 +1214,22 @@ mod tests {
         let scroll_y_clone = scroll_y.clone();
 
         // Create a Scroll view with tall content and ensure_visible
-        let scroll = Scroll::new(
-            Empty::new().style(|s| s.width(100.0).height(500.0)) // Tall content
-        )
-        .style(|s| s.width(100.0).height(100.0)) // Small viewport
-        .ensure_visible(move || {
-            let y = target_y.get();
-            println!("ensure_visible: target_y = {}", y);
-            Rect::new(0.0, y, 10.0, y + 20.0) // 20px tall rect at target_y
-        })
-        .on_scroll(move |viewport| {
-            on_scroll_called_clone.set(true);
-            scroll_y_clone.set(viewport.y0);
-            println!("on_scroll: viewport = {:?}", viewport);
-        });
+        let child = Empty::new().style(|s| s.width(100.0).height(500.0)); // Tall content
+        let child_id = child.view_id();
+
+        let scroll = Scroll::new(child)
+            .style(|s| s.width(100.0).height(100.0)) // Small viewport
+            .ensure_visible(move || {
+                let y = target_y.get();
+                println!("ensure_visible: target_y = {}", y);
+                Rect::new(0.0, y, 10.0, y + 20.0) // 20px tall rect at target_y
+            })
+            .on_scroll(move |viewport| {
+                on_scroll_called_clone.set(true);
+                scroll_y_clone.set(viewport.y0);
+                println!("on_scroll: viewport = {:?}", viewport);
+            });
+        let scroll_id = scroll.view_id();
 
         // Create test harness
         let mut harness = TestHarness::new_with_size(scroll, 100.0, 100.0);
@@ -927,8 +1237,24 @@ mod tests {
         // Run a rebuild to process initial state
         harness.rebuild();
 
+        // Check layout values
+        let scroll_size = harness.get_size(scroll_id);
+        let scroll_content_rect = harness.get_content_rect(scroll_id);
+        let child_size = harness.get_size(child_id);
+        let child_layout_rect = harness.get_layout_rect(child_id);
+
+        println!("=== Layout after first rebuild ===");
+        println!("scroll_size: {:?}", scroll_size);
+        println!("scroll_content_rect: {:?}", scroll_content_rect);
+        println!("child_size: {:?}", child_size);
+        println!("child_layout_rect: {:?}", child_layout_rect);
+
         // Initial state
-        println!("Initial: on_scroll_called={}, scroll_y={}", on_scroll_called.get(), scroll_y.get());
+        println!(
+            "Initial: on_scroll_called={}, scroll_y={}",
+            on_scroll_called.get(),
+            scroll_y.get()
+        );
 
         // Now update target_y to something beyond the viewport
         target_y.set(300.0);
@@ -936,12 +1262,118 @@ mod tests {
         // Rebuild to process the deferred updates
         harness.rebuild();
 
-        println!("After target_y.set(300.0) and rebuild: on_scroll_called={}, scroll_y={}", on_scroll_called.get(), scroll_y.get());
+        println!(
+            "After target_y.set(300.0) and rebuild: on_scroll_called={}, scroll_y={}",
+            on_scroll_called.get(),
+            scroll_y.get()
+        );
 
         // The scroll position should have changed to show y=300
         // With a 100px viewport, to show y=300, we need to scroll to at least y0=200
         // (so that y=300 is at the bottom of the viewport at y1=300)
-        assert!(scroll_y.get() > 0.0, "Scroll should have moved to show target_y=300, but scroll_y={}", scroll_y.get());
+        assert!(
+            scroll_y.get() > 0.0,
+            "Scroll should have moved to show target_y=300, but scroll_y={}",
+            scroll_y.get()
+        );
+    }
+
+    /// Test to verify that scroll_to works in the harness (simpler than ensure_visible)
+    #[test]
+    fn test_scroll_to_with_harness() {
+        use floem::HasViewId;
+        use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
+        use floem::views::{Empty, Scroll};
+        use std::cell::Cell;
+        use std::rc::Rc;
+
+        // Create signals
+        let scroll_target = RwSignal::new(None::<Point>);
+        let scroll_y = Rc::new(Cell::new(0.0f64));
+        let scroll_y_clone = scroll_y.clone();
+
+        // Create a Scroll view with scroll_to
+        let child = Empty::new().style(|s| s.width(100.0).height(500.0));
+
+        let scroll = Scroll::new(child)
+            .style(|s| s.width(100.0).height(100.0))
+            .scroll_to(move || {
+                let target = scroll_target.get();
+                println!("scroll_to: target = {:?}", target);
+                target
+            })
+            .on_scroll(move |viewport| {
+                scroll_y_clone.set(viewport.y0);
+                println!("on_scroll: viewport.y0 = {}", viewport.y0);
+            });
+
+        // Create test harness
+        let mut harness = TestHarness::new_with_size(scroll, 100.0, 100.0);
+
+        // Run a rebuild to process initial state
+        harness.rebuild();
+
+        println!("Initial scroll_y: {}", scroll_y.get());
+
+        // Set scroll target to y=200
+        scroll_target.set(Some(Point::new(0.0, 200.0)));
+
+        // Rebuild to process the deferred updates
+        harness.rebuild();
+
+        println!("After scroll_target.set(200): scroll_y={}", scroll_y.get());
+
+        // The scroll position should have changed
+        assert!(
+            scroll_y.get() > 0.0,
+            "Scroll should have moved to y=200, but scroll_y={}",
+            scroll_y.get()
+        );
+    }
+
+    /// Test to verify ensure_visible works with properly initialized layout
+    /// This test ensures the scroll behavior is correct when child_size > 0
+    #[test]
+    fn test_ensure_visible_with_initialized_layout() {
+        use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
+        use floem::views::{Empty, Scroll};
+        use std::cell::Cell;
+        use std::rc::Rc;
+
+        let target_y = RwSignal::new(0.0f64);
+        let scroll_y = Rc::new(Cell::new(0.0f64));
+        let scroll_y_clone = scroll_y.clone();
+
+        // Create child with fixed height (not signal-based)
+        let child = Empty::new().style(|s| s.width(100.0).height(500.0));
+
+        let scroll = Scroll::new(child)
+            .style(|s| s.width(100.0).height(100.0))
+            .ensure_visible(move || {
+                let y = target_y.get();
+                Rect::new(0.0, y, 10.0, y + 20.0)
+            })
+            .on_scroll(move |viewport| {
+                scroll_y_clone.set(viewport.y0);
+            });
+
+        let mut harness = TestHarness::new_with_size(scroll, 100.0, 100.0);
+
+        // Multiple rebuilds to ensure layout is fully initialized
+        harness.rebuild();
+        harness.rebuild();
+
+        // Now set target to bottom of content
+        target_y.set(400.0);
+        harness.rebuild();
+
+        // With a 100px viewport and 500px content, scrolling to show y=400
+        // should result in scroll_y around 320-400
+        assert!(
+            scroll_y.get() >= 300.0,
+            "Scroll should have moved to show y=400. Expected scroll_y >= 300, got {}",
+            scroll_y.get()
+        );
     }
 
     /// Helper to create a keyboard event
@@ -1327,7 +1759,10 @@ mod tests {
         doc_signal.get_untracked().set_offset(3, false);
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert_eq!(cursor.end, 3, "Cursor should be at position 3 (before newline)");
+        assert_eq!(
+            cursor.end, 3,
+            "Cursor should be at position 3 (before newline)"
+        );
 
         // Move right once more - should cross the newline
         harness.dispatch_event(create_key_event(
@@ -1336,7 +1771,10 @@ mod tests {
         ));
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert_eq!(cursor.end, 4, "Cursor should be at position 4 (start of line2)");
+        assert_eq!(
+            cursor.end, 4,
+            "Cursor should be at position 4 (start of line2)"
+        );
 
         // Move left - should go back before newline
         harness.dispatch_event(create_key_event(
@@ -1561,9 +1999,9 @@ mod tests {
 
     #[test]
     fn test_cursor_action_updated_on_typing() {
-        use std::time::Instant;
         use std::thread;
         use std::time::Duration;
+        use std::time::Instant;
 
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let last_cursor_action = textarea.last_cursor_action;
@@ -1595,9 +2033,9 @@ mod tests {
 
     #[test]
     fn test_cursor_action_updated_on_arrow_key() {
-        use std::time::Instant;
         use std::thread;
         use std::time::Duration;
+        use std::time::Instant;
 
         let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
         let last_cursor_action = textarea.last_cursor_action;
@@ -1636,20 +2074,44 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Left arrow
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::Left)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowLeft),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::Left))
+        );
 
         // Right arrow
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::Right)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowRight),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::Right))
+        );
 
         // Up arrow
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowUp), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::Up)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowUp),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::Up))
+        );
 
         // Down arrow
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowDown), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::Down)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowDown),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::Down))
+        );
     }
 
     #[test]
@@ -1657,12 +2119,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Home -> LineStart
-        let key = KeyPress { key: Key::Named(NamedKey::Home), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::LineStart)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Home),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::LineStart))
+        );
 
         // End -> LineEnd
-        let key = KeyPress { key: Key::Named(NamedKey::End), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::LineEnd)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::End),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::LineEnd))
+        );
     }
 
     #[test]
@@ -1670,12 +2144,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Alt+Left -> WordBackward
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::ALT };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::WordBackward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowLeft),
+            modifiers: Modifiers::ALT,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::WordBackward))
+        );
 
         // Alt+Right -> WordForward
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::ALT };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::WordForward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowRight),
+            modifiers: Modifiers::ALT,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::WordForward))
+        );
     }
 
     #[test]
@@ -1683,20 +2169,44 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Enter -> InsertNewLine
-        let key = KeyPress { key: Key::Named(NamedKey::Enter), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::InsertNewLine)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Enter),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::InsertNewLine))
+        );
 
         // Backspace -> DeleteBackward
-        let key = KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteBackward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Backspace),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteBackward))
+        );
 
         // Delete -> DeleteForward
-        let key = KeyPress { key: Key::Named(NamedKey::Delete), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteForward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Delete),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteForward))
+        );
 
         // Tab -> InsertTab
-        let key = KeyPress { key: Key::Named(NamedKey::Tab), modifiers: Modifiers::default() };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::InsertTab)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Tab),
+            modifiers: Modifiers::default(),
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::InsertTab))
+        );
     }
 
     #[test]
@@ -1704,12 +2214,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Alt+Backspace -> DeleteWordBackward
-        let key = KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::ALT };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteWordBackward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Backspace),
+            modifiers: Modifiers::ALT,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteWordBackward))
+        );
 
         // Alt+Delete -> DeleteWordForward
-        let key = KeyPress { key: Key::Named(NamedKey::Delete), modifiers: Modifiers::ALT };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteWordForward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Delete),
+            modifiers: Modifiers::ALT,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteWordForward))
+        );
     }
 
     #[test]
@@ -1722,7 +2244,10 @@ mod tests {
         #[cfg(not(target_os = "macos"))]
         let modifier = Modifiers::CONTROL;
 
-        let key = KeyPress { key: Key::Character("a".into()), modifiers: modifier };
+        let key = KeyPress {
+            key: Key::Character("a".into()),
+            modifiers: modifier,
+        };
         assert_eq!(keymap.keymaps.get(&key), Some(&Command::SelectAll));
     }
 
@@ -1732,12 +2257,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Cmd+Left -> LineStart
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::META };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::LineStart)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowLeft),
+            modifiers: Modifiers::META,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::LineStart))
+        );
 
         // Cmd+Right -> LineEnd
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::META };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::LineEnd)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowRight),
+            modifiers: Modifiers::META,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::LineEnd))
+        );
     }
 
     #[cfg(target_os = "macos")]
@@ -1746,12 +2283,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Cmd+Up -> DocumentStart
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowUp), modifiers: Modifiers::META };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::DocumentStart)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowUp),
+            modifiers: Modifiers::META,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::DocumentStart))
+        );
 
         // Cmd+Down -> DocumentEnd
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowDown), modifiers: Modifiers::META };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::DocumentEnd)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowDown),
+            modifiers: Modifiers::META,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::DocumentEnd))
+        );
     }
 
     #[cfg(target_os = "macos")]
@@ -1760,8 +2309,14 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Cmd+Backspace -> DeleteToBeginningOfLine
-        let key = KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::META };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteToBeginningOfLine)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Backspace),
+            modifiers: Modifiers::META,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteToBeginningOfLine))
+        );
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -1770,12 +2325,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Ctrl+Home -> DocumentStart
-        let key = KeyPress { key: Key::Named(NamedKey::Home), modifiers: Modifiers::CONTROL };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::DocumentStart)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Home),
+            modifiers: Modifiers::CONTROL,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::DocumentStart))
+        );
 
         // Ctrl+End -> DocumentEnd
-        let key = KeyPress { key: Key::Named(NamedKey::End), modifiers: Modifiers::CONTROL };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::DocumentEnd)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::End),
+            modifiers: Modifiers::CONTROL,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::DocumentEnd))
+        );
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -1784,12 +2351,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Ctrl+Left -> WordBackward
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowLeft), modifiers: Modifiers::CONTROL };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::WordBackward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowLeft),
+            modifiers: Modifiers::CONTROL,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::WordBackward))
+        );
 
         // Ctrl+Right -> WordForward
-        let key = KeyPress { key: Key::Named(NamedKey::ArrowRight), modifiers: Modifiers::CONTROL };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Move(MoveCommand::WordForward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::ArrowRight),
+            modifiers: Modifiers::CONTROL,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Move(MoveCommand::WordForward))
+        );
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -1798,12 +2377,24 @@ mod tests {
         let keymap = KeypressMap::default();
 
         // Ctrl+Backspace -> DeleteWordBackward
-        let key = KeyPress { key: Key::Named(NamedKey::Backspace), modifiers: Modifiers::CONTROL };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteWordBackward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Backspace),
+            modifiers: Modifiers::CONTROL,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteWordBackward))
+        );
 
         // Ctrl+Delete -> DeleteWordForward
-        let key = KeyPress { key: Key::Named(NamedKey::Delete), modifiers: Modifiers::CONTROL };
-        assert_eq!(keymap.keymaps.get(&key), Some(&Command::Edit(EditCommand::DeleteWordForward)));
+        let key = KeyPress {
+            key: Key::Named(NamedKey::Delete),
+            modifiers: Modifiers::CONTROL,
+        };
+        assert_eq!(
+            keymap.keymaps.get(&key),
+            Some(&Command::Edit(EditCommand::DeleteWordForward))
+        );
     }
 
     // ==========================================================================
@@ -1870,7 +2461,11 @@ mod tests {
         ));
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert!(cursor.end <= 6, "Alt+Left should move to start of 'world', got {}", cursor.end);
+        assert!(
+            cursor.end <= 6,
+            "Alt+Left should move to start of 'world', got {}",
+            cursor.end
+        );
     }
 
     #[test]
@@ -1891,7 +2486,11 @@ mod tests {
         ));
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert!(cursor.end >= 5, "Alt+Right should move past 'hello', got {}", cursor.end);
+        assert!(
+            cursor.end >= 5,
+            "Alt+Right should move past 'hello', got {}",
+            cursor.end
+        );
     }
 
     #[test]
@@ -1932,8 +2531,15 @@ mod tests {
         ));
 
         let text = doc_signal.get_untracked().text();
-        assert!(text.starts_with("hello"), "Alt+Backspace should delete 'world', got: {}", text);
-        assert!(text.len() < 11, "Text should be shorter after word deletion");
+        assert!(
+            text.starts_with("hello"),
+            "Alt+Backspace should delete 'world', got: {}",
+            text
+        );
+        assert!(
+            text.len() < 11,
+            "Text should be shorter after word deletion"
+        );
     }
 
     #[test]
@@ -1954,7 +2560,11 @@ mod tests {
         ));
 
         let text = doc_signal.get_untracked().text();
-        assert!(!text.starts_with("hello"), "Alt+Delete should delete 'hello', got: {}", text);
+        assert!(
+            !text.starts_with("hello"),
+            "Alt+Delete should delete 'hello', got: {}",
+            text
+        );
     }
 
     #[test]
@@ -1974,10 +2584,7 @@ mod tests {
         #[cfg(not(target_os = "macos"))]
         let modifier = Modifiers::CONTROL;
 
-        harness.dispatch_event(create_key_event(
-            Key::Character("a".into()),
-            modifier,
-        ));
+        harness.dispatch_event(create_key_event(Key::Character("a".into()), modifier));
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
         assert!(!cursor.is_caret(), "Cmd/Ctrl+A should create a selection");
@@ -2157,7 +2764,11 @@ mod tests {
         ));
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert!(cursor.end <= 6, "Ctrl+Left should move to start of 'world', got {}", cursor.end);
+        assert!(
+            cursor.end <= 6,
+            "Ctrl+Left should move to start of 'world', got {}",
+            cursor.end
+        );
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -2179,7 +2790,11 @@ mod tests {
         ));
 
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert!(cursor.end >= 5, "Ctrl+Right should move past 'hello', got {}", cursor.end);
+        assert!(
+            cursor.end >= 5,
+            "Ctrl+Right should move past 'hello', got {}",
+            cursor.end
+        );
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -2201,7 +2816,11 @@ mod tests {
         ));
 
         let text = doc_signal.get_untracked().text();
-        assert!(text.starts_with("hello"), "Ctrl+Backspace should delete 'world', got: {}", text);
+        assert!(
+            text.starts_with("hello"),
+            "Ctrl+Backspace should delete 'world', got: {}",
+            text
+        );
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -2223,7 +2842,11 @@ mod tests {
         ));
 
         let text = doc_signal.get_untracked().text();
-        assert!(!text.starts_with("hello"), "Ctrl+Delete should delete 'hello', got: {}", text);
+        assert!(
+            !text.starts_with("hello"),
+            "Ctrl+Delete should delete 'hello', got: {}",
+            text
+        );
     }
 
     // ==========================================================================
@@ -2262,14 +2885,17 @@ mod tests {
         // Should be able to read the signal without panicking
         let rect = viewport.get_untracked();
         assert!(rect.width() >= 0.0, "viewport width should be non-negative");
-        assert!(rect.height() >= 0.0, "viewport height should be non-negative");
+        assert!(
+            rect.height() >= 0.0,
+            "viewport height should be non-negative"
+        );
     }
 
     #[test]
     fn test_textarea_child_height_tracks_content() {
         // Create a textarea with multi-line content
-        let textarea = TextArea::with_text("line1\nline2\nline3\nline4\nline5")
-            .style(|s| s.size(200.0, 50.0)); // Small height to test scrolling
+        let textarea =
+            TextArea::with_text("line1\nline2\nline3\nline4\nline5").style(|s| s.size(200.0, 50.0)); // Small height to test scrolling
         let child_height = textarea.child_height;
         let doc_signal = textarea.doc();
 
@@ -2317,7 +2943,10 @@ mod tests {
         let main_id = textarea.id();
         let scroll_id = textarea.scroll_id();
 
-        assert_ne!(main_id, scroll_id, "Main and scroll IDs should be different");
+        assert_ne!(
+            main_id, scroll_id,
+            "Main and scroll IDs should be different"
+        );
 
         // The scroll view should be a child of the main view
         // This is verified by the structure in with_text() where:
@@ -2349,7 +2978,10 @@ mod tests {
     #[test]
     fn test_textarea_multiline_content_creates_scrollable_area() {
         // Create textarea with many lines to ensure content exceeds container
-        let many_lines = (0..20).map(|i| format!("line{}", i)).collect::<Vec<_>>().join("\n");
+        let many_lines = (0..20)
+            .map(|i| format!("line{}", i))
+            .collect::<Vec<_>>()
+            .join("\n");
         let textarea = TextArea::with_text(&many_lines).style(|s| s.size(200.0, 50.0));
         let child_height = textarea.child_height;
         let doc_signal = textarea.doc();
@@ -2379,8 +3011,14 @@ mod tests {
         let height = child_height.get_untracked();
         let rect = viewport.get_untracked();
 
-        assert!(height >= 0.0, "child_height should be valid for empty content");
-        assert!(rect.width() >= 0.0, "viewport should be valid for empty content");
+        assert!(
+            height >= 0.0,
+            "child_height should be valid for empty content"
+        );
+        assert!(
+            rect.width() >= 0.0,
+            "viewport should be valid for empty content"
+        );
         assert!(scroll_id != ViewId::new(), "scroll_id should be valid");
     }
 
@@ -2391,19 +3029,28 @@ mod tests {
     #[test]
     fn test_textarea_resizable_disabled_by_default() {
         let textarea = TextArea::new();
-        assert!(!textarea.is_resizable(), "Resize should be disabled by default");
+        assert!(
+            !textarea.is_resizable(),
+            "Resize should be disabled by default"
+        );
     }
 
     #[test]
     fn test_textarea_resizable_can_be_enabled() {
         let textarea = TextArea::new().resizable(true);
-        assert!(textarea.is_resizable(), "Resize should be enabled after calling resizable(true)");
+        assert!(
+            textarea.is_resizable(),
+            "Resize should be enabled after calling resizable(true)"
+        );
     }
 
     #[test]
     fn test_textarea_resizable_can_be_disabled() {
         let textarea = TextArea::new().resizable(true).resizable(false);
-        assert!(!textarea.is_resizable(), "Resize should be disabled after calling resizable(false)");
+        assert!(
+            !textarea.is_resizable(),
+            "Resize should be disabled after calling resizable(false)"
+        );
     }
 
     #[test]
@@ -2432,7 +3079,10 @@ mod tests {
             .min_resize_size(Size::new(100.0, 50.0));
 
         // The min_size is stored internally - we verify through the builder pattern
-        assert!(textarea.is_resizable(), "Should still be resizable after setting min size");
+        assert!(
+            textarea.is_resizable(),
+            "Should still be resizable after setting min size"
+        );
     }
 
     #[test]
@@ -2442,7 +3092,10 @@ mod tests {
             .max_resize_size(Size::new(500.0, 300.0));
 
         // The max_size is stored internally - we verify through the builder pattern
-        assert!(textarea.is_resizable(), "Should still be resizable after setting max size");
+        assert!(
+            textarea.is_resizable(),
+            "Should still be resizable after setting max size"
+        );
     }
 
     #[test]
@@ -2454,8 +3107,14 @@ mod tests {
     #[test]
     fn test_textarea_resize_handle_size_constant() {
         // Verify the resize handle size constant is reasonable
-        assert!(RESIZE_HANDLE_SIZE > 0.0, "Resize handle size should be positive");
-        assert!(RESIZE_HANDLE_SIZE <= 30.0, "Resize handle size should be reasonable");
+        assert!(
+            RESIZE_HANDLE_SIZE > 0.0,
+            "Resize handle size should be positive"
+        );
+        assert!(
+            RESIZE_HANDLE_SIZE <= 30.0,
+            "Resize handle size should be reasonable"
+        );
     }
 
     #[test]
@@ -2464,7 +3123,10 @@ mod tests {
             .resizable(true)
             .style(|s| s.size(200.0, 100.0));
 
-        assert!(textarea.is_resizable(), "Textarea with text should be resizable");
+        assert!(
+            textarea.is_resizable(),
+            "Textarea with text should be resizable"
+        );
         assert_eq!(textarea.text(), "Hello, World!");
     }
 
@@ -2476,7 +3138,10 @@ mod tests {
             .max_resize_size(Size::new(400.0, 200.0))
             .style(|s| s.size(200.0, 100.0));
 
-        assert!(textarea.is_resizable(), "Should be resizable after chained calls");
+        assert!(
+            textarea.is_resizable(),
+            "Should be resizable after chained calls"
+        );
     }
 
     // ==========================================================================
@@ -2515,11 +3180,17 @@ mod tests {
         // The text should now have multiple newlines
         let text = doc_signal.get_untracked().text();
         let newline_count = text.chars().filter(|c| *c == '\n').count();
-        assert_eq!(newline_count, 8, "Should have 8 newlines from 8 Enter presses");
+        assert_eq!(
+            newline_count, 8,
+            "Should have 8 newlines from 8 Enter presses"
+        );
 
         // Cursor should be at the end (after all newlines)
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert_eq!(cursor.end, 8, "Cursor should be at position 8 (after 8 newlines)");
+        assert_eq!(
+            cursor.end, 8,
+            "Cursor should be at position 8 (after 8 newlines)"
+        );
     }
 
     #[test]
@@ -2566,8 +3237,8 @@ mod tests {
     #[test]
     fn test_textarea_cursor_line_position_calculation() {
         // Test that cursor line position is calculated correctly for scrolling
-        let textarea = TextArea::with_text("line1\nline2\nline3\nline4\nline5")
-            .style(|s| s.size(200.0, 50.0));
+        let textarea =
+            TextArea::with_text("line1\nline2\nline3\nline4\nline5").style(|s| s.size(200.0, 50.0));
         let doc_signal = textarea.doc();
 
         let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
@@ -2596,8 +3267,7 @@ mod tests {
     #[test]
     fn test_textarea_ensure_visible_closure_returns_cursor_rect() {
         // Test that ensure_visible returns a rect for the cursor position
-        let textarea = TextArea::with_text("line1\nline2\nline3")
-            .style(|s| s.size(200.0, 50.0));
+        let textarea = TextArea::with_text("line1\nline2\nline3").style(|s| s.size(200.0, 50.0));
         let doc_signal = textarea.doc();
 
         let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
@@ -2619,14 +3289,20 @@ mod tests {
             (1.0, point.line_bottom - point.line_top),
         );
 
-        assert!(rect.height() > 0.0, "Cursor rect should have positive height");
+        assert!(
+            rect.height() > 0.0,
+            "Cursor rect should have positive height"
+        );
         assert!(rect.y0 >= 0.0, "Cursor rect should start at or after 0");
     }
 
     #[test]
     fn test_textarea_viewport_y_after_cursor_move_down() {
         // Create a textarea with content that exceeds viewport
-        let many_lines = (0..10).map(|i| format!("line{}", i)).collect::<Vec<_>>().join("\n");
+        let many_lines = (0..10)
+            .map(|i| format!("line{}", i))
+            .collect::<Vec<_>>()
+            .join("\n");
         let textarea = TextArea::with_text(&many_lines).style(|s| s.size(200.0, 60.0));
         let doc_signal = textarea.doc();
         let viewport = textarea.viewport();
@@ -2657,7 +3333,11 @@ mod tests {
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
         // Text: "line0\nline1\nline2\n..." = positions go 0-5, 6-11, 12-17, etc.
         // Last line "line9" starts at position 54
-        assert!(cursor.end >= 54, "Cursor should be in last line, got {}", cursor.end);
+        assert!(
+            cursor.end >= 54,
+            "Cursor should be in last line, got {}",
+            cursor.end
+        );
 
         // Note: The viewport position depends on the scroll view actually running,
         // which may not happen in a unit test without a full event loop.
@@ -2724,7 +3404,11 @@ mod tests {
 
         // Initially should have 1 line (empty)
         let text = doc_signal.get_untracked().text();
-        let line_count = if text.is_empty() { 1 } else { text.lines().count() };
+        let line_count = if text.is_empty() {
+            1
+        } else {
+            text.lines().count()
+        };
         assert_eq!(line_count, 1, "Should start with 1 line");
 
         // Press Enter 5 times
@@ -2768,7 +3452,10 @@ mod tests {
 
         // Cursor should be at position 2
         let cursor = doc_signal.get_untracked().cursor().get_untracked();
-        assert_eq!(cursor.end, 2, "Cursor should be at position 2 after 2 Enters");
+        assert_eq!(
+            cursor.end, 2,
+            "Cursor should be at position 2 after 2 Enters"
+        );
 
         // Get the visual line of the cursor
         let doc = doc_signal.get_untracked();
@@ -2850,7 +3537,10 @@ mod tests {
         // Get cursor position before Enter
         let doc = doc_signal.get_untracked();
         let before_point = doc.text_layouts().borrow().point_of_offset(17);
-        println!("Cursor before Enter: line_top={}, line_bottom={}", before_point.line_top, before_point.line_bottom);
+        println!(
+            "Cursor before Enter: line_top={}, line_bottom={}",
+            before_point.line_top, before_point.line_bottom
+        );
 
         // Press Enter - this should create a new line below viewport
         harness.dispatch_event(create_key_event(
@@ -2865,7 +3555,10 @@ mod tests {
         let doc = doc_signal.get_untracked();
         let cursor = doc.cursor().get_untracked();
         let after_point = doc.text_layouts().borrow().point_of_offset(cursor.end);
-        println!("Cursor after Enter: offset={}, line_top={}, line_bottom={}", cursor.end, after_point.line_top, after_point.line_bottom);
+        println!(
+            "Cursor after Enter: offset={}, line_top={}, line_bottom={}",
+            cursor.end, after_point.line_top, after_point.line_bottom
+        );
 
         // The cursor should now be on line 4 (the new line)
         assert_eq!(doc.text(), "line1\nline2\nline3\n");
@@ -2922,7 +3615,12 @@ mod tests {
             let doc = doc_signal.get_untracked();
             let cursor = doc.cursor().get_untracked();
             let point = doc.text_layouts().borrow().point_of_offset(cursor.end);
-            println!("After Enter {}: cursor={}, line_top={}", i + 1, cursor.end, point.line_top);
+            println!(
+                "After Enter {}: cursor={}, line_top={}",
+                i + 1,
+                cursor.end,
+                point.line_top
+            );
         }
 
         // Text should now be "A\nB\nC\n\n\n\n\n"
@@ -2935,7 +3633,10 @@ mod tests {
 
         // The cursor's line_top should be well beyond the initial viewport height
         let point = doc.text_layouts().borrow().point_of_offset(cursor.end);
-        println!("Final cursor line_top: {}, viewport height: 60.0", point.line_top);
+        println!(
+            "Final cursor line_top: {}, viewport height: 60.0",
+            point.line_top
+        );
 
         // Cursor should be on line 8 (0-indexed: 7), so line_top should be ~7*20 = 140
         assert!(
@@ -2948,8 +3649,8 @@ mod tests {
     #[test]
     fn test_ensure_visible_rect_calculation() {
         // Test that the ensure_visible rect is correctly calculated
-        let textarea = TextArea::with_text("line1\nline2\nline3\nline4\nline5")
-            .style(|s| s.size(200.0, 60.0));
+        let textarea =
+            TextArea::with_text("line1\nline2\nline3\nline4\nline5").style(|s| s.size(200.0, 60.0));
         let doc_signal = textarea.doc();
 
         doc_signal.get_untracked().set_width(200.0);
@@ -2971,7 +3672,11 @@ mod tests {
 
             println!(
                 "Offset {}: line={}, rect y0={}, y1={}, height={}",
-                offset, expected_line, rect.y0, rect.y1, rect.height()
+                offset,
+                expected_line,
+                rect.y0,
+                rect.y1,
+                rect.height()
             );
 
             // Verify rect properties
@@ -2993,5 +3698,207 @@ mod tests {
             }
         }
     }
-}
 
+    #[test]
+    fn test_enter_with_scrollable_content() {
+        // Create a textarea with enough content to require scrolling
+        // 10 lines of content, viewport only 80px tall (~4 lines visible)
+        let initial_text =
+            "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10";
+        let textarea = TextArea::with_text(initial_text).style(|s| s.size(200.0, 80.0));
+        let doc_signal = textarea.doc();
+        let viewport = textarea.viewport();
+
+        doc_signal.get_untracked().set_width(200.0);
+
+        let mut harness = TestHarness::new_with_size(textarea, 200.0, 80.0);
+
+        // Initial rebuild to ensure layout is fully initialized
+        harness.rebuild();
+
+        // Click to focus (dispatch_event already calls process_update internally)
+        harness.click(10.0, 10.0);
+
+        // Verify content height is greater than viewport (scroll should be active)
+        let doc = doc_signal.get_untracked();
+        let last_offset = initial_text.len();
+        let last_point = doc.text_layouts().borrow().point_of_offset(last_offset);
+        println!(
+            "Content height (last line_bottom): {}, viewport height: 80.0",
+            last_point.line_bottom
+        );
+        assert!(
+            last_point.line_bottom > 80.0,
+            "Content should overflow viewport: {} > 80.0",
+            last_point.line_bottom
+        );
+
+        // Navigate to end using Cmd+Down (DocumentEnd on macOS) which triggers ensure_visible
+        // dispatch_event() already calls process_update() internally
+        harness.dispatch_event(create_key_event(
+            Key::Named(NamedKey::ArrowDown),
+            Modifiers::META,
+        ));
+
+        // Verify cursor is at end
+        let cursor = doc_signal.get_untracked().cursor().get_untracked();
+        println!("Cursor after Cmd+End: offset={}", cursor.end);
+
+        // Get viewport before - it should have scrolled to show cursor
+        let viewport_before = viewport.get_untracked();
+        println!("Viewport before Enter: {:?}", viewport_before);
+
+        // Verify cursor is visible in viewport before Enter
+        let cursor_before = doc.text_layouts().borrow().point_of_offset(cursor.end);
+        println!(
+            "Cursor before Enter: line_top={}, line_bottom={}",
+            cursor_before.line_top, cursor_before.line_bottom
+        );
+        assert!(
+            cursor_before.line_bottom <= viewport_before.y1 + 1.0,
+            "Cursor should be visible before Enter: line_bottom={} <= viewport.y1={}",
+            cursor_before.line_bottom,
+            viewport_before.y1
+        );
+
+        // Press Enter to create a new line (Line 11)
+        // dispatch_event() already calls process_update() internally
+        harness.dispatch_event(create_key_event(
+            Key::Named(NamedKey::Enter),
+            Modifiers::default(),
+        ));
+
+        // Get cursor position after Enter
+        let doc = doc_signal.get_untracked();
+        let cursor = doc.cursor().get_untracked();
+        let cursor_after = doc.text_layouts().borrow().point_of_offset(cursor.end);
+        println!(
+            "Cursor after Enter: offset={}, line_top={}, line_bottom={}",
+            cursor.end, cursor_after.line_top, cursor_after.line_bottom
+        );
+
+        // Verify cursor is on a new line below
+        assert!(
+            cursor_after.line_top > cursor_before.line_top,
+            "Cursor should be on a new line: {} > {}",
+            cursor_after.line_top,
+            cursor_before.line_top
+        );
+
+        // Get viewport after Enter
+        let viewport_after_enter = viewport.get_untracked();
+        println!("Viewport after Enter: {:?}", viewport_after_enter);
+
+        // Now press Right to see if y0 changes
+        harness.dispatch_event(create_key_event(
+            Key::Named(NamedKey::ArrowRight),
+            Modifiers::default(),
+        ));
+
+        // Get viewport after Right
+        let viewport_after_right = viewport.get_untracked();
+        let doc = doc_signal.get_untracked();
+        let cursor_after_right = doc.cursor().get_untracked();
+        let cursor_point_after_right = doc
+            .text_layouts()
+            .borrow()
+            .point_of_offset(cursor_after_right.end);
+        println!(
+            "Cursor after Right: offset={}, line_top={}, line_bottom={}",
+            cursor_after_right.end,
+            cursor_point_after_right.line_top,
+            cursor_point_after_right.line_bottom
+        );
+        println!("Viewport after Right: {:?}", viewport_after_right);
+        println!(
+            "Viewport y0 change: Enter={} -> Right={}",
+            viewport_after_enter.y0, viewport_after_right.y0
+        );
+
+        // The cursor should be visible in the viewport
+        // cursor line_bottom should be <= viewport.y1
+        // cursor line_top should be >= viewport.y0
+        let cursor_visible = cursor_after.line_top >= viewport_after_enter.y0
+            && cursor_after.line_bottom <= viewport_after_enter.y1;
+
+        // If viewport scrolled, y0 should have increased
+        let viewport_scrolled = viewport_after_enter.y0 > viewport_before.y0;
+
+        assert!(
+            cursor_visible || viewport_scrolled,
+            "Either cursor should be visible (line_top={} >= viewport.y0={} && line_bottom={} <= viewport.y1={}) \
+             or viewport should have scrolled (y0={} > {})",
+            cursor_after.line_top,
+            viewport_after_enter.y0,
+            cursor_after.line_bottom,
+            viewport_after_enter.y1,
+            viewport_after_enter.y0,
+            viewport_before.y0
+        );
+    }
+
+    #[test]
+    fn test_scroll_child_size_initialized() {
+        // This test specifically verifies that scroll's child_size is properly initialized
+        // before ensure_visible runs
+        let initial_text = "A\nB\nC\nD\nE\nF\nG\nH";
+        let textarea = TextArea::with_text(initial_text).style(|s| s.size(200.0, 60.0));
+        let doc_signal = textarea.doc();
+        let viewport = textarea.viewport();
+
+        doc_signal.get_untracked().set_width(200.0);
+
+        let mut harness = TestHarness::new_with_size(textarea, 200.0, 60.0);
+
+        // Initial rebuild to ensure layout settles
+        harness.rebuild();
+
+        // Focus (dispatch_event already calls process_update internally)
+        harness.click(10.0, 10.0);
+
+        // Move to end
+        let end_offset = initial_text.len();
+        doc_signal.get_untracked().set_offset(end_offset, false);
+
+        // Get the content height
+        let doc = doc_signal.get_untracked();
+        let end_point = doc.text_layouts().borrow().point_of_offset(end_offset);
+        let content_height = end_point.line_bottom;
+
+        println!("Content height: {}, viewport: 60.0", content_height);
+        assert!(
+            content_height > 60.0,
+            "Content should be taller than viewport for meaningful test"
+        );
+
+        // Record viewport before
+        let vp_before = viewport.get_untracked();
+        println!("Viewport before navigation: {:?}", vp_before);
+
+        // Press Enter (dispatch_event already calls process_update internally)
+        harness.dispatch_event(create_key_event(
+            Key::Named(NamedKey::Enter),
+            Modifiers::default(),
+        ));
+
+        // Check cursor and viewport
+        let doc = doc_signal.get_untracked();
+        let cursor = doc.cursor().get_untracked();
+        let cursor_point = doc.text_layouts().borrow().point_of_offset(cursor.end);
+        let vp_after = viewport.get_untracked();
+
+        println!(
+            "After Enter: cursor line_top={}, line_bottom={}, viewport={:?}",
+            cursor_point.line_top, cursor_point.line_bottom, vp_after
+        );
+
+        // The key assertion: cursor should be within viewport bounds
+        // This tests that ensure_visible worked with proper child_size
+        assert!(
+            cursor_point.line_bottom <= vp_after.y1 + 1.0, // Allow 1px tolerance
+            "Cursor bottom ({}) should be within viewport bottom ({})",
+            cursor_point.line_bottom,
+            vp_after.y1
+        );
+    }
+}

@@ -256,7 +256,10 @@ fn cards_demo() -> impl IntoView {
                 v_stack((
                     Label::derived(|| "Name")
                         .style(|s| s.font_size(14.0).font_weight(Weight::MEDIUM).mb_2()),
-                    Input::new(project_name).placeholder("Name of your project"),
+                    Input::new()
+                        .placeholder("Name of your project")
+                        .value(move || project_name.get())
+                        .on_update(move |s| project_name.set(s.to_string())),
                 ))
                 .style(|s| s.gap_2()),
             ),
@@ -279,10 +282,19 @@ fn inputs_demo() -> impl IntoView {
         v_stack((subsection(
             "Basic",
             v_stack((
-                form_field("Email", Input::new(email).placeholder("Enter your email")),
+                form_field(
+                    "Email",
+                    Input::new()
+                        .placeholder("Enter your email")
+                        .value(move || email.get())
+                        .on_update(move |s| email.set(s.to_string())),
+                ),
                 form_field(
                     "Password",
-                    Input::new(password).placeholder("Enter your password"),
+                    Input::new()
+                        .placeholder("Enter your password")
+                        .value(move || password.get())
+                        .on_update(move |s| password.set(s.to_string())),
                 ),
             ))
             .style(|s| s.gap_4().max_w_md()),
@@ -1250,16 +1262,25 @@ fn label_demo() -> impl IntoView {
                 "Form Label",
                 v_stack((
                     FormLabel::new("Email"),
-                    Input::new(email).placeholder("Enter your email"),
+                    Input::new()
+                        .placeholder("Enter your email")
+                        .value(move || email.get())
+                        .on_update(move |s| email.set(s.to_string())),
                 ))
                 .style(|s| s.gap_2()),
             ),
             subsection(
                 "Form Field",
-                FormField::new(
-                    "Username",
-                    Input::new(RwSignal::new(String::new())).placeholder("Enter username"),
-                ),
+                {
+                    let username = RwSignal::new(String::new());
+                    FormField::new(
+                        "Username",
+                        Input::new()
+                            .placeholder("Enter username")
+                            .value(move || username.get())
+                            .on_update(move |s| username.set(s.to_string())),
+                    )
+                },
             ),
         ))
         .style(|s| s.gap_8().max_w_md()),

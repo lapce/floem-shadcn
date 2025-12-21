@@ -4,7 +4,7 @@ use floem::{
     kurbo::Point,
     peniko::Color,
     reactive::{RwSignal, SignalGet, SignalUpdate, SignalWith},
-    text::{Attrs, AttrsList, LineHeightValue, TextLayout},
+    text::{Attrs, AttrsList, FamilyOwned, LineHeightValue, TextLayout, Weight},
 };
 use floem_editor_core::{
     buffer::{
@@ -40,6 +40,10 @@ pub struct Document {
     cursor: RwSignal<SelRegion>,
     horiz: RwSignal<Option<ColPosition>>,
     text_color: RwSignal<Color>,
+    font_size: RwSignal<f32>,
+    line_height: RwSignal<LineHeightValue>,
+    font_weight: RwSignal<Weight>,
+    font_family: RwSignal<Vec<FamilyOwned>>,
     on_update: Rc<RefCell<Vec<Box<dyn Fn(&str)>>>>,
 }
 
@@ -53,6 +57,10 @@ impl Document {
         let horiz = RwSignal::new(None);
         let active = RwSignal::new(false);
         let text_color = RwSignal::new(Color::BLACK);
+        let font_size = RwSignal::new(14.0);
+        let line_height = RwSignal::new(LineHeightValue::Normal(1.5));
+        let font_weight = RwSignal::new(Weight::NORMAL);
+        let font_family = RwSignal::new(Vec::new());
 
         Self {
             buffer,
@@ -62,6 +70,10 @@ impl Document {
             width,
             horiz,
             text_color,
+            font_size,
+            line_height,
+            font_weight,
+            font_family,
             on_update: Rc::new(RefCell::new(Vec::new())),
         }
     }
@@ -119,14 +131,73 @@ impl Document {
         }
     }
 
+    /// Sets the font size and rebuilds layouts.
+    pub fn set_font_size(&self, size: f32) {
+        if self.font_size.get_untracked() == size {
+            return;
+        }
+        self.font_size.set(size);
+        let width = self.width.get_untracked();
+        if width > 0.0 {
+            self.rebuild_layouts(width);
+        }
+    }
+
+    /// Sets the line height and rebuilds layouts.
+    pub fn set_line_height(&self, line_height: LineHeightValue) {
+        if self.line_height.get_untracked() == line_height {
+            return;
+        }
+        self.line_height.set(line_height);
+        let width = self.width.get_untracked();
+        if width > 0.0 {
+            self.rebuild_layouts(width);
+        }
+    }
+
+    /// Sets the font weight and rebuilds layouts.
+    pub fn set_font_weight(&self, weight: Weight) {
+        if self.font_weight.get_untracked() == weight {
+            return;
+        }
+        self.font_weight.set(weight);
+        let width = self.width.get_untracked();
+        if width > 0.0 {
+            self.rebuild_layouts(width);
+        }
+    }
+
+    /// Sets the font family and rebuilds layouts.
+    pub fn set_font_family(&self, family: Vec<FamilyOwned>) {
+        if self.font_family.get_untracked() == family {
+            return;
+        }
+        self.font_family.set(family);
+        let width = self.width.get_untracked();
+        if width > 0.0 {
+            self.rebuild_layouts(width);
+        }
+    }
+
     /// Rebuilds text layouts with current settings.
     fn rebuild_layouts(&self, width: f64) {
         let text_color = self.text_color.get_untracked();
-        let attrs = AttrsList::new(
-            Attrs::default()
-                .line_height(LineHeightValue::Normal(1.5))
-                .color(text_color),
-        );
+        let font_size = self.font_size.get_untracked();
+        let line_height = self.line_height.get_untracked();
+        let font_weight = self.font_weight.get_untracked();
+        let font_family = self.font_family.get_untracked();
+
+        let mut attrs = Attrs::default()
+            .font_size(font_size)
+            .line_height(line_height)
+            .weight(font_weight)
+            .color(text_color);
+
+        if !font_family.is_empty() {
+            attrs = attrs.family(&font_family);
+        }
+
+        let attrs = AttrsList::new(attrs);
         let mut builder = TextLayoutLines::builder();
 
         // Create a reference layout with a space to capture default font metrics
@@ -171,11 +242,22 @@ impl Document {
     fn apply_delta(&self, delta: &(Rope, RopeDelta, InvalLines)) {
         let width = self.width.get_untracked();
         let text_color = self.text_color.get_untracked();
-        let attrs = AttrsList::new(
-            Attrs::default()
-                .line_height(LineHeightValue::Normal(1.5))
-                .color(text_color),
-        );
+        let font_size = self.font_size.get_untracked();
+        let line_height = self.line_height.get_untracked();
+        let font_weight = self.font_weight.get_untracked();
+        let font_family = self.font_family.get_untracked();
+
+        let mut attrs = Attrs::default()
+            .font_size(font_size)
+            .line_height(line_height)
+            .weight(font_weight)
+            .color(text_color);
+
+        if !font_family.is_empty() {
+            attrs = attrs.family(&font_family);
+        }
+
+        let attrs = AttrsList::new(attrs);
 
         let (rope, rope_delta, inval_lines) = delta;
         {
@@ -471,6 +553,76 @@ impl Document {
         let doc_len = self.text_layouts.borrow().utf8_len();
         let region = SelRegion::new(0, doc_len, CursorAffinity::Forward, None);
         self.cursor.set(region);
+    }
+
+    /// Copies the selected text to the clipboard.
+    /// Returns true if text was copied.
+    pub fn copy(&self) -> bool {
+        let region = self.cursor.get_untracked();
+        if region.is_caret() {
+            return false;
+        }
+
+        let start = region.min();
+        let end = region.max();
+        let text = self.buffer.with_untracked(|b| {
+            b.text().slice_to_cow(start..end).into_owned()
+        });
+
+        if text.is_empty() {
+            return false;
+        }
+
+        floem::Clipboard::set_contents(text).is_ok()
+    }
+
+    /// Cuts the selected text to the clipboard.
+    /// Returns true if text was cut.
+    pub fn cut(&self) -> bool {
+        let region = self.cursor.get_untracked();
+        if region.is_caret() {
+            return false;
+        }
+
+        let start = region.min();
+        let end = region.max();
+        let text = self.buffer.with_untracked(|b| {
+            b.text().slice_to_cow(start..end).into_owned()
+        });
+
+        if text.is_empty() {
+            return false;
+        }
+
+        if floem::Clipboard::set_contents(text).is_ok() {
+            // Delete the selected text
+            self.edit([(region, "")], EditType::Delete);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Pastes text from the clipboard at the cursor position.
+    /// If `filter_newlines` is true, newlines are removed (for single-line input).
+    /// Returns true if text was pasted.
+    pub fn paste(&self, filter_newlines: bool) -> bool {
+        let mut content = match floem::Clipboard::get_contents() {
+            Ok(content) => content,
+            Err(_) => return false,
+        };
+
+        if filter_newlines {
+            content.retain(|c| c != '\n' && c != '\r');
+        }
+
+        if content.is_empty() {
+            return false;
+        }
+
+        let region = self.cursor.get_untracked();
+        self.edit([(region, content.as_str())], EditType::InsertChars);
+        true
     }
 
     /// Handles pointer down events.
