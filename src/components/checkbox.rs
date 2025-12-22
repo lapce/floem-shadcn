@@ -22,6 +22,7 @@ use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -62,14 +63,21 @@ impl Checkbox {
         let disabled = self.disabled;
 
         // The checkbox box
+        // shadcn/ui (v4 new-york):
+        // Root: size-4 shrink-0 rounded-[4px] border border-input shadow-xs
+        //       data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground
+        //       data-[state=checked]:border-primary
+        //       disabled:cursor-not-allowed disabled:opacity-50
+        // Indicator: grid place-content-center text-current
+        //            CheckIcon size-3.5
         let checkbox_box = floem::views::Container::new(
-            // Checkmark (only visible when checked)
+            // Checkmark (only visible when checked) - uses text-primary-foreground color
             floem::views::svg(|| CHECKMARK_SVG.to_string()).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     let is_checked = checked.get();
-                    s.width(12.0)
-                        .height(12.0)
-                        .color(t.primary_foreground)
+                    s.width(14.0) // size-3.5 = 14px
+                        .height(14.0)
+                        .color(t.primary_foreground) // text-primary-foreground (white on dark primary)
                         .apply_if(!is_checked, |s| s.display(floem::style::Display::None))
                 })
             }),
@@ -77,35 +85,25 @@ impl Checkbox {
         .style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let is_checked = checked.get();
-                s.width(16.0)
-                    .height(16.0)
-                    .border_radius(4.0)
-                    .border(1.0)
-                    .display(floem::style::Display::Flex)
+                // size-4 = 16px, rounded-[4px] = 4px, border = 1px
+                s.size_4() // size-4 = 16px
+                    .flex_shrink(0.0) // shrink-0
+                    .border_radius(4.0) // rounded-[4px] = 4px border radius
+                    .border_1() // border
+                    .shadow_sm() // shadow-xs (using shadow_sm as equivalent)
+                    .flex()
                     .items_center()
                     .justify_center()
-                    .cursor(if disabled {
-                        CursorStyle::Default
-                    } else {
-                        CursorStyle::Pointer
-                    })
-                    .transition(
-                        floem::style::Background,
-                        floem::style::Transition::linear(millis(100)),
-                    )
+                    // Checked: bg-primary, border-primary; Unchecked: transparent, border-input
                     .apply_if(is_checked, |s| {
                         s.background(t.primary).border_color(t.primary)
                     })
                     .apply_if(!is_checked, |s| {
-                        s.background(t.background).border_color(t.input)
+                        s.background(peniko::Color::TRANSPARENT).border_color(t.input)
                     })
-                    .hover(move |s| {
-                        if !disabled && !is_checked {
-                            s.border_color(t.primary)
-                        } else {
-                            s
-                        }
-                    })
+                    // Disabled state: cursor-not-allowed, opacity-50
+                    .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                    .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
             })
         });
 
@@ -123,17 +121,16 @@ impl Checkbox {
         if let Some(label_text) = self.label_text {
             let label_view = floem::views::Label::new(label_text).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
-                    s.font_size(14.0)
+                    s.text_sm() // 14px
+                        .font_medium()
+                        .leading_none()
                         .color(if disabled {
                             t.muted_foreground
                         } else {
                             t.foreground
                         })
-                        .cursor(if disabled {
-                            CursorStyle::Default
-                        } else {
-                            CursorStyle::Pointer
-                        })
+                        .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                        .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
                 })
             });
 
@@ -148,7 +145,7 @@ impl Checkbox {
             };
 
             floem::views::h_stack((checkbox_box, label_view))
-                .style(|s| s.gap(8.0).items_center())
+                .style(|s| s.gap_2().items_center()) // gap-2 = 8px
                 .into_any()
         } else {
             checkbox_box
@@ -177,7 +174,3 @@ impl IntoView for Checkbox {
 
 // Simple checkmark SVG path
 const CHECKMARK_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>"#;
-
-fn millis(ms: u64) -> std::time::Duration {
-    std::time::Duration::from_millis(ms)
-}

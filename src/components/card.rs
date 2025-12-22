@@ -5,21 +5,21 @@
 //! # Example
 //!
 //! ```rust
-//! use floem::views::v_stack;
 //! use floem_shadcn::components::card::{Card, CardHeader, CardContent, CardFooter};
 //!
-//! let card = Card::new(v_stack((
+//! let card = Card::new((
 //!     CardHeader::new()
 //!         .title("Create project")
 //!         .description("Deploy your new project in one-click."),
 //!     CardContent::new(content),
 //!     CardFooter::new(buttons),
-//! )));
+//! ));
 //! ```
 
+use floem::into_view_iter::IntoViewIter;
 use floem::prelude::*;
 use floem::text::Weight;
-use floem::views::{Decorators, label};
+use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
@@ -30,39 +30,44 @@ use crate::theme::ShadcnThemeExt;
 // ============================================================================
 
 /// Card container builder
-pub struct Card<V> {
+pub struct Card<C> {
     id: ViewId,
-    child: V,
+    children: C,
 }
 
-impl<V: IntoView + 'static> Card<V> {
-    /// Create a new card with the given content
-    pub fn new(child: V) -> Self {
+impl<C: IntoViewIter> Card<C> {
+    /// Create a new card with the given children
+    pub fn new(children: C) -> Self {
         Self {
             id: ViewId::new(),
-            child,
+            children,
         }
     }
 
     /// Build the card view with reactive styling
     pub fn build(self) -> impl IntoView {
-        floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.rounded_lg().border(1.0).with_shadcn_theme(|s, t| {
-                s.border_color(t.border)
-                    .background(t.card)
-                    .color(t.card_foreground)
-            })
+        floem::views::v_stack_from_iter(self.children.into_view_iter()).style(|s| {
+            s.gap_6()
+                .rounded_xl()
+                .border(1.0)
+                .py_6()
+                // Note: shadow-sm not available in floem-tailwind yet
+                .with_shadcn_theme(|s, t| {
+                    s.border_color(t.border)
+                        .background(t.card)
+                        .color(t.card_foreground)
+                })
         })
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for Card<V> {
+impl<C: IntoViewIter> HasViewId for Card<C> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for Card<V> {
+impl<C: IntoViewIter> IntoView for Card<C> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -133,23 +138,23 @@ impl IntoView for CardHeader {
         let mut children: Vec<Box<dyn View>> = Vec::new();
 
         if let Some(title) = self.title {
-            children.push(Box::new(Label::derived(move || title.clone()).style(|s| {
-                s.font_size(18.0)
-                    .font_weight(Weight::SEMIBOLD)
-                    .line_height(1.0)
-            })));
+            children
+                .push(Box::new(Label::derived(move || title.clone()).style(|s| {
+                    s.text_lg().font_weight(Weight::SEMIBOLD).leading_none()
+                })));
         }
 
         if let Some(description) = self.description {
             children.push(Box::new(Label::derived(move || description.clone()).style(
                 |s| {
-                    s.font_size(14.0)
+                    s.text_sm()
+                        .line_height(1.43) // 20px / 14px
                         .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
                 },
             )));
         }
 
-        Box::new(floem::views::v_stack_from_iter(children).style(|s| s.gap(4.0).padding(24.0)))
+        Box::new(floem::views::v_stack_from_iter(children).style(|s| s.gap(8.0).px_6())) // gap-2 px-6
     }
 }
 
@@ -188,9 +193,7 @@ impl<V: IntoView + 'static> IntoView for CardContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| s.padding(24.0).padding_top(0.0)),
-        )
+        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| s.px_6()))
     }
 }
 
@@ -229,12 +232,11 @@ impl<V: IntoView + 'static> IntoView for CardFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .items_center()
-                .padding(24.0)
-                .padding_top(0.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.flex().items_center().px_6() // flex items-center px-6
+            }),
+        )
     }
 }
 
@@ -273,11 +275,10 @@ impl<V: IntoView + 'static> IntoView for CardTitle<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.font_size(18.0)
-                .font_weight(Weight::SEMIBOLD)
-                .line_height(1.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child)
+                .style(|s| s.text_lg().font_weight(Weight::SEMIBOLD).leading_none()),
+        )
     }
 }
 
@@ -316,9 +317,12 @@ impl<V: IntoView + 'static> IntoView for CardDescription<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.font_size(14.0)
-                .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.text_sm()
+                    .line_height(1.43) // 20px / 14px
+                    .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
+            }),
+        )
     }
 }

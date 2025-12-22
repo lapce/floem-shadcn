@@ -248,7 +248,7 @@ fn cards_demo() -> impl IntoView {
     demo_section(
         "Cards",
         "A card component for grouping related content.",
-        v_stack((Card::new(v_stack((
+        v_stack((Card::new((
             CardHeader::new()
                 .title("Create project")
                 .description("Deploy your new project in one-click."),
@@ -259,15 +259,16 @@ fn cards_demo() -> impl IntoView {
                     Input::new()
                         .placeholder("Name of your project")
                         .value(move || project_name.get())
-                        .on_update(move |s| project_name.set(s.to_string())),
+                        .on_update(move |s| project_name.set(s.to_string()))
+                        .style(|s| s.w_full()),
                 ))
-                .style(|s| s.gap_2()),
+                .style(|s| s.gap_2().w_full()),
             ),
             CardFooter::new(
                 h_stack((Button::new("Cancel").outline(), Button::new("Deploy")))
                     .style(|s| s.gap_2()),
             ),
-        )))
+        ))
         .style(|s| s.max_w_md()),)),
     )
 }
@@ -391,25 +392,25 @@ fn tabs_demo() -> impl IntoView {
                 ))),
                 TabsContent::new(
                     "account",
-                    Card::new(v_stack((CardHeader::new()
+                    Card::new((CardHeader::new()
                         .title("Account")
-                        .description("Manage your account settings."),)))
+                        .description("Manage your account settings."),))
                     .style(|s| s.w_full()),
                 )
                 .active(active_tab),
                 TabsContent::new(
                     "password",
-                    Card::new(v_stack((CardHeader::new()
+                    Card::new((CardHeader::new()
                         .title("Password")
-                        .description("Change your password here."),)))
+                        .description("Change your password here."),))
                     .style(|s| s.w_full()),
                 )
                 .active(active_tab),
                 TabsContent::new(
                     "settings",
-                    Card::new(v_stack((CardHeader::new()
+                    Card::new((CardHeader::new()
                         .title("Settings")
-                        .description("Configure your preferences."),)))
+                        .description("Configure your preferences."),))
                     .style(|s| s.w_full()),
                 )
                 .active(active_tab),
@@ -1269,19 +1270,16 @@ fn label_demo() -> impl IntoView {
                 ))
                 .style(|s| s.gap_2()),
             ),
-            subsection(
-                "Form Field",
-                {
-                    let username = RwSignal::new(String::new());
-                    FormField::new(
-                        "Username",
-                        Input::new()
-                            .placeholder("Enter username")
-                            .value(move || username.get())
-                            .on_update(move |s| username.set(s.to_string())),
-                    )
-                },
-            ),
+            subsection("Form Field", {
+                let username = RwSignal::new(String::new());
+                FormField::new(
+                    "Username",
+                    Input::new()
+                        .placeholder("Enter username")
+                        .value(move || username.get())
+                        .on_update(move |s| username.set(s.to_string())),
+                )
+            }),
         ))
         .style(|s| s.gap_8().max_w_md()),
     )

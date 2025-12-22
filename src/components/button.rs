@@ -193,17 +193,39 @@ fn build_button_style(s: Style, size: ButtonSize, variant: ButtonVariant) -> Sty
 }
 
 fn apply_variant_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Style {
+    // All variants have border_1() for consistent box sizing
+    // Non-outline variants use transparent border
     match variant {
-        ButtonVariant::Default => s.background(t.primary).color(t.primary_foreground),
-        ButtonVariant::Destructive => s.background(t.destructive).color(t.destructive_foreground),
+        ButtonVariant::Default => s
+            .background(t.primary)
+            .color(t.primary_foreground)
+            .border_1()
+            .border_color(peniko::Color::TRANSPARENT),
+        ButtonVariant::Destructive => s
+            .background(t.destructive)
+            .color(t.destructive_foreground)
+            .border_1()
+            .border_color(peniko::Color::TRANSPARENT),
         ButtonVariant::Outline => s
             .background(t.background)
             .color(t.foreground)
             .border_1()
             .border_color(t.input),
-        ButtonVariant::Secondary => s.background(t.secondary).color(t.secondary_foreground),
-        ButtonVariant::Ghost => s.background(peniko::Color::TRANSPARENT).color(t.foreground),
-        ButtonVariant::Link => s.background(peniko::Color::TRANSPARENT).color(t.primary),
+        ButtonVariant::Secondary => s
+            .background(t.secondary)
+            .color(t.secondary_foreground)
+            .border_1()
+            .border_color(peniko::Color::TRANSPARENT),
+        ButtonVariant::Ghost => s
+            .background(peniko::Color::TRANSPARENT)
+            .color(t.foreground)
+            .border_1()
+            .border_color(peniko::Color::TRANSPARENT),
+        ButtonVariant::Link => s
+            .background(peniko::Color::TRANSPARENT)
+            .color(t.primary)
+            .border_1()
+            .border_color(peniko::Color::TRANSPARENT),
     }
 }
 
