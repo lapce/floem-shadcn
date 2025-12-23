@@ -17,11 +17,11 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::style::Style;
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
-use crate::theme::{ShadcnThemeExt, ShadcnTheme};
+use crate::theme::{ShadcnTheme, ShadcnThemeExt};
 
 /// Badge variants following shadcn/ui conventions
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -110,13 +110,16 @@ fn build_badge_style(s: Style, variant: BadgeVariant) -> Style {
     let s = s
         .flex()
         .items_center()
-        .rounded_xl()        // 12px radius for pill shape
+        .rounded_full() // 12px radius for pill shape
         .border_1()
-        .px_2()              // 8px horizontal padding
-        .py_0p5()            // 2px vertical padding
-        .text_xs()           // 12px font size
+        .px_2() // 8px horizontal padding
+        .py_0p5() // 2px vertical padding
+        .text_xs() // 12px font size
         .font_medium()
-        .transition(floem::style::Background, floem::style::Transition::linear(millis(100)));
+        .transition(
+            floem::style::Background,
+            floem::style::Transition::linear(millis(100)),
+        );
 
     // Theme-dependent styles
     s.with_shadcn_theme(move |s, t| apply_variant_style(s, variant, t))

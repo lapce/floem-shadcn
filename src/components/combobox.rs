@@ -14,9 +14,9 @@
 //! Combobox::new(selected, search)
 //!     .placeholder("Select framework...")
 //!     .items(vec![
-//!         ComboboxItem::new("next", "Next.js"),
-//!         ComboboxItem::new("sveltekit", "SvelteKit"),
-//!         ComboboxItem::new("nuxt", "Nuxt.js"),
+//!         ComboboxItemData::new("next", "Next.js"),
+//!         ComboboxItemData::new("sveltekit", "SvelteKit"),
+//!         ComboboxItemData::new("nuxt", "Nuxt.js"),
 //!     ]);
 //! ```
 
@@ -24,12 +24,14 @@ use floem::prelude::*;
 use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::{Decorators, text_input};
+use floem::views::Decorators;
+use floem_tailwind::TailwindExt;
 
+use crate::text::TextInput;
 use crate::theme::ShadcnThemeExt;
 
 // ============================================================================
-// ComboboxItem (data structure)
+// ComboboxItemData (data structure)
 // ============================================================================
 
 /// Item for combobox
@@ -73,7 +75,9 @@ pub struct Combobox {
 
 impl Combobox {
     /// Create a new combobox
-    pub fn new(selected: RwSignal<Option<String>>, search: RwSignal<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(selected: RwSignal<Option<String>>, search: RwSignal<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             selected,
             search,
             placeholder: "Select...".to_string(),
@@ -83,21 +87,23 @@ impl Combobox {
     }
 
     /// Set placeholder text
-    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self { self.placeholder = placeholder.into();
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
         self
     }
 
     /// Set items
-    pub fn items(mut self, items: Vec<ComboboxItemData>) -> Self { self.items = items;
+    pub fn items(mut self, items: Vec<ComboboxItemData>) -> Self {
+        self.items = items;
         self
     }
 
     /// Set empty state text
-    pub fn empty_text(mut self, text: impl Into<String>) -> Self { self.empty_text = text.into();
+    pub fn empty_text(mut self, text: impl Into<String>) -> Self {
+        self.empty_text = text.into();
         self
     }
 }
-
 
 impl HasViewId for Combobox {
     fn view_id(&self) -> ViewId {
@@ -125,12 +131,12 @@ impl IntoView for Combobox {
         let items_for_trigger = items.clone();
         let items_for_empty = items.clone();
 
-        // Trigger button
+        // shadcn/ui ComboboxTrigger (v4):
+        // Similar to SelectTrigger - border-input rounded-md px-3 py-2 text-sm shadow-xs h-9
         let trigger = floem::views::h_stack((
             // Selected value or placeholder
             floem::views::Label::derived(move || {
                 if let Some(val) = selected.get() {
-                    // Find the label for the value
                     items_for_trigger
                         .iter()
                         .find(|i| i.value == val)
@@ -143,32 +149,37 @@ impl IntoView for Combobox {
             .style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     let has_value = selected.get().is_some();
-                    s.flex_grow(1.0).font_size(14.0).color(if has_value {
+                    // data-[placeholder]:text-muted-foreground
+                    s.flex_grow(1.0).text_sm().color(if has_value {
                         t.foreground
                     } else {
                         t.muted_foreground
                     })
                 })
             }),
-            // Dropdown indicator
+            // ChevronDown icon - size-4 text-muted-foreground
             floem::views::Label::new("▼").style(|s| {
-                s.with_shadcn_theme(move |s, t| s.font_size(10.0).color(t.muted_foreground))
+                s.with_shadcn_theme(move |s, t| {
+                    s.font_size(10.0)
+                        .color(t.muted_foreground)
+                        .flex_shrink(0.0)
+                })
             }),
         ))
         .style(|s| {
             s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .min_width(200.0)
-                    .padding_left(12.0)
-                    .padding_right(12.0)
-                    .padding_top(8.0)
-                    .padding_bottom(8.0)
-                    .gap(8.0)
+                // border-input rounded-md bg-transparent px-3 py-2 text-sm shadow-xs h-9
+                s.min_width(200.0)
+                    .h_9() // h-9 = 36px
+                    .px_3() // px-3 = 12px
+                    .py_2() // py-2 = 8px
+                    .gap_2() // gap-2
                     .items_center()
+                    .border_1() // border
+                    .border_color(t.input) // border-input
+                    .rounded_md() // rounded-md
                     .background(t.background)
-                    .border(1.0)
-                    .border_color(t.input)
-                    .border_radius(t.radius)
+                    .shadow_sm() // shadow-xs
                     .cursor(CursorStyle::Pointer)
                     .hover(|s| s.border_color(t.ring))
             })
@@ -177,19 +188,26 @@ impl IntoView for Combobox {
             is_open.update(|v| *v = !*v);
         });
 
-        // Search input in dropdown
-        let search_input = text_input(search).placeholder("Search...").style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .padding(8.0)
-                    .font_size(14.0)
-                    .border(0.0)
-                    .border_bottom(1.0)
-                    .border_color(t.border)
-                    .background(floem::peniko::Color::TRANSPARENT)
-                    .color(t.foreground)
+        // Search input in dropdown using custom TextInput
+        let search_input = TextInput::new()
+            .placeholder("Search...")
+            .value(move || search.get())
+            .on_update(move |text| {
+                search.set(text.to_string());
             })
-        });
+            .style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    // Input inside dropdown - no outer border, just bottom border
+                    s.width_full()
+                        .padding(8.0)
+                        .text_sm() // text-sm = 14px
+                        .border(0.0)
+                        .border_bottom(1.0)
+                        .border_color(t.border)
+                        .background(floem::peniko::Color::TRANSPARENT)
+                        .color(t.foreground)
+                })
+            });
 
         // Items list (static, up to 10 items)
         let item0 = create_combobox_item(0, items.clone(), selected, search, is_open);
@@ -203,7 +221,8 @@ impl IntoView for Combobox {
         let item8 = create_combobox_item(8, items.clone(), selected, search, is_open);
         let item9 = create_combobox_item(9, items.clone(), selected, search, is_open);
 
-        // Empty state
+        // shadcn/ui ComboboxEmpty (v4):
+        // text-muted-foreground py-2 text-center text-sm
         let empty_view = floem::views::Label::new(empty_text).style(move |s| {
             let items = items_for_empty.clone();
             s.with_shadcn_theme(move |s, t| {
@@ -215,9 +234,10 @@ impl IntoView for Combobox {
                 });
                 let base = s
                     .width_full()
-                    .padding(16.0)
-                    .font_size(14.0)
-                    .color(t.muted_foreground)
+                    .padding_top(8.0) // py-2 = 8px
+                    .padding_bottom(8.0)
+                    .text_sm() // text-sm = 14px
+                    .color(t.muted_foreground) // text-muted-foreground
                     .justify_center();
                 if !has_results && !search_val.is_empty() {
                     base
@@ -227,12 +247,18 @@ impl IntoView for Combobox {
             })
         });
 
+        // shadcn/ui ComboboxList (v4):
+        // scroll-py-1 overflow-y-auto p-1
         let items_container = floem::views::v_stack((
             item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, empty_view,
         ))
-        .style(|s| s.max_height(200.0));
+        .style(|s| {
+            s.max_height(300.0) // max-h-96 ~ 384px but using 300 for practicality
+                .p_1() // p-1 = 4px
+        });
 
-        // Dropdown content
+        // shadcn/ui ComboboxContent/Popup (v4):
+        // bg-popover text-popover-foreground rounded-md shadow-md ring-1 ring-foreground/10
         let dropdown = floem::views::v_stack((search_input, items_container)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let open = is_open.get();
@@ -241,13 +267,13 @@ impl IntoView for Combobox {
                     .inset_top_pct(100.0)
                     .inset_left(0.0)
                     .inset_right(0.0)
-                    .margin_top(4.0)
-                    .background(t.popover)
-                    .border(1.0)
+                    .margin_top(4.0) // sideOffset = 6 in shadcn
+                    .background(t.popover) // bg-popover
+                    .color(t.popover_foreground) // text-popover-foreground
+                    .border_1() // ring-1
                     .border_color(t.border)
-                    .border_radius(t.radius)
-                    .box_shadow_blur(8.0)
-                    .box_shadow_color(t.foreground.with_alpha(0.1))
+                    .rounded_md() // rounded-md
+                    .shadow_lg() // shadow-md
                     .z_index(100);
                 if open {
                     base
@@ -257,7 +283,7 @@ impl IntoView for Combobox {
             })
         });
 
-        // Backdrop
+        // Backdrop to close when clicking outside
         let backdrop = floem::views::Empty::new()
             .style(move |s| {
                 let open = is_open.get();
@@ -268,7 +294,6 @@ impl IntoView for Combobox {
                     .width(3000.0)
                     .height(3000.0)
                     .z_index(99);
-
                 if open {
                     base
                 } else {
@@ -296,26 +321,59 @@ fn create_combobox_item(
 ) -> impl IntoView {
     let items_for_label = items.clone();
     let items_for_style = items.clone();
-    let items_for_click = items;
+    let items_for_click = items.clone();
+    let items_for_handler = items;
 
-    floem::views::Label::derived(move || {
-        let search_val = search.get();
-        let filtered: Vec<_> = items_for_label
-            .iter()
-            .filter(|item| {
-                item.label
-                    .to_lowercase()
-                    .contains(&search_val.to_lowercase())
+    // shadcn/ui ComboboxItem (v4):
+    // py-1.5 pr-8 pl-2 text-sm rounded-sm
+    // data-highlighted:bg-accent data-highlighted:text-accent-foreground
+    // CheckIcon size-4 at absolute right-2
+    floem::views::h_stack((
+        // Check icon (visible when selected)
+        floem::views::Label::new("✓").style(move |s| {
+            let items = items_for_label.clone();
+            s.with_shadcn_theme(move |s, t| {
+                let search_val = search.get();
+                let filtered: Vec<_> = items
+                    .iter()
+                    .filter(|item| {
+                        item.label
+                            .to_lowercase()
+                            .contains(&search_val.to_lowercase())
+                    })
+                    .collect();
+                let item_opt = filtered.get(index);
+                let is_selected = item_opt
+                    .map(|i| Some(i.value.clone()) == selected.get())
+                    .unwrap_or(false);
+                s.size_4() // size-4 = 16px
+                    .text_sm()
+                    .color(t.foreground)
+                    .items_center()
+                    .justify_center()
+                    .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
             })
-            .collect();
-
-        filtered
-            .get(index)
-            .map(|i| i.label.clone())
-            .unwrap_or_default()
-    })
+        }),
+        // Label
+        floem::views::Label::derived(move || {
+            let search_val = search.get();
+            let filtered: Vec<_> = items_for_style
+                .iter()
+                .filter(|item| {
+                    item.label
+                        .to_lowercase()
+                        .contains(&search_val.to_lowercase())
+                })
+                .collect();
+            filtered
+                .get(index)
+                .map(|i| i.label.clone())
+                .unwrap_or_default()
+        })
+        .style(|s| s.text_sm()),
+    ))
     .style(move |s| {
-        let items = items_for_style.clone();
+        let items = items_for_click.clone();
         s.with_shadcn_theme(move |s, t| {
             let search_val = search.get();
             let filtered: Vec<_> = items
@@ -332,26 +390,33 @@ fn create_combobox_item(
                 .map(|i| Some(i.value.clone()) == selected.get())
                 .unwrap_or(false);
             let is_disabled = item_opt.map(|i| i.disabled).unwrap_or(false);
+
+            // py-1.5 = 6px, pl-2 = 8px, pr-8 = 32px (space for check)
             let base = s
                 .width_full()
-                .padding_left(8.0)
-                .padding_right(8.0)
-                .padding_top(8.0)
-                .padding_bottom(8.0)
-                .font_size(14.0)
-                .border_radius(4.0)
+                .padding_top(6.0) // py-1.5 = 6px
+                .padding_bottom(6.0)
+                .padding_left(8.0) // pl-2 = 8px
+                .padding_right(32.0) // pr-8 = 32px
+                .gap_2() // gap-2 = 8px
+                .items_center()
+                .rounded_sm() // rounded-sm = 3px
                 .cursor(if is_disabled {
                     CursorStyle::Default
                 } else {
                     CursorStyle::Pointer
                 });
+
             if !is_visible {
                 base.display(floem::style::Display::None)
             } else if is_selected {
+                // Selected/highlighted state
                 base.background(t.accent).color(t.accent_foreground)
             } else if is_disabled {
+                // Disabled state
                 base.color(t.muted_foreground)
             } else {
+                // Normal state with hover
                 base.color(t.foreground)
                     .hover(|s| s.background(t.accent).color(t.accent_foreground))
             }
@@ -359,7 +424,7 @@ fn create_combobox_item(
     })
     .on_click_stop(move |_| {
         let search_val = search.get();
-        let filtered: Vec<_> = items_for_click
+        let filtered: Vec<_> = items_for_handler
             .iter()
             .filter(|item| {
                 item.label
@@ -391,10 +456,14 @@ pub struct ComboboxTrigger<V> {
 
 impl<V: IntoView + 'static> ComboboxTrigger<V> {
     /// Create a new trigger
-    pub fn new(child: V, is_open: RwSignal<bool>) -> Self { Self { id: ViewId::new(), child, is_open }
+    pub fn new(child: V, is_open: RwSignal<bool>) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            is_open,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ComboboxTrigger<V> {
     fn view_id(&self) -> ViewId {
@@ -413,9 +482,25 @@ impl<V: IntoView + 'static> IntoView for ComboboxTrigger<V> {
     fn into_view(self) -> Self::V {
         let is_open = self.is_open;
 
+        // Similar to SelectTrigger styling
         Box::new(
             floem::views::Container::with_id(self.id, self.child)
-                .style(|s| s.cursor(CursorStyle::Pointer))
+                .style(|s| {
+                    s.with_shadcn_theme(move |s, t| {
+                        s.h_9() // h-9 = 36px
+                            .px_3() // px-3 = 12px
+                            .py_2() // py-2 = 8px
+                            .gap_2() // gap-2
+                            .items_center()
+                            .border_1() // border
+                            .border_color(t.input) // border-input
+                            .rounded_md() // rounded-md
+                            .background(t.background)
+                            .shadow_sm() // shadow-xs
+                            .cursor(CursorStyle::Pointer)
+                            .hover(|s| s.border_color(t.ring))
+                    })
+                })
                 .on_click_stop(move |_| {
                     is_open.update(|v| *v = !*v);
                 }),
@@ -436,10 +521,14 @@ pub struct ComboboxContent<V> {
 
 impl<V: IntoView + 'static> ComboboxContent<V> {
     /// Create new content
-    pub fn new(child: V, is_open: RwSignal<bool>) -> Self { Self { id: ViewId::new(), child, is_open }
+    pub fn new(child: V, is_open: RwSignal<bool>) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            is_open,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ComboboxContent<V> {
     fn view_id(&self) -> ViewId {
@@ -458,6 +547,8 @@ impl<V: IntoView + 'static> IntoView for ComboboxContent<V> {
     fn into_view(self) -> Self::V {
         let is_open = self.is_open;
 
+        // shadcn/ui ComboboxContent (v4):
+        // bg-popover text-popover-foreground rounded-md shadow-md ring-1
         Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let open = is_open.get();
@@ -467,15 +558,14 @@ impl<V: IntoView + 'static> IntoView for ComboboxContent<V> {
                     .inset_left(0.0)
                     .inset_right(0.0)
                     .margin_top(4.0)
-                    .padding(4.0)
-                    .background(t.popover)
-                    .border(1.0)
+                    .p_1() // p-1 = 4px
+                    .background(t.popover) // bg-popover
+                    .color(t.popover_foreground) // text-popover-foreground
+                    .border_1() // ring-1
                     .border_color(t.border)
-                    .border_radius(t.radius)
-                    .box_shadow_blur(8.0)
-                    .box_shadow_color(t.foreground.with_alpha(0.1))
+                    .rounded_md() // rounded-md
+                    .shadow_lg() // shadow-md
                     .z_index(100)
-                    .display(floem::style::Display::Flex)
                     .flex_direction(floem::style::FlexDirection::Column);
                 if open {
                     base
@@ -500,18 +590,20 @@ pub struct ComboboxInput {
 
 impl ComboboxInput {
     /// Create a new search input
-    pub fn new(search: RwSignal<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(search: RwSignal<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             search,
             placeholder: "Search...".to_string(),
         }
     }
 
     /// Set placeholder text
-    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self { self.placeholder = placeholder.into();
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
         self
     }
 }
-
 
 impl HasViewId for ComboboxInput {
     fn view_id(&self) -> ViewId {
@@ -531,18 +623,27 @@ impl IntoView for ComboboxInput {
         let search = self.search;
         let placeholder = self.placeholder;
 
-        Box::new(text_input(search).placeholder(placeholder).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .padding(8.0)
-                    .font_size(14.0)
-                    .border(0.0)
-                    .border_bottom(1.0)
-                    .border_color(t.border)
-                    .background(floem::peniko::Color::TRANSPARENT)
-                    .color(t.foreground)
-            })
-        }))
+        // Use custom TextInput from text submodule
+        Box::new(
+            TextInput::new()
+                .placeholder(placeholder)
+                .value(move || search.get())
+                .on_update(move |text| {
+                    search.set(text.to_string());
+                })
+                .style(|s| {
+                    s.with_shadcn_theme(move |s, t| {
+                        s.width_full()
+                            .padding(8.0)
+                            .text_sm() // text-sm = 14px
+                            .border(0.0)
+                            .border_bottom(1.0)
+                            .border_color(t.border)
+                            .background(floem::peniko::Color::TRANSPARENT)
+                            .color(t.foreground)
+                    })
+                }),
+        )
     }
 }
 
@@ -558,7 +659,11 @@ pub struct ComboboxEmpty {
 
 impl ComboboxEmpty {
     /// Create a new empty state
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
 
@@ -567,7 +672,6 @@ impl Default for ComboboxEmpty {
         Self::new("No results found.")
     }
 }
-
 
 impl HasViewId for ComboboxEmpty {
     fn view_id(&self) -> ViewId {
@@ -584,14 +688,15 @@ impl IntoView for ComboboxEmpty {
     }
 
     fn into_view(self) -> Self::V {
-        let text = self.text;
-
-        Box::new(floem::views::Label::with_id(self.id, text).style(|s| {
+        // shadcn/ui ComboboxEmpty (v4):
+        // text-muted-foreground py-2 text-center text-sm
+        Box::new(floem::views::Label::with_id(self.id, self.text).style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.width_full()
-                    .padding(16.0)
-                    .font_size(14.0)
-                    .color(t.muted_foreground)
+                    .padding_top(8.0) // py-2 = 8px
+                    .padding_bottom(8.0)
+                    .text_sm() // text-sm = 14px
+                    .color(t.muted_foreground) // text-muted-foreground
                     .justify_center()
             })
         }))
@@ -611,13 +716,14 @@ pub struct ComboboxGroup<V> {
 
 impl<V: IntoView + 'static> ComboboxGroup<V> {
     /// Create a new group
-    pub fn new(label: impl Into<String>, child: V) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>, child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             child,
         }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ComboboxGroup<V> {
     fn view_id(&self) -> ViewId {
@@ -636,16 +742,16 @@ impl<V: IntoView + 'static> IntoView for ComboboxGroup<V> {
     fn into_view(self) -> Self::V {
         let label = self.label;
 
-        // Group label
+        // shadcn/ui ComboboxLabel (v4):
+        // text-muted-foreground px-2 py-1.5 text-xs
         let label_view = floem::views::Label::new(label).style(|s| {
             s.with_shadcn_theme(move |s, t| {
-                s.padding_left(8.0)
-                    .padding_right(8.0)
-                    .padding_top(6.0)
+                s.px_2() // px-2 = 8px
+                    .padding_top(6.0) // py-1.5 = 6px
                     .padding_bottom(6.0)
-                    .font_size(12.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
-                    .color(t.muted_foreground)
+                    .text_xs() // text-xs = 12px
+                    .font_medium()
+                    .color(t.muted_foreground) // text-muted-foreground
             })
         });
 
@@ -669,7 +775,9 @@ pub struct ComboboxItem {
 
 impl ComboboxItem {
     /// Create a new item
-    pub fn new(value: impl Into<String>, label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(value: impl Into<String>, label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             value: value.into(),
             label: label.into(),
             disabled: false,
@@ -679,21 +787,23 @@ impl ComboboxItem {
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
     /// Connect to selection signal
-    pub fn bind(mut self, selected: RwSignal<Option<String>>) -> Self { self.selected = Some(selected);
+    pub fn bind(mut self, selected: RwSignal<Option<String>>) -> Self {
+        self.selected = Some(selected);
         self
     }
 
     /// Connect to open state (for auto-close)
-    pub fn auto_close(mut self, is_open: RwSignal<bool>) -> Self { self.is_open = Some(is_open);
+    pub fn auto_close(mut self, is_open: RwSignal<bool>) -> Self {
+        self.is_open = Some(is_open);
         self
     }
 }
-
 
 impl HasViewId for ComboboxItem {
     fn view_id(&self) -> ViewId {
@@ -716,49 +826,75 @@ impl IntoView for ComboboxItem {
         let selected = self.selected;
         let is_open = self.is_open;
 
-        let value_clone = value.clone();
+        let value_for_style = value.clone();
+        let value_for_click = value.clone();
 
+        // shadcn/ui ComboboxItem (v4):
+        // py-1.5 pr-8 pl-2 text-sm rounded-sm
+        // data-highlighted:bg-accent data-highlighted:text-accent-foreground
+        // CheckIcon size-4 at absolute right-2
         Box::new(
-            floem::views::Label::new(label)
-                .style(move |s| {
+            floem::views::h_stack((
+                // Check icon
+                floem::views::Label::new("✓").style(move |s| {
                     let val = value.clone();
                     s.with_shadcn_theme(move |s, t| {
                         let is_selected = selected
-                            .map(|s| s.get() == Some(val.clone()))
+                            .map(|sig| sig.get() == Some(val.clone()))
                             .unwrap_or(false);
-                        let base = s
-                            .width_full()
-                            .padding_left(8.0)
-                            .padding_right(8.0)
-                            .padding_top(8.0)
-                            .padding_bottom(8.0)
-                            .font_size(14.0)
-                            .border_radius(4.0)
-                            .cursor(if disabled {
-                                CursorStyle::Default
-                            } else {
-                                CursorStyle::Pointer
-                            });
-                        if is_selected {
-                            base.background(t.accent).color(t.accent_foreground)
-                        } else if disabled {
-                            base.color(t.muted_foreground)
-                        } else {
-                            base.color(t.foreground)
-                                .hover(|s| s.background(t.accent).color(t.accent_foreground))
-                        }
+                        s.size_4() // size-4 = 16px
+                            .text_sm()
+                            .color(t.foreground)
+                            .items_center()
+                            .justify_center()
+                            .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
                     })
-                })
-                .on_click_stop(move |_| {
-                    if !disabled {
-                        if let Some(signal) = selected {
-                            signal.set(Some(value_clone.clone()));
-                        }
-                        if let Some(open_signal) = is_open {
-                            open_signal.set(false);
-                        }
-                    }
                 }),
+                // Label text
+                floem::views::Label::new(label).style(|s| s.text_sm()),
+            ))
+            .style(move |s| {
+                let val = value_for_style.clone();
+                s.with_shadcn_theme(move |s, t| {
+                    let is_selected = selected
+                        .map(|sig| sig.get() == Some(val.clone()))
+                        .unwrap_or(false);
+
+                    let base = s
+                        .width_full()
+                        .padding_top(6.0) // py-1.5 = 6px
+                        .padding_bottom(6.0)
+                        .padding_left(8.0) // pl-2 = 8px
+                        .padding_right(32.0) // pr-8 = 32px
+                        .gap_2() // gap-2 = 8px
+                        .items_center()
+                        .rounded_sm() // rounded-sm
+                        .cursor(if disabled {
+                            CursorStyle::Default
+                        } else {
+                            CursorStyle::Pointer
+                        });
+
+                    if is_selected {
+                        base.background(t.accent).color(t.accent_foreground)
+                    } else if disabled {
+                        base.color(t.muted_foreground)
+                    } else {
+                        base.color(t.foreground)
+                            .hover(|s| s.background(t.accent).color(t.accent_foreground))
+                    }
+                })
+            })
+            .on_click_stop(move |_| {
+                if !disabled {
+                    if let Some(signal) = selected {
+                        signal.set(Some(value_for_click.clone()));
+                    }
+                    if let Some(open_signal) = is_open {
+                        open_signal.set(false);
+                    }
+                }
+            }),
         )
     }
 }
@@ -783,7 +919,6 @@ impl Default for ComboboxSeparator {
     }
 }
 
-
 impl HasViewId for ComboboxSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -799,13 +934,17 @@ impl IntoView for ComboboxSeparator {
     }
 
     fn into_view(self) -> Self::V {
+        // shadcn/ui ComboboxSeparator (v4):
+        // bg-border -mx-1 my-1 h-px
         Box::new(floem::views::Empty::new().style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.width_full()
-                    .height(1.0)
-                    .background(t.border)
-                    .margin_top(4.0)
-                    .margin_bottom(4.0)
+                    .height(1.0) // h-px
+                    .background(t.border) // bg-border
+                    .margin_left(-4.0) // -mx-1
+                    .margin_right(-4.0) // -mx-1
+                    .margin_top(4.0) // my-1
+                    .margin_bottom(4.0) // my-1
             })
         }))
     }

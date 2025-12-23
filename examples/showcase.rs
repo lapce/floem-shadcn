@@ -1100,7 +1100,7 @@ fn context_menu_demo() -> impl IntoView {
 }
 
 fn select_demo() -> impl IntoView {
-    let selected = RwSignal::new("apple".to_string());
+    let selected = RwSignal::new(Some("apple".to_string()));
 
     demo_section(
         "Select",
@@ -1108,16 +1108,18 @@ fn select_demo() -> impl IntoView {
         v_stack((subsection(
             "Basic",
             v_stack((
-                SimpleSelect::new(
-                    selected,
-                    vec![
-                        ("apple", "Apple"),
-                        ("banana", "Banana"),
-                        ("cherry", "Cherry"),
-                        ("date", "Date"),
-                    ],
-                ),
-                Label::derived(move || format!("Selected: {}", selected.get())).style(|s| {
+                Select::new(selected)
+                    .placeholder("Select a fruit...")
+                    .items(vec![
+                        SelectItemData::new("apple", "Apple"),
+                        SelectItemData::new("banana", "Banana"),
+                        SelectItemData::new("cherry", "Cherry"),
+                        SelectItemData::new("date", "Date"),
+                    ]),
+                Label::derived(move || {
+                    format!("Selected: {}", selected.get().unwrap_or_default())
+                })
+                .style(|s| {
                     s.font_size(12.0)
                         .margin_top(8.0)
                         .with_shadcn_theme(|s, t| s.color(t.muted_foreground))

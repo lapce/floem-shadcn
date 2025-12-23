@@ -38,7 +38,7 @@ pub mod prelude {
     };
     pub use crate::components::checkbox::Checkbox;
     pub use crate::components::switch::Switch;
-    pub use crate::components::select::{Select, SimpleSelect, SelectItem};
+    pub use crate::components::select::{Select, SelectItem, SelectItemData, SelectTrigger, SelectContent, SelectLabel, SelectSeparator, SelectGroup};
     pub use crate::components::tabs::{Tabs, TabsList, Tab, TabsContent};
     pub use crate::components::dialog::{Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription};
     pub use crate::components::alert::{Alert, AlertVariant};

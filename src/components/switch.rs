@@ -18,10 +18,11 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -61,17 +62,25 @@ impl Switch {
         let checked = self.checked;
         let disabled = self.disabled;
 
+        // shadcn/ui Switch (v4 new-york):
+        // Root: h-[1.15rem] w-8 shrink-0 rounded-full border border-transparent shadow-xs
+        //       data-[state=checked]:bg-primary data-[state=unchecked]:bg-input
+        // Thumb: size-4 rounded-full bg-background
+        //        data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0
+
         // The thumb (circle that moves)
+        // size-4 = 16px
         let thumb = floem::views::Empty::new().style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let is_checked = checked.get();
-                let translate_x = if is_checked { 18.0 } else { 2.0 };
-                s.width(16.0)
-                    .height(16.0)
-                    .border_radius(8.0)
-                    .background(t.background)
+                // Track is 32px (w-8), thumb is 16px (size-4)
+                // Checked: translate-x-[calc(100%-2px)] = 32 - 16 - 2 = 14px
+                // Unchecked: translate-x-0 = 0px
+                let translate_x = if is_checked { 14.0 } else { 0.0 };
+                s.size_4() // size-4 = 16px
+                    .rounded_full() // rounded-full
+                    .background(t.background) // bg-background
                     .position(floem::style::Position::Absolute)
-                    .inset_top(2.0)
                     .inset_left(translate_x)
                     .transition(
                         floem::style::InsetLeft,
@@ -81,24 +90,28 @@ impl Switch {
         });
 
         // The track (background)
+        // h-[1.15rem] ≈ 18px, w-8 = 32px
         let track = floem::views::Container::new(thumb).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let is_checked = checked.get();
-                s.width(36.0)
-                    .height(20.0)
-                    .border_radius(10.0)
+                s.height(18.0) // h-[1.15rem] ≈ 18px
+                    .w_8() // w-8 = 32px
+                    .flex_shrink(0.0) // shrink-0
+                    .rounded_full() // rounded-full
+                    .border_1() // border
+                    .border_color(peniko::Color::TRANSPARENT) // border-transparent
+                    .shadow_sm() // shadow-xs
                     .position(floem::style::Position::Relative)
-                    .cursor(if disabled {
-                        CursorStyle::Default
-                    } else {
-                        CursorStyle::Pointer
-                    })
                     .transition(
                         floem::style::Background,
                         floem::style::Transition::linear(millis(150)),
                     )
+                    // Checked: bg-primary, Unchecked: bg-input
                     .apply_if(is_checked, |s| s.background(t.primary))
                     .apply_if(!is_checked, |s| s.background(t.input))
+                    // Disabled state
+                    .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                    .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
             })
         });
 
@@ -116,7 +129,10 @@ impl Switch {
         if let Some(label_text) = self.label_text {
             let label_view = floem::views::Label::new(label_text).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
-                    s.font_size(14.0)
+                    // Label: text-sm font-medium leading-none
+                    s.text_sm()
+                        .font_medium()
+                        .leading_none()
                         .color(if disabled {
                             t.muted_foreground
                         } else {
@@ -141,7 +157,7 @@ impl Switch {
             };
 
             floem::views::h_stack((track, label_view))
-                .style(|s| s.gap(8.0).items_center())
+                .style(|s| s.gap_2().items_center()) // gap-2 = 8px
                 .into_any()
         } else {
             track

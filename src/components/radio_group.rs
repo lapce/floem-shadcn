@@ -22,6 +22,7 @@ use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -58,10 +59,11 @@ impl<V: IntoView + 'static> IntoView for RadioGroup<V> {
     }
 
     fn into_view(self) -> Self::V {
+        // shadcn/ui: grid gap-3
         Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
             s.width_full()
                 .flex_direction(floem::style::FlexDirection::Column)
-                .gap(8.0)
+                .gap_3() // gap-3 = 12px
         }))
     }
 }
@@ -108,19 +110,23 @@ impl RadioGroupItem {
         let item_value = value.clone();
         let item_value_click = value.clone();
 
+        // shadcn/ui RadioGroupItem (v4 new-york):
+        // Item: size-4 shrink-0 rounded-full border border-input text-primary shadow-xs
+        //       disabled:cursor-not-allowed disabled:opacity-50
+        // Indicator: CircleIcon fill-primary size-2 (8px filled dot with primary color)
+
         // Radio circle
         let radio_circle = floem::views::Container::new(
-            // Inner dot (visible when selected)
+            // Inner dot (visible when selected) - fill-primary size-2
             floem::views::Empty::new().style(move |s| {
                 let val = item_value.clone();
                 s.with_shadcn_theme(move |s, t| {
                     let is_selected = selected_signal
                         .map(|sig| sig.get() == val.clone())
                         .unwrap_or(false);
-                    s.width(8.0)
-                        .height(8.0)
-                        .border_radius(4.0)
-                        .background(t.primary_foreground)
+                    s.size_2() // size-2 = 8px
+                        .rounded_full()
+                        .background(t.primary) // fill-primary
                         .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
                 })
             }),
@@ -128,50 +134,44 @@ impl RadioGroupItem {
         .style(move |s| {
             let val = value.clone();
             s.with_shadcn_theme(move |s, t| {
-                let is_selected = selected_signal
+                let _is_selected = selected_signal
                     .map(|sig| sig.get() == val.clone())
                     .unwrap_or(false);
-                s.width(16.0)
-                    .height(16.0)
-                    .border_radius(8.0)
-                    .border(2.0)
-                    .display(floem::style::Display::Flex)
+                // size-4 = 16px, rounded-full, border border-input, shadow-xs
+                s.size_4() // size-4 = 16px
+                    .flex_shrink(0.0) // shrink-0
+                    .rounded_full() // rounded-full
+                    .border_1() // border (1px)
+                    .border_color(t.input) // border-input (same for both states)
+                    .shadow_sm() // shadow-xs
+                    .flex()
                     .items_center()
                     .justify_center()
-                    .cursor(if disabled {
-                        CursorStyle::Default
-                    } else {
-                        CursorStyle::Pointer
-                    })
-                    .apply_if(is_selected, |s| {
-                        s.background(t.primary).border_color(t.primary)
-                    })
-                    .apply_if(!is_selected, |s| {
-                        s.background(t.background).border_color(t.input)
-                    })
+                    .background(peniko::Color::TRANSPARENT) // transparent background
+                    .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                    .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
             })
         });
 
         // Label
         let label_view = floem::views::Label::new(label).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
-                s.font_size(14.0)
+                s.text_sm() // 14px
+                    .font_medium()
+                    .leading_none()
                     .color(if disabled {
                         t.muted_foreground
                     } else {
                         t.foreground
                     })
-                    .cursor(if disabled {
-                        CursorStyle::Default
-                    } else {
-                        CursorStyle::Pointer
-                    })
+                    .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                    .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
             })
         });
 
         // Container
         let container =
-            floem::views::h_stack((radio_circle, label_view)).style(|s| s.gap(8.0).items_center());
+            floem::views::h_stack((radio_circle, label_view)).style(|s| s.gap_2().items_center());
 
         if !disabled {
             container

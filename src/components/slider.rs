@@ -18,10 +18,11 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -79,53 +80,69 @@ impl Slider {
         let max = self.max;
         let disabled = self.disabled;
 
+        // shadcn/ui Slider (v4 new-york):
+        // Root: relative flex w-full touch-none items-center select-none
+        // Track: bg-muted relative grow overflow-hidden rounded-full h-1.5 (6px)
+        // Range: bg-primary absolute h-full
+        // Thumb: size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm
+
         // Track (background)
         let track = floem::views::Container::new(
-            // Filled portion
-            floem::views::Empty::new()
-                .style(move |s| s.with_shadcn_theme(move |s, t| {
+            // Range (filled portion) - bg-primary absolute h-full
+            floem::views::Empty::new().style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
                     let percent = ((value.get() - min) / (max - min) * 100.0).clamp(0.0, 100.0);
-                    s.height_full()
+                    s.rounded_full()
+                        .height_full()
                         .width_pct(percent)
-                        .background(t.primary)
-                        .border_radius(4.0)
-                }))
+                        .background(t.primary) // bg-primary
+                })
+            }),
         )
-        .style(move |s| s.with_shadcn_theme(move |s, t| {
-            s.width_full()
-                .height(6.0)
-                .background(t.muted)
-                .border_radius(4.0)
-                .position(floem::style::Position::Relative)
-        }));
+        .style(move |s| {
+            s.with_shadcn_theme(move |s, t| {
+                // Track: bg-muted relative grow rounded-full h-1.5
+                s.rounded_full()
+                    .width_full()
+                    .height(6.0) // h-1.5 = 6px
+                    .background(t.muted) // bg-muted
+                    .position(floem::style::Position::Relative)
+            })
+        });
 
-        // Thumb
-        let thumb = floem::views::Empty::new()
-            .style(move |s| s.with_shadcn_theme(move |s, t| {
+        // Thumb: size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm
+        let thumb = floem::views::Empty::new().style(move |s| {
+            s.with_shadcn_theme(move |s, t| {
                 let percent = ((value.get() - min) / (max - min) * 100.0).clamp(0.0, 100.0);
-                s.width(16.0)
-                    .height(16.0)
-                    .border_radius(8.0)
-                    .background(t.background)
-                    .border(2.0)
-                    .border_color(t.primary)
+                s.size_4() // size-4 = 16px
+                    .flex_shrink(0.0) // shrink-0
+                    .rounded_full() // rounded-full
+                    .background(peniko::Color::WHITE) // bg-white (always white, not theme background)
+                    .border_1() // border (1px)
+                    .border_color(t.primary) // border-primary
+                    .shadow_sm() // shadow-sm
                     .position(floem::style::Position::Absolute)
-                    .inset_top(-5.0)
+                    .inset_top(-5.0) // center vertically: (16 - 6) / 2 = 5
                     .inset_left_pct(percent)
-                    .margin_left(-8.0) // Center the thumb
-                    .cursor(if disabled { CursorStyle::Default } else { CursorStyle::Pointer })
-            }));
+                    .margin_left(-8.0) // Center the thumb horizontally
+                    .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                    .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
+            })
+        });
 
         // Container with interaction
         floem::views::Container::new(
             floem::views::stack((track, thumb))
-                .style(|s| s.width_full().position(floem::style::Position::Relative))
+                .style(|s| s.width_full().position(floem::style::Position::Relative)),
         )
         .style(move |s| {
+            // Root: relative flex w-full touch-none items-center select-none
             s.width_full()
-                .height(16.0)
-                .cursor(if disabled { CursorStyle::Default } else { CursorStyle::Pointer })
-                .padding_left(8.0)
+                .h_4() // height matches thumb for proper alignment
+                .items_center()
+                .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
+                .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
+                .padding_left(8.0) // account for thumb overflow
                 .padding_right(8.0)
         })
         .on_click_stop(move |_| {
