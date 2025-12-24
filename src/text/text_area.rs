@@ -27,12 +27,12 @@ use ui_events::{
     pointer::PointerEvent,
 };
 
-use super::{
-    Command, Document, Keymap, apply_styles_to_document, extract_padding, extract_text_styles,
-    get_glyph_dimensions, is_cursor_visible, CURSOR_BLINK_INTERVAL_MS,
-};
 #[cfg(test)]
 use super::KeyPress;
+use super::{
+    CURSOR_BLINK_INTERVAL_MS, Command, Document, Keymap, apply_styles_to_document, extract_padding,
+    extract_text_styles, get_glyph_dimensions, is_cursor_visible,
+};
 #[cfg(test)]
 use ui_events::keyboard::NamedKey;
 
@@ -491,7 +491,13 @@ impl View for TextArea {
             self.child_height.set(child_height);
             // Set the dummy child's height directly via taffy to bypass reactive delay
             let node = self.dummy_child_id.taffy_node();
-            let mut style = self.id.taffy().borrow().style(node).cloned().unwrap_or_default();
+            let mut style = self
+                .id
+                .taffy()
+                .borrow()
+                .style(node)
+                .cloned()
+                .unwrap_or_default();
             style.size.height = Dimension::length(child_height as f32);
             self.id.set_taffy_style(node, style);
         }
@@ -534,7 +540,11 @@ impl View for TextArea {
         if cx.is_focused(self.id) {
             let cursor = doc.cursor().get_untracked();
             if cursor.is_caret() {
-                let elapsed_ms = self.last_cursor_action.get_untracked().elapsed().as_millis();
+                let elapsed_ms = self
+                    .last_cursor_action
+                    .get_untracked()
+                    .elapsed()
+                    .as_millis();
 
                 if is_cursor_visible(elapsed_ms) {
                     let p = lines.point_of_offset(cursor.end);
@@ -633,6 +643,7 @@ mod tests {
     use floem::reactive::SignalGet;
     use floem::test_harness::TestHarness;
     use floem::views::Decorators;
+    use floem_editor_core::command::{EditCommand, MoveCommand};
 
     /// Test to verify that Effects run when signals change in test environment
     #[test]

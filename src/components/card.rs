@@ -16,9 +16,9 @@
 //! ));
 //! ```
 
-use floem::into_view_iter::IntoViewIter;
 use floem::prelude::*;
 use floem::text::Weight;
+use floem::view::IntoViewIter;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
