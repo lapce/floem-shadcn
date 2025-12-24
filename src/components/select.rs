@@ -207,35 +207,36 @@ impl IntoView for Select {
         let items_container = floem::views::v_stack((
             item0, item1, item2, item3, item4, item5, item6, item7, item8, item9,
         ))
-        .style(|s| s.max_height(300.0));
+        .style(|s| s.width_full().max_height(300.0));
 
         // shadcn/ui SelectContent (v4 new-york):
         // bg-popover text-popover-foreground rounded-md border shadow-md
         // Viewport: p-1
-        let dropdown = floem::views::Container::new(items_container).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let open = is_open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top_pct(100.0)
-                    .inset_left(0.0)
-                    .inset_right(0.0)
-                    .margin_top(4.0) // small gap from trigger
-                    .p_1() // p-1 = 4px (viewport padding)
-                    .background(t.popover) // bg-popover
-                    .color(t.popover_foreground) // text-popover-foreground
-                    .border_1() // border
-                    .border_color(t.border)
-                    .rounded_md() // rounded-md
-                    .shadow_lg() // shadow-md
-                    .z_index(100);
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-        });
+        let dropdown = floem::views::Container::new(items_container)
+            .style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
+                    let open = is_open.get();
+                    let base = s
+                        .position(floem::style::Position::Absolute)
+                        .inset_top_pct(100.0)
+                        .inset_left(0.0)
+                        .min_width(120.0) // Match trigger min-width explicitly
+                        .margin_top(4.0) // small gap from trigger
+                        .p_1() // p-1 = 4px (viewport padding)
+                        .background(t.popover) // bg-popover
+                        .color(t.popover_foreground) // text-popover-foreground
+                        .border_1() // border
+                        .border_color(t.border)
+                        .rounded_md() // rounded-md
+                        .shadow_lg() // shadow-md
+                        .z_index(100);
+                    if open {
+                        base
+                    } else {
+                        base.display(floem::style::Display::None)
+                    }
+                })
+            });
 
         // Backdrop to close when clicking outside
         let backdrop = floem::views::Empty::new()
@@ -260,7 +261,7 @@ impl IntoView for Select {
 
         Box::new(
             floem::views::Container::new(floem::views::stack((trigger, backdrop, dropdown)))
-                .style(|s| s.position(floem::style::Position::Relative)),
+                .style(|s| s.position(floem::style::Position::Relative).min_width(120.0)),
         )
     }
 }

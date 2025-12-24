@@ -23,6 +23,7 @@ use floem::style::CursorStyle;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
+use ui_events::pointer::PointerEvent;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -131,7 +132,9 @@ impl Slider {
         });
 
         // Container with interaction
-        floem::views::Container::new(
+        let container_id = ViewId::new();
+        floem::views::Container::with_id(
+            container_id,
             floem::views::stack((track, thumb))
                 .style(|s| s.width_full().position(floem::style::Position::Relative)),
         )
@@ -145,18 +148,19 @@ impl Slider {
                 .padding_left(8.0) // account for thumb overflow
                 .padding_right(8.0)
         })
-        .on_click_stop(move |_| {
-            // For now, clicking toggles between min and max as a simple interaction
-            // A full slider implementation would track drag events
-            if !disabled {
-                value.update(|v| {
-                    let mid = (min + max) / 2.0;
-                    if *v < mid {
-                        *v = max;
-                    } else {
-                        *v = min;
-                    }
-                });
+        .on_event_stop(floem::event::EventListener::PointerDown, move |e| {
+            if disabled {
+                return;
+            }
+            if let floem::event::Event::Pointer(PointerEvent::Down(pointer_event)) = e {
+                // get_content_rect() returns the area inside padding (in logical pixels)
+                // Use logical_point() to convert physical position to logical coordinates
+                let content_rect = container_id.get_content_rect();
+                let track_width = content_rect.width();
+                let click_x = pointer_event.state.logical_point().x - content_rect.x0;
+                let percent = (click_x / track_width).clamp(0.0, 1.0);
+                let new_value = min + percent * (max - min);
+                value.set(new_value);
             }
         })
     }
