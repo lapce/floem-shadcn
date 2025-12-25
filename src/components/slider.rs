@@ -81,6 +81,9 @@ impl Slider {
         let max = self.max;
         let disabled = self.disabled;
 
+        // Track dragging state
+        let is_dragging = RwSignal::new(false);
+
         // shadcn/ui Slider (v4 new-york):
         // Root: relative flex w-full touch-none items-center select-none
         // Track: bg-muted relative grow overflow-hidden rounded-full h-1.5 (6px)
@@ -131,6 +134,30 @@ impl Slider {
             })
         });
 
+        // Helper to calculate value from pointer position (window coordinates)
+        let calc_value_window = move |container_id: ViewId, x: f64| {
+            let content_rect = container_id.get_content_rect();
+            let track_width = content_rect.width();
+            // x is in window coordinates, content_rect.x0 is also in window coordinates
+            let click_x = x - content_rect.x0;
+            let percent = (click_x / track_width).clamp(0.0, 1.0);
+            min + percent * (max - min)
+        };
+
+        // Helper to calculate value from pointer position (view-relative coordinates)
+        // When pointer capture is active, PointerMove gives view-relative coords
+        let calc_value_relative = move |container_id: ViewId, x: f64| {
+            let content_rect = container_id.get_content_rect();
+            let layout_rect = container_id.layout_rect();
+            let track_width = content_rect.width();
+            // x is view-relative, convert to content-relative by subtracting the padding
+            // padding = content_rect.x0 - layout_rect.x0 (in window coords, but same offset)
+            let padding = content_rect.x0 - layout_rect.x0;
+            let click_x = x - padding;
+            let percent = (click_x / track_width).clamp(0.0, 1.0);
+            min + percent * (max - min)
+        };
+
         // Container with interaction
         let container_id = ViewId::new();
         floem::views::Container::with_id(
@@ -148,20 +175,37 @@ impl Slider {
                 .padding_left(8.0) // account for thumb overflow
                 .padding_right(8.0)
         })
-        .on_event_stop(floem::event::EventListener::PointerDown, move |e| {
+        .on_event(floem::event::EventListener::PointerDown, move |e| {
             if disabled {
-                return;
+                return floem::event::EventPropagation::Continue;
             }
             if let floem::event::Event::Pointer(PointerEvent::Down(pointer_event)) = e {
-                // get_content_rect() returns the area inside padding (in logical pixels)
-                // Use logical_point() to convert physical position to logical coordinates
-                let content_rect = container_id.get_content_rect();
-                let track_width = content_rect.width();
-                let click_x = pointer_event.state.logical_point().x - content_rect.x0;
-                let percent = (click_x / track_width).clamp(0.0, 1.0);
-                let new_value = min + percent * (max - min);
-                value.set(new_value);
+                let x = pointer_event.state.logical_point().x;
+                // PointerDown uses window coordinates
+                value.set(calc_value_window(container_id, x));
+                is_dragging.set(true);
+                // Set pointer capture to receive events even outside bounds
+                if let Some(pointer_id) = pointer_event.pointer.pointer_id {
+                    container_id.set_pointer_capture(pointer_id);
+                }
             }
+            floem::event::EventPropagation::Continue
+        })
+        .on_event(floem::event::EventListener::PointerMove, move |e| {
+            if disabled || !is_dragging.get() {
+                return floem::event::EventPropagation::Continue;
+            }
+            if let floem::event::Event::Pointer(PointerEvent::Move(pointer_event)) = e {
+                let x = pointer_event.current.logical_point().x;
+                // PointerMove with pointer capture uses view-relative coordinates
+                value.set(calc_value_relative(container_id, x));
+            }
+            floem::event::EventPropagation::Continue
+        })
+        .on_event(floem::event::EventListener::PointerUp, move |_| {
+            is_dragging.set(false);
+            // Pointer capture is automatically released on pointer up
+            floem::event::EventPropagation::Continue
         })
     }
 }
