@@ -641,7 +641,7 @@ impl View for TextArea {
 mod tests {
     use super::*;
     use floem::reactive::SignalGet;
-    use floem::test_harness::TestHarness;
+    use floem_test::prelude::*;
     use floem::views::Decorators;
     use floem_editor_core::command::{EditCommand, MoveCommand};
 
@@ -769,7 +769,7 @@ mod tests {
         drop(scroll);
     }
 
-    /// Test to verify that ensure_visible actually updates scroll position via TestHarness
+    /// Test to verify that ensure_visible actually updates scroll position via HeadlessHarness
     #[test]
     fn test_ensure_visible_with_harness() {
         use floem::HasViewId;
@@ -804,7 +804,7 @@ mod tests {
         let scroll_id = scroll.view_id();
 
         // Create test harness
-        let mut harness = TestHarness::new_with_size(scroll, 100.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(scroll, 100.0, 100.0);
 
         // Run a rebuild to process initial state
         harness.rebuild();
@@ -880,7 +880,7 @@ mod tests {
             });
 
         // Create test harness
-        let mut harness = TestHarness::new_with_size(scroll, 100.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(scroll, 100.0, 100.0);
 
         // Run a rebuild to process initial state
         harness.rebuild();
@@ -929,7 +929,7 @@ mod tests {
                 scroll_y_clone.set(viewport.y0);
             });
 
-        let mut harness = TestHarness::new_with_size(scroll, 100.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(scroll, 100.0, 100.0);
 
         // Multiple rebuilds to ensure layout is fully initialized
         harness.rebuild();
@@ -980,7 +980,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let id = textarea.id;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Initially not focused
         assert!(!harness.is_focused(id), "Should not be focused initially");
@@ -997,7 +997,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1017,7 +1017,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1039,7 +1039,7 @@ mod tests {
         let textarea = TextArea::with_text("").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1068,7 +1068,7 @@ mod tests {
         let textarea = TextArea::with_text("").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1109,7 +1109,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1144,7 +1144,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1188,7 +1188,7 @@ mod tests {
     // === Tests for wrapped text and cursor positioning at visual line edges ===
 
     /// Helper to click at very top-left corner to focus and set cursor at position 0
-    fn focus_at_start(harness: &mut TestHarness) {
+    fn focus_at_start(harness: &mut HeadlessHarness) {
         harness.click(1.0, 1.0);
     }
 
@@ -1200,7 +1200,7 @@ mod tests {
         // Initialize text layout by setting width
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus and position at start
         focus_at_start(&mut harness);
@@ -1270,7 +1270,7 @@ mod tests {
         let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1296,7 +1296,7 @@ mod tests {
         let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1322,7 +1322,7 @@ mod tests {
         let textarea = TextArea::with_text("abc\ndef").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1367,7 +1367,7 @@ mod tests {
         // Initialize text layout by setting width
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1425,7 +1425,7 @@ mod tests {
         // Initialize text layout by setting width
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1460,7 +1460,7 @@ mod tests {
         let textarea = TextArea::with_text("abcd").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1486,7 +1486,7 @@ mod tests {
         let textarea = TextArea::with_text("ab\ncd").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         focus_at_start(&mut harness);
@@ -1578,7 +1578,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let last_cursor_action = textarea.last_cursor_action;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1612,7 +1612,7 @@ mod tests {
         let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
         let last_cursor_action = textarea.last_cursor_action;
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -1978,7 +1978,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to middle
@@ -1999,7 +1999,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor starts at 0
@@ -2020,7 +2020,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to end
@@ -2045,7 +2045,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor starts at 0
@@ -2070,7 +2070,7 @@ mod tests {
         let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to end
@@ -2090,7 +2090,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to end
@@ -2119,7 +2119,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor at start
@@ -2144,7 +2144,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor in middle
@@ -2170,7 +2170,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to middle
@@ -2192,7 +2192,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor at start
@@ -2214,7 +2214,7 @@ mod tests {
         let textarea = TextArea::with_text("line1\nline2\nline3").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to last line
@@ -2236,7 +2236,7 @@ mod tests {
         let textarea = TextArea::with_text("line1\nline2\nline3").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor at start
@@ -2258,7 +2258,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to 'w' in world
@@ -2279,7 +2279,7 @@ mod tests {
         let textarea = TextArea::with_text("line1\nline2\nline3").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to last line
@@ -2301,7 +2301,7 @@ mod tests {
         let textarea = TextArea::with_text("line1\nline2\nline3").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor at start
@@ -2323,7 +2323,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to end
@@ -2349,7 +2349,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor at start
@@ -2375,7 +2375,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Move cursor to end
@@ -2401,7 +2401,7 @@ mod tests {
         let textarea = TextArea::with_text("hello world").style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Cursor at start
@@ -2471,7 +2471,7 @@ mod tests {
         let child_height = textarea.child_height;
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 50.0);
         harness.click(10.0, 10.0);
 
         // After layout, child_height should reflect content height
@@ -2530,7 +2530,7 @@ mod tests {
         let textarea = TextArea::with_text("hello").style(|s| s.size(200.0, 100.0));
         let viewport = textarea.viewport();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
         harness.click(10.0, 10.0);
 
         // Initially, viewport should be at or near origin
@@ -2558,7 +2558,7 @@ mod tests {
         let child_height = textarea.child_height;
         let doc_signal = textarea.doc();
 
-        let _harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
+        let _harness = HeadlessHarness::new_with_size(textarea, 200.0, 50.0);
 
         // Verify we have the expected number of lines
         let text = doc_signal.get_untracked().text();
@@ -2577,7 +2577,7 @@ mod tests {
         let viewport = textarea.viewport();
         let scroll_id = textarea.scroll_id();
 
-        let _harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let _harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // All signals should be valid even with empty content
         let height = child_height.get_untracked();
@@ -2727,7 +2727,7 @@ mod tests {
         let doc_signal = textarea.doc();
         let viewport = textarea.viewport();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 50.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -2771,7 +2771,7 @@ mod tests {
         let textarea = TextArea::with_text("line1").style(|s| s.size(200.0, 40.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 40.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 40.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -2813,7 +2813,7 @@ mod tests {
             TextArea::with_text("line1\nline2\nline3\nline4\nline5").style(|s| s.size(200.0, 50.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 50.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -2842,7 +2842,7 @@ mod tests {
         let textarea = TextArea::with_text("line1\nline2\nline3").style(|s| s.size(200.0, 50.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 50.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -2882,7 +2882,7 @@ mod tests {
         // Set width for layout
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 60.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 60.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -2922,7 +2922,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 100.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -2969,7 +2969,7 @@ mod tests {
         let textarea = TextArea::new().style(|s| s.size(200.0, 50.0));
         let doc_signal = textarea.doc();
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 50.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 50.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -3007,7 +3007,7 @@ mod tests {
         // Set width for text layout
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -3047,7 +3047,7 @@ mod tests {
         // Set width for text layout
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 100.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 100.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -3094,7 +3094,7 @@ mod tests {
 
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 60.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 60.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -3169,7 +3169,7 @@ mod tests {
 
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 60.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 60.0);
 
         // Click to focus
         harness.click(10.0, 10.0);
@@ -3227,7 +3227,7 @@ mod tests {
 
         doc_signal.get_untracked().set_width(200.0);
 
-        let _harness = TestHarness::new_with_size(textarea, 200.0, 60.0);
+        let _harness = HeadlessHarness::new_with_size(textarea, 200.0, 60.0);
 
         // Move cursor to different lines and check the rect that would be passed to ensure_visible
         for (offset, expected_line) in [(0, 0), (6, 1), (12, 2), (18, 3), (24, 4)] {
@@ -3283,7 +3283,7 @@ mod tests {
 
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 80.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 80.0);
 
         // Initial rebuild to ensure layout is fully initialized
         harness.rebuild();
@@ -3420,7 +3420,7 @@ mod tests {
 
         doc_signal.get_untracked().set_width(200.0);
 
-        let mut harness = TestHarness::new_with_size(textarea, 200.0, 60.0);
+        let mut harness = HeadlessHarness::new_with_size(textarea, 200.0, 60.0);
 
         // Initial rebuild to ensure layout settles
         harness.rebuild();

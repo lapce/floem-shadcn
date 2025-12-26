@@ -2,79 +2,130 @@
 //!
 //! Based on shadcn/ui Dialog component for modal dialogs.
 //!
-//! # Example
+//! # Example (recommended)
 //!
 //! ```rust
-//! use floem::reactive::RwSignal;
-//! use floem_shadcn::components::dialog::{Dialog, DialogContent, DialogHeader, DialogFooter};
+//! use floem_shadcn::components::dialog::{Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogClose};
 //! use floem_shadcn::components::button::Button;
 //!
-//! let open = RwSignal::new(false);
-//!
-//! // Trigger button
-//! Button::new("Open Dialog").on_click_stop(move |_| open.set(true));
-//!
-//! // Dialog - uses a closure to build content
-//! Dialog::new(open, move || DialogContent::new((
-//!     DialogHeader::new()
-//!         .title("Are you sure?")
-//!         .description("This action cannot be undone."),
-//!     DialogFooter::new((
-//!         Button::new("Cancel").outline().on_click_stop(move |_| open.set(false)),
-//!         Button::new("Continue").on_click_stop(move |_| {
-//!             // do something
-//!             open.set(false);
-//!         }),
+//! Dialog::new((
+//!     DialogTrigger::new(Button::new("Open Dialog")),
+//!     DialogContent::new((
+//!         DialogHeader::new()
+//!             .title("Are you sure?")
+//!             .description("This action cannot be undone."),
+//!         DialogFooter::new((
+//!             DialogClose::new(Button::new("Cancel").outline()),
+//!             Button::new("Continue").on_click_stop(move |_| {
+//!                 // do something
+//!             }),
+//!         )),
 //!     )),
-//! )));
+//! ));
+//! ```
+//!
+//! # Components
+//!
+//! - `Dialog` - Root component that provides context
+//! - `DialogTrigger` - Opens the dialog when clicked
+//! - `DialogContent` - The modal content (includes overlay/backdrop automatically)
+//! - `DialogHeader` - Container for title and description
+//! - `DialogFooter` - Container for action buttons
+//! - `DialogClose` - Closes the dialog when clicked
+//!
+//! # External state control
+//!
+//! Use `dialog.open_signal()` to get the signal for programmatic control:
+//!
+//! ```rust
+//! let dialog = Dialog::new((trigger, content));
+//! let open = dialog.open_signal();
+//! // Later: open.set(true) to open programmatically
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
-use floem::action::{add_overlay, remove_overlay};
-use floem::reactive::{Effect, RwSignal, SignalGet, SignalUpdate};
-use floem::text::Weight;
+use floem::reactive::{Context, RwSignal, Scope, SignalGet, SignalUpdate};
 use floem::views::Decorators;
+use floem::views::Overlay;
+use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
+
+// ============================================================================
+// Dialog Context - passes open signal to children via reactive Context
+// ============================================================================
+
+/// Dialog context that holds the open signal
+///
+/// This is provided via `Context::provide` and can be accessed by child
+/// components using `Context::get::<DialogContext>()`.
+#[derive(Clone, Copy)]
+pub struct DialogContext {
+    pub open: RwSignal<bool>,
+}
 
 // ============================================================================
 // Dialog
 // ============================================================================
 
-/// Dialog (modal) builder
-pub struct Dialog<F> {
+/// Dialog (modal) root component
+///
+/// Contains both the trigger and content. Uses internal state management
+/// that is shared via context with child components.
+pub struct Dialog<V> {
     id: ViewId,
     open: RwSignal<bool>,
-    content_fn: F,
+    child: V,
+    scope: Scope,
 }
 
-impl<F, V> Dialog<F>
-where
-    F: Fn() -> V + 'static,
-    V: IntoView + 'static,
-{
-    /// Create a new dialog with the given open signal and content builder function
-    pub fn new(open: RwSignal<bool>, content_fn: F) -> Self {
-        Self { id: ViewId::new(), open, content_fn }
+impl<V: IntoView + 'static> Dialog<V> {
+    /// Create a new dialog with internal state management
+    ///
+    /// The dialog state is managed internally and shared via context.
+    /// Use `DialogTrigger` to open the dialog and `DialogClose` to close it.
+    ///
+    /// # Example
+    /// ```rust
+    /// Dialog::new((
+    ///     DialogTrigger::new(Button::new("Open")),
+    ///     DialogContent::new((
+    ///         DialogHeader::new().title("Title"),
+    ///         DialogFooter::new(DialogClose::new(Button::new("Close"))),
+    ///     )),
+    /// ))
+    /// ```
+    pub fn new(child: V) -> Self {
+        let open = RwSignal::new(false);
+        let scope = Scope::current().create_child();
+
+        // Provide the dialog context in the child scope
+        scope.provide_context(DialogContext { open });
+
+        Self {
+            id: ViewId::new(),
+            open,
+            child,
+            scope,
+        }
+    }
+
+    /// Get the open signal for external control
+    ///
+    /// Use this when you need to open the dialog programmatically from outside.
+    pub fn open_signal(&self) -> RwSignal<bool> {
+        self.open
     }
 }
 
-
-impl<F, V> HasViewId for Dialog<F> where
-    F: Fn() -> V + 'static,
-    V: IntoView + 'static,
- {
+impl<V: IntoView + 'static> HasViewId for Dialog<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<F, V> IntoView for Dialog<F>
-where
-    F: Fn() -> V + 'static,
-    V: IntoView + 'static,
- {
+impl<V: IntoView + 'static> IntoView for Dialog<V> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -83,102 +134,160 @@ where
     }
 
     fn into_view(self) -> Self::V {
-        let open = self.open;
-        let content_fn = self.content_fn;
-        let overlay_id: RwSignal<Option<ViewId>> = RwSignal::new(None);
+        let scope = self.scope;
+        let child = self.child;
+        let id = self.id;
 
-        // Effect to show/hide the overlay based on open signal
-        Effect::new(move |_| {
-            let is_open = open.get();
-            let current_overlay = overlay_id.get();
-
-            if is_open && current_overlay.is_none() {
-                // Create and show the overlay
-                let content = content_fn();
-                let id = add_overlay(
-                    dialog_overlay(open, content)
-                );
-                overlay_id.set(Some(id));
-            } else if !is_open && current_overlay.is_some() {
-                // Remove the overlay
-                if let Some(id) = current_overlay {
-                    remove_overlay(id);
-                }
-                overlay_id.set(None);
-            }
-        });
-
-        // Return an empty view - the dialog is managed via overlay
-        Box::new(floem::views::Empty::with_id(self.id))
+        // Build the child view within the dialog's scope so it has access to context
+        Box::new(scope.enter(move || floem::views::Container::with_id(id, child)))
     }
 }
 
-fn dialog_overlay<V: IntoView + 'static>(open: RwSignal<bool>, content: V) -> impl View {
-    // Backdrop
-    let backdrop = floem::views::Empty::new()
-        .style(|s| {
-            s.position(floem::style::Position::Absolute)
-                .inset(0.0)
-                .background(peniko::Color::from_rgba8(0, 0, 0, 128))
-        })
-        .on_click_stop(move |_| {
-            open.set(false);
-        });
+// ============================================================================
+// DialogTrigger
+// ============================================================================
 
-    // Dialog container
-    let dialog = floem::views::Container::new(content)
-        .style(|s| s.with_shadcn_theme(|s, t| {            s.position(floem::style::Position::Absolute)
-                .inset_left_pct(50.0)
-                .inset_top_pct(50.0)
-                // CSS transform: translate(-50%, -50%) equivalent
-                .margin_left(-200.0) // Half of max-width
-                .margin_top(-100.0) // Approximate
-                .max_width(400.0)
-                .width_full()
-                .background(t.background)
-                .border(1.0)
-                .border_color(t.border)
-                .border_radius(8.0)
-                .padding(24.0)
-                .flex_direction(floem::style::FlexDirection::Column)
-                .gap(16.0)
+/// Trigger element that opens the dialog when clicked
+///
+/// Reads the dialog's open signal from context and sets it to true on click.
+pub struct DialogTrigger<V> {
+    id: ViewId,
+    child: V,
+}
 
-        }));
+impl<V: IntoView + 'static> DialogTrigger<V> {
+    /// Create a new dialog trigger wrapping the given element
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
+    }
+}
 
-    floem::views::stack((backdrop, dialog))
-        .style(|s| {
-            s.position(floem::style::Position::Absolute)
-                .inset(0.0)
-                .display(floem::style::Display::Flex)
-                .items_center()
-                .justify_center()
-        })
+impl<V: IntoView + 'static> HasViewId for DialogTrigger<V> {
+    fn view_id(&self) -> ViewId {
+        self.id
+    }
+}
+
+impl<V: IntoView + 'static> IntoView for DialogTrigger<V> {
+    type V = Box<dyn View>;
+    type Intermediate = Self;
+
+    fn into_intermediate(self) -> Self::Intermediate {
+        self
+    }
+
+    fn into_view(self) -> Self::V {
+        // Get the dialog context from the current scope
+        let ctx = Context::get::<DialogContext>();
+
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).on_click_stop(move |_| {
+                if let Some(ctx) = ctx {
+                    ctx.open.set(true);
+                }
+            }),
+        )
+    }
+}
+
+// ============================================================================
+// DialogClose
+// ============================================================================
+
+/// Element that closes the dialog when clicked
+///
+/// Reads the dialog's open signal from context and sets it to false on click.
+pub struct DialogClose<V> {
+    id: ViewId,
+    child: V,
+}
+
+impl<V: IntoView + 'static> DialogClose<V> {
+    /// Create a new dialog close element wrapping the given element
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
+    }
+}
+
+impl<V: IntoView + 'static> HasViewId for DialogClose<V> {
+    fn view_id(&self) -> ViewId {
+        self.id
+    }
+}
+
+impl<V: IntoView + 'static> IntoView for DialogClose<V> {
+    type V = Box<dyn View>;
+    type Intermediate = Self;
+
+    fn into_intermediate(self) -> Self::Intermediate {
+        self
+    }
+
+    fn into_view(self) -> Self::V {
+        // Get the dialog context from the current scope
+        let ctx = Context::get::<DialogContext>();
+
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).on_click_stop(move |_| {
+                if let Some(ctx) = ctx {
+                    ctx.open.set(false);
+                }
+            }),
+        )
+    }
 }
 
 // ============================================================================
 // DialogContent
 // ============================================================================
 
-/// Dialog content container
-pub struct DialogContent<V> {
+/// Dialog content container with integrated overlay and backdrop
+///
+/// Like shadcn/ui, DialogContent automatically includes:
+/// - A semi-transparent backdrop that closes the dialog when clicked
+/// - Proper portal rendering via Overlay
+/// - Centering and styling
+///
+/// Accepts any type that implements `IntoViewIter`, including:
+/// - Tuples: `(DialogHeader::new(), DialogFooter::new(...))`
+/// - Arrays: `[view1, view2]`
+/// - Vectors: `vec![view1, view2]`
+pub struct DialogContent {
     id: ViewId,
-    child: V,
+    children: Vec<Box<dyn View>>,
 }
 
-impl<V: IntoView + 'static> DialogContent<V> {
-    /// Create new dialog content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+impl DialogContent {
+    /// Create new dialog content with children
+    ///
+    /// # Example
+    /// ```rust
+    /// DialogContent::new((
+    ///     DialogHeader::new().title("Title"),
+    ///     DialogFooter::new(Button::new("Close")),
+    /// ))
+    /// ```
+    pub fn new(children: impl floem::view::IntoViewIter) -> Self {
+        Self {
+            id: ViewId::new(),
+            children: children.into_view_iter().collect(),
+        }
     }
 }
 
-
-impl<V: IntoView + 'static> HasViewId for DialogContent<V> {
+impl HasViewId for DialogContent {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for DialogContent<V> {
+impl IntoView for DialogContent {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -187,14 +296,67 @@ impl<V: IntoView + 'static> IntoView for DialogContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child)
-                .style(|s| {
-                    s.width_full()
-                        .flex_direction(floem::style::FlexDirection::Column)
-                        .gap(16.0)
-                })
-        )
+        let id = self.id;
+        let children = self.children;
+
+        // Get the dialog context from the current scope
+        let ctx = Context::get::<DialogContext>();
+
+        if let Some(ctx) = ctx {
+            let open = ctx.open;
+
+            // Like shadcn/ui, DialogContent includes the portal and overlay
+            Box::new(Overlay::with_id(
+                id,
+                floem::views::stack((
+                    // Backdrop - semi-transparent overlay that closes dialog when clicked
+                    floem::views::Empty::new()
+                        .style(move |s| {
+                            s.absolute()
+                                .inset_0()
+                                .background(peniko::Color::from_rgba8(0, 0, 0, 128))
+                        })
+                        .on_click_stop(move |_| {
+                            open.set(false);
+                        }),
+                    // Content wrapper - centered modal with vertical stack for children
+                    floem::views::v_stack_from_iter(children)
+                        .style(move |s| {
+                            s.absolute()
+                                .left_1_2()
+                                .top_1_2()
+                                .translate_x_neg_1_2()
+                                .translate_y_neg_1_2()
+                                .z_index(10)
+                                .max_w_lg()
+                                .rounded_lg()
+                                .p_6()
+                                .gap_4()
+                                .shadow_lg()
+                        })
+                        .style(move |s| {
+                            s.with_shadcn_theme(move |s, t| {
+                                s.background(t.background).border_1().border_color(t.border)
+                            })
+                        }),
+                ))
+                .style(move |s| {
+                    let is_open = open.get();
+                    s.fixed()
+                        .inset_0()
+                        .width_full()
+                        .height_full()
+                        .apply_if(!is_open, |s| s.hide())
+                }),
+            ))
+        } else {
+            // No dialog context - just render the content (for use outside Dialog)
+            Box::new(
+                floem::views::Stack::with_id(id, children)
+                    .vertical()
+                    .style(|s| s.w_full()),
+            )
+        }
     }
 }
 
@@ -211,19 +373,23 @@ pub struct DialogHeader {
 
 impl DialogHeader {
     /// Create a new dialog header
-    pub fn new() -> Self { Self { id: ViewId::new(),
+    pub fn new() -> Self {
+        Self {
+            id: ViewId::new(),
             title: None,
             description: None,
         }
     }
 
     /// Set the dialog title
-    pub fn title(mut self, title: impl Into<String>) -> Self { self.title = Some(title.into());
+    pub fn title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
         self
     }
 
     /// Set the dialog description
-    pub fn description(mut self, description: impl Into<String>) -> Self { self.description = Some(description.into());
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
         self
     }
 }
@@ -233,7 +399,6 @@ impl Default for DialogHeader {
         Self::new()
     }
 }
-
 
 impl HasViewId for DialogHeader {
     fn view_id(&self) -> ViewId {
@@ -250,33 +415,32 @@ impl IntoView for DialogHeader {
     }
 
     fn into_view(self) -> Self::V {
+        // shadcn/ui DialogHeader: flex flex-col gap-2 text-center sm:text-left
         let mut children: Vec<Box<dyn View>> = Vec::new();
 
         if let Some(title) = self.title {
-            children.push(Box::new(
-                floem::views::Label::new(title)
-                    .style(|s| s.with_shadcn_theme(|s, t| {                        s.font_size(18.0)
-                            .font_weight(Weight::SEMIBOLD)
-                            .color(t.foreground)
-
-                    }))
-            ));
+            // shadcn/ui DialogTitle: text-lg leading-none font-semibold
+            children.push(Box::new(floem::views::Label::new(title).style(|s| {
+                s.with_shadcn_theme(|s, t| {
+                    s.text_lg() // text-lg = 18px
+                        .leading_none() // leading-none
+                        .font_semibold() // font-semibold
+                        .color(t.foreground)
+                })
+            })));
         }
 
         if let Some(description) = self.description {
-            children.push(Box::new(
-                floem::views::Label::new(description)
-                    .style(|s| s.with_shadcn_theme(|s, t| {                        s.font_size(14.0)
-                            .color(t.muted_foreground)
-
-                    }))
-            ));
+            // shadcn/ui DialogDescription: text-muted-foreground text-sm
+            children.push(Box::new(floem::views::Label::new(description).style(|s| {
+                s.with_shadcn_theme(|s, t| {
+                    s.text_sm() // text-sm = 14px
+                        .color(t.muted_foreground) // text-muted-foreground
+                })
+            })));
         }
 
-        Box::new(
-            floem::views::v_stack_from_iter(children)
-                .style(|s| s.gap(8.0))
-        )
+        Box::new(floem::views::v_stack_from_iter(children).style(|s| s.gap_2())) // gap-2 = 8px
     }
 }
 
@@ -292,10 +456,13 @@ pub struct DialogFooter<V> {
 
 impl<V: IntoView + 'static> DialogFooter<V> {
     /// Create a new dialog footer
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DialogFooter<V> {
     fn view_id(&self) -> ViewId {
@@ -312,15 +479,10 @@ impl<V: IntoView + 'static> IntoView for DialogFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
+        // shadcn/ui: flex flex-col-reverse gap-2 sm:flex-row sm:justify-end
         Box::new(
             floem::views::Container::with_id(self.id, self.child)
-                .style(|s| {
-                    s.display(floem::style::Display::Flex)
-                        .flex_direction(floem::style::FlexDirection::Row)
-                        .justify_end()
-                        .gap(8.0)
-                        .margin_top(8.0)
-                })
+                .style(|s| s.flex().flex_row().justify_end().gap_2()),
         )
     }
 }
@@ -337,10 +499,13 @@ pub struct DialogTitle<V> {
 
 impl<V: IntoView + 'static> DialogTitle<V> {
     /// Create a new dialog title
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DialogTitle<V> {
     fn view_id(&self) -> ViewId {
@@ -358,12 +523,9 @@ impl<V: IntoView + 'static> IntoView for DialogTitle<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child)
-                .style(|s| s.with_shadcn_theme(|s, t| {                    s.font_size(18.0)
-                        .font_weight(Weight::SEMIBOLD)
-                        .color(t.foreground)
-
-                }))
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(|s, t| s.text_lg().font_semibold().color(t.foreground))
+            }),
         )
     }
 }
@@ -380,10 +542,13 @@ pub struct DialogDescription<V> {
 
 impl<V: IntoView + 'static> DialogDescription<V> {
     /// Create a new dialog description
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DialogDescription<V> {
     fn view_id(&self) -> ViewId {
@@ -402,10 +567,7 @@ impl<V: IntoView + 'static> IntoView for DialogDescription<V> {
     fn into_view(self) -> Self::V {
         Box::new(
             floem::views::Container::with_id(self.id, self.child)
-                .style(|s| s.with_shadcn_theme(|s, t| {                    s.font_size(14.0)
-                        .color(t.muted_foreground)
-
-                }))
+                .style(|s| s.with_shadcn_theme(|s, t| s.text_sm().color(t.muted_foreground))),
         )
     }
 }

@@ -40,7 +40,7 @@ pub mod prelude {
     pub use crate::components::switch::Switch;
     pub use crate::components::select::{Select, SelectItem, SelectItemData, SelectTrigger, SelectContent, SelectLabel, SelectSeparator, SelectGroup};
     pub use crate::components::tabs::{Tabs, TabsList, Tab, TabsContent};
-    pub use crate::components::dialog::{Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription};
+    pub use crate::components::dialog::{Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose, DialogContext};
     pub use crate::components::alert::{Alert, AlertVariant};
     pub use crate::components::tooltip::TooltipExt;
     pub use crate::components::separator::{Separator, SeparatorOrientation};

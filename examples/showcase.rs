@@ -422,29 +422,24 @@ fn tabs_demo() -> impl IntoView {
 }
 
 fn dialog_demo() -> impl IntoView {
-    let dialog_open = RwSignal::new(false);
-
     demo_section(
         "Dialog",
         "A modal dialog component for important interactions.",
         v_stack((
             subsection(
                 "Basic Dialog",
-                v_stack((
-                    Button::new("Open Dialog").on_click_stop(move |_| dialog_open.set(true)),
-                    Dialog::new(dialog_open, move || {
-                        DialogContent::new(v_stack((
-                            DialogHeader::new()
-                                .title("Are you sure?")
-                                .description("This action cannot be undone. This will permanently delete your account."),
-                            DialogFooter::new(h_stack((
-                                Button::new("Cancel").outline().on_click_stop(move |_| dialog_open.set(false)),
-                                Button::new("Continue").destructive().on_click_stop(move |_| dialog_open.set(false)),
-                            )).style(|s| s.gap_2())),
-                        )))
-                    }),
-                ))
-                .style(|s| s.gap_4()),
+                Dialog::new((
+                    DialogTrigger::new(Button::new("Open Dialog")),
+                    DialogContent::new((
+                        DialogHeader::new()
+                            .title("Are you sure?")
+                            .description("This action cannot be undone. This will permanently delete your account."),
+                        DialogFooter::new(h_stack((
+                            DialogClose::new(Button::new("Cancel").outline()),
+                            DialogClose::new(Button::new("Continue").destructive()),
+                        )).style(|s| s.gap_2())),
+                    )),
+                )),
             ),
         ))
         .style(|s| s.gap_8()),
