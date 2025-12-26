@@ -22,7 +22,8 @@ use floem::prelude::*;
 use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::Decorators;
+use floem::views::{Decorators, Overlay};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -75,18 +76,9 @@ impl<V: IntoView + 'static> IntoView for Sheet<V> {
         let backdrop = floem::views::Empty::new()
             .style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
-                    let is_open = open.get();
-                    let base = s
-                        .position(floem::style::Position::Absolute)
-                        .inset(0.0)
+                    s.absolute()
+                        .inset_0()
                         .background(t.foreground.with_alpha(0.5))
-                        .z_index(49)
-                        .cursor(CursorStyle::Pointer);
-                    if is_open {
-                        base
-                    } else {
-                        base.display(floem::style::Display::None)
-                    }
                 })
             })
             .on_click_stop(move |_| {
@@ -94,30 +86,24 @@ impl<V: IntoView + 'static> IntoView for Sheet<V> {
             });
 
         // Content wrapper
-        let content_wrapper = floem::views::Container::new(self.content).style(move |s| {
+        let content_wrapper = floem::views::Container::new(self.content);
+
+        // Use Overlay with fixed positioning
+        let sheet_overlay = Overlay::new(
+            floem::views::stack((backdrop, content_wrapper))
+                .style(|s| s.width_full().height_full()),
+        )
+        .style(move |s| {
             let is_open = open.get();
-            if is_open {
-                s
-            } else {
-                s.display(floem::style::Display::None)
-            }
+            s.fixed()
+                .inset_0()
+                .width_full()
+                .height_full()
+                .z_index(50)
+                .apply_if(!is_open, |s| s.hide())
         });
 
-        Box::new(
-            floem::views::stack((backdrop, content_wrapper)).style(move |s| {
-                let is_open = open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset(0.0)
-                    .z_index(50);
-
-                if is_open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            }),
-        )
+        Box::new(sheet_overlay)
     }
 }
 

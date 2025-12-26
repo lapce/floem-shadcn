@@ -22,7 +22,8 @@ use floem::prelude::*;
 use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::Decorators;
+use floem::views::{Decorators, Overlay};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -134,36 +135,46 @@ impl IntoView for ToastContainer {
     fn into_view(self) -> Self::V {
         let toasts = self.toasts;
 
-        Box::new(
-            floem::views::dyn_container(
-                move || toasts.get(),
-                move |toast_list| {
-                    let views: Vec<Box<dyn View>> = toast_list
-                        .iter()
-                        .map(|toast| {
-                            let toast_id = toast.id;
-                            let toasts_signal = toasts;
-                            Toast::new(toast.clone())
-                                .on_close(move || {
-                                    toasts_signal.update(|t| t.retain(|x| x.id != toast_id));
-                                })
-                                .into_view()
-                        })
-                        .collect();
+        // Toast list positioned at bottom-right
+        let toast_list = floem::views::dyn_container(
+            move || toasts.get(),
+            move |toast_list| {
+                let views: Vec<Box<dyn View>> = toast_list
+                    .iter()
+                    .map(|toast| {
+                        let toast_id = toast.id;
+                        let toasts_signal = toasts;
+                        Toast::new(toast.clone())
+                            .on_close(move || {
+                                toasts_signal.update(|t| t.retain(|x| x.id != toast_id));
+                            })
+                            .into_view()
+                    })
+                    .collect();
 
-                    floem::views::v_stack_from_iter(views)
-                        .style(|s| s.gap(8.0))
-                        .into_any()
-                },
-            )
-            .style(|s| {
-                s.position(floem::style::Position::Absolute)
-                    .inset_bottom(16.0)
-                    .inset_right(16.0)
-                    .z_index(100)
-                    .display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Column)
-                    .gap(8.0)
+                floem::views::v_stack_from_iter(views)
+                    .style(|s| s.gap(8.0))
+                    .into_any()
+            },
+        )
+        .style(|s| {
+            s.absolute()
+                .inset_bottom(16.0)
+                .inset_right(16.0)
+                .flex_col()
+                .gap(8.0)
+        });
+
+        // Use Overlay with fixed positioning
+        Box::new(
+            Overlay::new(toast_list).style(move |s| {
+                let has_toasts = !toasts.get().is_empty();
+                s.fixed()
+                    .inset_0()
+                    .width_full()
+                    .height_full()
+                    .pointer_events_none()
+                    .apply_if(!has_toasts, |s| s.hide())
             }),
         )
     }
@@ -272,7 +283,8 @@ impl IntoView for Toast {
                     .box_shadow_blur(8.0)
                     .box_shadow_color(t.foreground.with_alpha(0.1))
                     .items_start()
-                    .gap(8.0);
+                    .gap(8.0)
+                    .pointer_events_auto(); // Enable clicks on toast (parent overlay has pointer-events: none)
                 match variant {
                     ToastVariant::Default | ToastVariant::Success => {
                         base.background(t.background).border_color(t.border)

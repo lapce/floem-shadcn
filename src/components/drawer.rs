@@ -20,6 +20,7 @@ use floem::views::{Decorators, Overlay};
 use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
