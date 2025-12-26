@@ -76,7 +76,7 @@ pub fn extract_text_styles(style: &BuiltinStyle<'_>) -> TextStyles {
 pub fn apply_styles_to_document(doc: &Document, styles: &TextStyles) {
     doc.set_text_color(styles.text_color);
     doc.set_font_size(styles.font_size);
-    doc.set_line_height(styles.line_height.clone());
+    doc.set_line_height(styles.line_height);
     doc.set_font_weight(styles.font_weight);
     doc.set_font_family(styles.font_family.clone());
 }
@@ -87,7 +87,7 @@ pub fn apply_styles_to_document(doc: &Document, styles: &TextStyles) {
 /// and `false` during odd intervals (500-1000ms, 1500-2000ms, etc.).
 pub fn is_cursor_visible(elapsed_ms: u128) -> bool {
     let blink_cycle = elapsed_ms / CURSOR_BLINK_INTERVAL_MS as u128;
-    blink_cycle % 2 == 0
+    blink_cycle.is_multiple_of(2)
 }
 
 /// Gets cursor or glyph dimensions, falling back to default font metrics.

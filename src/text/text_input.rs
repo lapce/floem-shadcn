@@ -11,8 +11,7 @@ use floem::{
     context::{ComputeLayoutCx, PaintCx},
     event::{Event, EventListener, EventPropagation},
     kurbo::{Point, Rect, Size},
-    peniko::Color,
-    reactive::{RwSignal, SignalGet, SignalUpdate, SignalWith, create_effect, create_rw_signal},
+    reactive::{Effect, RwSignal, SignalGet, SignalUpdate, SignalWith},
     style::{CursorStyle as StyleCursorStyle, Style},
 };
 
@@ -58,20 +57,20 @@ impl TextInput {
 
     /// Creates a new text input with the given initial text and a specific ViewId
     pub fn with_text_and_id(text: impl Into<String>, id: ViewId) -> Self {
-        let padding = create_rw_signal((0.0, 0.0, 0.0, 0.0));
-        let scroll_offset = create_rw_signal(0.0);
-        let visible_width = create_rw_signal(0.0);
+        let padding = RwSignal::new((0.0, 0.0, 0.0, 0.0));
+        let scroll_offset = RwSignal::new(0.0);
+        let visible_width = RwSignal::new(0.0);
         let doc = Document::new(text.into());
-        let doc_signal = create_rw_signal(doc);
-        let last_cursor_action = create_rw_signal(Instant::now());
-        let placeholder = create_rw_signal(None);
-        let on_enter: RwSignal<Option<Box<dyn Fn(&str)>>> = create_rw_signal(None);
+        let doc_signal = RwSignal::new(doc);
+        let last_cursor_action = RwSignal::new(Instant::now());
+        let placeholder = RwSignal::new(None);
+        let on_enter: RwSignal<Option<Box<dyn Fn(&str)>>> = RwSignal::new(None);
 
         // Capture cursor signal for reactive tracking
         let cursor_signal = doc_signal.get_untracked().cursor();
 
         // Effect to ensure cursor is visible (horizontal scrolling)
-        create_effect(move |_| {
+        Effect::new(move |_| {
             let cursor = cursor_signal.get();
             let doc = doc_signal.get_untracked();
             let lines = doc.text_layouts().borrow();
@@ -220,7 +219,7 @@ impl TextInput {
                 }
 
                 // Handle character input (filter out newlines)
-                let mut mods = modifiers.clone();
+                let mut mods = *modifiers;
                 mods.set(Modifiers::SHIFT, false);
                 #[cfg(target_os = "macos")]
                 mods.set(Modifiers::ALT, false);
@@ -294,7 +293,7 @@ impl TextInput {
     /// Sets the editor content reactively
     pub fn value(self, set_value: impl Fn() -> String + 'static) -> Self {
         let doc = self.doc;
-        create_effect(move |_| {
+        Effect::new(move |_| {
             let new_value = set_value();
             // Filter out newlines
             let filtered: String = new_value.chars().filter(|&ch| ch != '\n' && ch != '\r').collect();
@@ -409,7 +408,7 @@ impl View for TextInput {
                 let mut placeholder_attrs = floem::text::Attrs::default()
                     .font_size(text_styles.font_size)
                     .color(placeholder_color)
-                    .line_height(text_styles.line_height.clone())
+                    .line_height(text_styles.line_height)
                     .weight(text_styles.font_weight);
 
                 if !text_styles.font_family.is_empty() {

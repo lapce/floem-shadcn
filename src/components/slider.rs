@@ -162,7 +162,7 @@ impl Slider {
         let container_id = ViewId::new();
         floem::views::Container::with_id(
             container_id,
-            floem::views::stack((track, thumb))
+            floem::views::Stack::new((track, thumb))
                 .style(|s| s.width_full().position(floem::style::Position::Relative)),
         )
         .style(move |s| {

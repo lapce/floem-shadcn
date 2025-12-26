@@ -11,13 +11,10 @@ use floem::{
     context::{ComputeLayoutCx, PaintCx},
     event::{Event, EventListener, EventPropagation},
     kurbo::{Point, Rect, Size},
-    peniko::Color,
-    reactive::{
-        RwSignal, SignalGet, SignalTrack, SignalUpdate, SignalWith, create_effect, create_rw_signal,
-    },
+    reactive::{Effect, RwSignal, SignalGet, SignalTrack, SignalUpdate, SignalWith},
     style::{CursorStyle as StyleCursorStyle, Style},
     taffy::{Dimension, Overflow},
-    views::{Decorators, Scroll, empty},
+    views::{Decorators, Empty, Scroll},
 };
 
 use crate::theme::ShadcnThemeProp;
@@ -69,6 +66,12 @@ pub struct TextArea {
     max_size: RwSignal<Option<Size>>,
 }
 
+impl Default for TextArea {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TextArea {
     /// Creates a new text editor with empty content
     pub fn new() -> Self {
@@ -82,32 +85,32 @@ impl TextArea {
 
     /// Creates a new text editor with the given initial text and a specific ViewId
     pub fn with_text_and_id(text: impl Into<String>, id: ViewId) -> Self {
-        let child_height = create_rw_signal(0.0);
-        let padding = create_rw_signal((0.0, 0.0, 0.0, 0.0));
-        let viewport = create_rw_signal(Rect::ZERO);
-        let parent_size = create_rw_signal(Size::ZERO);
+        let child_height = RwSignal::new(0.0);
+        let padding = RwSignal::new((0.0, 0.0, 0.0, 0.0));
+        let viewport = RwSignal::new(Rect::ZERO);
+        let parent_size = RwSignal::new(Size::ZERO);
         let doc = Document::new(text.into());
-        let doc_signal = create_rw_signal(doc);
-        let last_cursor_action = create_rw_signal(Instant::now());
+        let doc_signal = RwSignal::new(doc);
+        let last_cursor_action = RwSignal::new(Instant::now());
 
         // Resize handle state
-        let resize_enabled = create_rw_signal(false);
-        let resize_size = create_rw_signal(None);
-        let is_resizing = create_rw_signal(false);
-        let resize_start_pos = create_rw_signal(Point::ZERO);
-        let resize_start_size = create_rw_signal(Size::ZERO);
-        let min_size = create_rw_signal(Size::new(50.0, 30.0));
-        let max_size = create_rw_signal(None);
+        let resize_enabled = RwSignal::new(false);
+        let resize_size = RwSignal::new(None);
+        let is_resizing = RwSignal::new(false);
+        let resize_start_pos = RwSignal::new(Point::ZERO);
+        let resize_start_size = RwSignal::new(Size::ZERO);
+        let min_size = RwSignal::new(Size::new(50.0, 30.0));
+        let max_size = RwSignal::new(None);
 
         // Capture cursor signal directly for reactive tracking in ensure_visible
         let cursor_signal = doc_signal.get_untracked().cursor();
 
         // Create dummy child view for Scroll - we'll set its height directly in compute_layout
-        let dummy_child = empty().style(|s| s.width(10.0).height(0.0));
+        let dummy_child = Empty::new().style(|s| s.width(10.0).height(0.0));
         let dummy_child_id = dummy_child.id();
 
         // Signal to track scroll's child size, updated via on_child_size callback
-        let scroll_child_size = create_rw_signal(Size::ZERO);
+        let scroll_child_size = RwSignal::new(Size::ZERO);
 
         // Create scroll view with the dummy child and callbacks
         let scroll_view = Scroll::new(dummy_child)
@@ -302,14 +305,14 @@ impl TextArea {
                 }
 
                 // Handle character input
-                let mut mods = modifiers.clone();
+                let mut mods = *modifiers;
                 mods.set(Modifiers::SHIFT, false);
                 #[cfg(target_os = "macos")]
                 mods.set(Modifiers::ALT, false);
 
                 if mods.is_empty() {
                     if let Key::Character(c) = key {
-                        document.insert_text(&c);
+                        document.insert_text(c);
                         id.request_layout();
                         last_cursor_action.set(Instant::now());
                     }
@@ -322,7 +325,7 @@ impl TextArea {
             EventListener::ImeCommit,
             Box::new(move |event| {
                 if let Event::ImeCommit(text) = event {
-                    doc_signal.get_untracked().insert_text(&text);
+                    doc_signal.get_untracked().insert_text(text);
                     id.request_layout();
                     last_cursor_action.set(Instant::now());
                 }
@@ -379,7 +382,7 @@ impl TextArea {
     /// Sets the editor content reactively
     pub fn value(self, set_value: impl Fn() -> String + 'static) -> Self {
         let doc = self.doc;
-        create_effect(move |_| {
+        Effect::new(move |_| {
             let new_value = set_value();
             // Check if document already has this value to avoid re-entrancy issues
             let current_text = doc.with_untracked(|d| d.text());

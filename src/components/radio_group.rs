@@ -171,7 +171,7 @@ impl RadioGroupItem {
 
         // Container
         let container =
-            floem::views::h_stack((radio_circle, label_view)).style(|s| s.gap_2().items_center());
+            floem::views::Stack::horizontal((radio_circle, label_view)).style(|s| s.gap_2().items_center());
 
         if !disabled {
             container

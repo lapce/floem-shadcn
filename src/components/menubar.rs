@@ -211,7 +211,7 @@ impl<C: IntoView + 'static> IntoView for MenubarMenu<C> {
             });
 
         Box::new(
-            floem::views::Container::new(floem::views::stack((trigger, backdrop, dropdown)))
+            floem::views::Container::new(floem::views::Stack::new((trigger, backdrop, dropdown)))
                 .style(|s| s.position(floem::style::Position::Relative)),
         )
     }
@@ -396,7 +396,7 @@ impl IntoView for MenubarItem {
             floem::views::Empty::new().into_any()
         };
 
-        let row = floem::views::h_stack((label_view, shortcut_view)).style(move |s| {
+        let row = floem::views::Stack::horizontal((label_view, shortcut_view)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
                     .width_full()
@@ -546,7 +546,7 @@ impl IntoView for MenubarCheckboxItem {
             })
         });
 
-        let row = floem::views::h_stack((check_indicator, label_view)).style(move |s| {
+        let row = floem::views::Stack::horizontal((check_indicator, label_view)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
                     .width_full()

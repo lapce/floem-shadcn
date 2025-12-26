@@ -62,7 +62,9 @@ impl Progress {
         let max = self.max;
 
         // The track (background)
-        let track = floem::views::Container::new(
+        
+
+        floem::views::Container::new(
             // The indicator (foreground)
             floem::views::Empty::new()
                 .style(move |s| {
@@ -85,9 +87,7 @@ impl Progress {
                 .height(8.0)
                 .border_radius(4.0)
                 .with_shadcn_theme(|s, t| s.background(t.muted))
-        });
-
-        track
+        })
     }
 }
 

@@ -138,7 +138,7 @@ impl IntoView for Combobox {
 
         // shadcn/ui ComboboxTrigger (v4):
         // Similar to SelectTrigger - border-input rounded-md px-3 py-2 text-sm shadow-xs h-9
-        let trigger = floem::views::h_stack((
+        let trigger = floem::views::Stack::horizontal((
             // Selected value or placeholder
             floem::views::Label::derived(move || {
                 if let Some(val) = selected.get() {
@@ -261,7 +261,7 @@ impl IntoView for Combobox {
 
         // shadcn/ui ComboboxList (v4):
         // scroll-py-1 overflow-y-auto p-1
-        let items_container = floem::views::v_stack((
+        let items_container = floem::views::Stack::vertical((
             item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, empty_view,
         ))
         .style(|s| {
@@ -271,7 +271,7 @@ impl IntoView for Combobox {
 
         // Dropdown in Overlay - escapes parent clipping and z-index constraints
         let dropdown_overlay = floem::views::Overlay::new(
-            floem::views::stack((
+            floem::views::Stack::new((
                 // Backdrop - closes dropdown when clicking outside
                 floem::views::Empty::new()
                     .style(move |s| {
@@ -283,7 +283,7 @@ impl IntoView for Combobox {
                         search.set(String::new());
                     }),
                 // Dropdown content - positioned relative to trigger using window coordinates
-                floem::views::v_stack((search_input, items_container))
+                floem::views::Stack::vertical((search_input, items_container))
                     .style(move |s| {
                         s.with_shadcn_theme(move |s, t| {
                             let origin = trigger_origin.get();
@@ -313,7 +313,7 @@ impl IntoView for Combobox {
             }),
         );
 
-        Box::new(floem::views::stack((trigger, dropdown_overlay)))
+        Box::new(floem::views::Stack::new((trigger, dropdown_overlay)))
     }
 }
 
@@ -333,7 +333,7 @@ fn create_combobox_item(
     // py-1.5 pr-8 pl-2 text-sm rounded-sm
     // data-highlighted:bg-accent data-highlighted:text-accent-foreground
     // CheckIcon size-4 at absolute right-2
-    floem::views::h_stack((
+    floem::views::Stack::horizontal((
         // Check icon (visible when selected)
         floem::views::Label::new("✓").style(move |s| {
             let items = items_for_label.clone();
@@ -760,7 +760,7 @@ impl<V: IntoView + 'static> IntoView for ComboboxGroup<V> {
             })
         });
 
-        Box::new(floem::views::v_stack((label_view, self.child)))
+        Box::new(floem::views::Stack::vertical((label_view, self.child)))
     }
 }
 
@@ -839,7 +839,7 @@ impl IntoView for ComboboxItem {
         // data-highlighted:bg-accent data-highlighted:text-accent-foreground
         // CheckIcon size-4 at absolute right-2
         Box::new(
-            floem::views::h_stack((
+            floem::views::Stack::horizontal((
                 // Check icon
                 floem::views::Label::new("✓").style(move |s| {
                     let val = value.clone();

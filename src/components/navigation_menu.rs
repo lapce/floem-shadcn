@@ -225,7 +225,7 @@ impl<C: IntoView + 'static> IntoView for NavigationMenuItem<C> {
         };
 
         Box::new(
-            floem::views::Container::new(floem::views::stack((trigger, dropdown)))
+            floem::views::Container::new(floem::views::Stack::new((trigger, dropdown)))
                 .style(|s| s.position(floem::style::Position::Relative))
                 .on_event_stop(floem::event::EventListener::PointerLeave, move |_| {
                     is_open.set(false);
@@ -412,7 +412,7 @@ impl IntoView for NavigationMenuLink {
             floem::views::Empty::new().into_any()
         };
 
-        let container = floem::views::v_stack((title, desc_view)).style(|s| {
+        let container = floem::views::Stack::vertical((title, desc_view)).style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.padding(8.0)
                     .border_radius(t.radius)

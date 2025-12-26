@@ -76,7 +76,7 @@ impl IntoView for DatePicker {
         let is_open = RwSignal::new(false);
 
         // Trigger button
-        let trigger = floem::views::h_stack((
+        let trigger = floem::views::Stack::horizontal((
             // Calendar icon
             floem::views::Label::new("📅").style(|s| s.font_size(14.0)),
             // Date text or placeholder
@@ -195,7 +195,7 @@ impl IntoView for DatePicker {
             });
 
         Box::new(
-            floem::views::Container::new(floem::views::stack((trigger, backdrop, popup)))
+            floem::views::Container::new(floem::views::Stack::new((trigger, backdrop, popup)))
                 .style(|s| s.position(floem::style::Position::Relative)),
         )
     }
@@ -208,7 +208,7 @@ fn create_calendar_content(
     is_open: RwSignal<bool>,
 ) -> impl IntoView {
     // Header with navigation
-    let header = floem::views::h_stack((
+    let header = floem::views::Stack::horizontal((
         // Previous month button
         floem::views::Label::new("◀")
             .style(|s| {
@@ -285,7 +285,7 @@ fn create_calendar_content(
     .style(|s| s.width_full().items_center().margin_bottom(8.0));
 
     // Day of week headers
-    let day_headers = floem::views::h_stack((
+    let day_headers = floem::views::Stack::horizontal((
         day_header("Su"),
         day_header("Mo"),
         day_header("Tu"),
@@ -304,7 +304,7 @@ fn create_calendar_content(
     let week5 = create_picker_week(4, selected, view_year, view_month, is_open);
     let week6 = create_picker_week(5, selected, view_year, view_month, is_open);
 
-    floem::views::v_stack((
+    floem::views::Stack::vertical((
         header,
         day_headers,
         week1,
@@ -338,8 +338,8 @@ fn create_picker_week(
     view_month: RwSignal<u32>,
     is_open: RwSignal<bool>,
 ) -> impl IntoView {
-    floem::views::h_stack((
-        create_picker_day(week * 7 + 0, selected, view_year, view_month, is_open),
+    floem::views::Stack::horizontal((
+        create_picker_day(week * 7, selected, view_year, view_month, is_open),
         create_picker_day(week * 7 + 1, selected, view_year, view_month, is_open),
         create_picker_day(week * 7 + 2, selected, view_year, view_month, is_open),
         create_picker_day(week * 7 + 3, selected, view_year, view_month, is_open),
@@ -443,7 +443,7 @@ fn get_weekday(year: i32, month: u32, day: u32) -> i32 {
     let h = (d + (13 * (m + 1)) / 5 + k + k / 4 + j / 4 - 2 * j) % 7;
 
     // Convert to Sunday = 0
-    ((h + 6) % 7) as i32
+    (h + 6) % 7
 }
 
 fn get_days_in_month(year: i32, month: u32) -> i32 {
@@ -527,7 +527,7 @@ impl IntoView for DateRangePicker {
         let is_open = RwSignal::new(false);
 
         // Trigger button
-        let trigger = floem::views::h_stack((
+        let trigger = floem::views::Stack::horizontal((
             floem::views::Label::new("📅").style(|s| s.font_size(14.0)),
             floem::views::Label::derived(move || match (start.get(), end.get()) {
                 (Some(s), Some(e)) => {
@@ -640,7 +640,7 @@ impl IntoView for DateRangePicker {
             });
 
         Box::new(
-            floem::views::Container::new(floem::views::stack((trigger, backdrop, popup)))
+            floem::views::Container::new(floem::views::Stack::new((trigger, backdrop, popup)))
                 .style(|s| s.position(floem::style::Position::Relative)),
         )
     }

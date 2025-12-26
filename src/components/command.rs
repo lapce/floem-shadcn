@@ -28,7 +28,7 @@
 
 use floem::prelude::*;
 use floem::{HasViewId, ViewId};
-use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::RwSignal;
 use floem::style::CursorStyle;
 use floem::views::{Decorators, text_input};
 
@@ -120,7 +120,7 @@ impl<C: IntoView + 'static> IntoView for Command<C> {
             floem::views::Empty::new().into_any()
         };
 
-        Box::new(floem::views::v_stack((input, content_view)).style(|s| {
+        Box::new(floem::views::Stack::vertical((input, content_view)).style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.width_full()
                     .background(t.popover)
@@ -354,7 +354,7 @@ impl<V: IntoView + 'static> IntoView for CommandGroup<V> {
             floem::views::Empty::new().into_any()
         };
 
-        Box::new(floem::views::v_stack((heading_view, items_view)))
+        Box::new(floem::views::Stack::vertical((heading_view, items_view)))
     }
 }
 

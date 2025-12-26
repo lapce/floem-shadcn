@@ -133,7 +133,7 @@ impl IntoView for Select {
         // border-input rounded-md bg-transparent px-3 py-2 text-sm shadow-xs
         // data-[size=default]:h-9 (36px)
         // ChevronDownIcon size-4 opacity-50
-        let trigger = floem::views::h_stack((
+        let trigger = floem::views::Stack::horizontal((
             // Selected value or placeholder
             floem::views::Label::derived(move || {
                 if let Some(val) = selected.get() {
@@ -216,14 +216,14 @@ impl IntoView for Select {
         let item8 = create_select_item(8, items.clone(), selected, is_open);
         let item9 = create_select_item(9, items.clone(), selected, is_open);
 
-        let items_container = floem::views::v_stack((
+        let items_container = floem::views::Stack::vertical((
             item0, item1, item2, item3, item4, item5, item6, item7, item8, item9,
         ))
         .style(|s| s.width_full().max_height(300.0));
 
         // Dropdown in Overlay - escapes parent clipping and z-index constraints
         let dropdown_overlay = Overlay::new(
-            floem::views::stack((
+            floem::views::Stack::new((
                 // Backdrop - closes dropdown when clicking outside
                 floem::views::Empty::new()
                     .style(move |s| {
@@ -265,7 +265,7 @@ impl IntoView for Select {
             }),
         );
 
-        Box::new(floem::views::stack((trigger, dropdown_overlay)))
+        Box::new(floem::views::Stack::new((trigger, dropdown_overlay)))
     }
 }
 
@@ -285,7 +285,7 @@ fn create_select_item(
     // py-1.5 pr-8 pl-2 text-sm rounded-sm
     // focus:bg-accent focus:text-accent-foreground
     // CheckIcon size-4 at absolute right-2
-    floem::views::h_stack((
+    floem::views::Stack::horizontal((
         // Check icon (visible when selected)
         floem::views::Label::new("✓").style(move |s| {
             let items = items_for_label.clone();
@@ -573,7 +573,7 @@ impl IntoView for SelectItem {
         // focus:bg-accent focus:text-accent-foreground
         // CheckIcon size-4 at absolute right-2
         Box::new(
-            floem::views::h_stack((
+            floem::views::Stack::horizontal((
                 // Check icon
                 floem::views::Label::new("✓").style(move |s| {
                     let val = value.clone();
@@ -776,6 +776,6 @@ impl<V: IntoView + 'static> IntoView for SelectGroup<V> {
 
     fn into_view(self) -> Self::V {
         let label_view = SelectLabel::new(self.label);
-        Box::new(floem::views::v_stack((label_view, self.child)))
+        Box::new(floem::views::Stack::vertical((label_view, self.child)))
     }
 }

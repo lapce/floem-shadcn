@@ -225,11 +225,11 @@ impl IntoView for AlertDialog {
 
         // Footer with buttons
         let footer =
-            floem::views::h_stack((cancel_btn, action_btn)).style(|s| s.gap(8.0).justify_end());
+            floem::views::Stack::horizontal((cancel_btn, action_btn)).style(|s| s.gap(8.0).justify_end());
 
         // Dialog content in Overlay - escapes parent clipping
         let dialog_overlay = Overlay::new(
-            floem::views::stack((
+            floem::views::Stack::new((
                 // Backdrop - semi-transparent, doesn't close on click for alert dialogs
                 floem::views::Empty::new()
                     .style(move |s| {
@@ -241,7 +241,7 @@ impl IntoView for AlertDialog {
                         // Don't close on backdrop click for alert dialogs
                     }),
                 // Content wrapper - centered modal
-                floem::views::v_stack((title_view, desc_view, footer))
+                floem::views::Stack::vertical((title_view, desc_view, footer))
                     .style(move |s| {
                         s.absolute()
                             .left_1_2()
@@ -271,7 +271,7 @@ impl IntoView for AlertDialog {
             }),
         );
 
-        Box::new(floem::views::stack((trigger, dialog_overlay)))
+        Box::new(floem::views::Stack::new((trigger, dialog_overlay)))
     }
 }
 
@@ -358,7 +358,7 @@ impl<V: IntoView + 'static> IntoView for AlertDialogContent<V> {
 
         // Alert dialog content in Overlay - escapes parent clipping
         Box::new(Overlay::new(
-            floem::views::stack((
+            floem::views::Stack::new((
                 // Backdrop - semi-transparent, doesn't close on click for alert dialogs
                 floem::views::Empty::new()
                     .style(move |s| {

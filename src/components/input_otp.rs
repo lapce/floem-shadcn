@@ -15,7 +15,7 @@
 
 use floem::prelude::*;
 use floem::{HasViewId, ViewId};
-use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet};
 use floem::views::Decorators;
 
 use crate::theme::ShadcnThemeExt;
@@ -77,7 +77,7 @@ impl IntoView for InputOTP {
 }
 
 fn create_otp_group_4(value: RwSignal<String>, mask: bool) -> impl IntoView {
-    floem::views::h_stack((
+    floem::views::Stack::horizontal((
         create_otp_slot(value, 0, mask),
         create_otp_slot(value, 1, mask),
         create_otp_slot(value, 2, mask),
@@ -87,7 +87,7 @@ fn create_otp_group_4(value: RwSignal<String>, mask: bool) -> impl IntoView {
 }
 
 fn create_otp_group_6(value: RwSignal<String>, mask: bool) -> impl IntoView {
-    floem::views::h_stack((
+    floem::views::Stack::horizontal((
         create_otp_slot(value, 0, mask),
         create_otp_slot(value, 1, mask),
         create_otp_slot(value, 2, mask),

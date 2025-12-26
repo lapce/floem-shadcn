@@ -161,7 +161,7 @@ impl IntoView for Pagination {
             });
 
         Box::new(
-            floem::views::h_stack((
+            floem::views::Stack::horizontal((
                 prev_btn, page1, page2, page3, page4, page5, page6, page7, next_btn,
             ))
             .style(|s| s.gap(4.0).items_center()),
@@ -477,7 +477,7 @@ impl IntoView for PaginationPrevious {
         let label = self.label;
 
         Box::new(
-            floem::views::h_stack((
+            floem::views::Stack::horizontal((
                 floem::views::Label::new("◀").style(|s| s.font_size(12.0)),
                 floem::views::Label::new(label),
             ))
@@ -567,7 +567,7 @@ impl IntoView for PaginationNext {
         let label = self.label;
 
         Box::new(
-            floem::views::h_stack((
+            floem::views::Stack::horizontal((
                 floem::views::Label::new(label),
                 floem::views::Label::new("▶").style(|s| s.font_size(12.0)),
             ))

@@ -308,7 +308,7 @@ impl IntoView for DialogContent {
             // Like shadcn/ui, DialogContent includes the portal and overlay
             Box::new(Overlay::with_id(
                 id,
-                floem::views::stack((
+                floem::views::Stack::new((
                     // Backdrop - semi-transparent overlay that closes dialog when clicked
                     floem::views::Empty::new()
                         .style(move |s| {
@@ -320,7 +320,7 @@ impl IntoView for DialogContent {
                             open.set(false);
                         }),
                     // Content wrapper - centered modal with vertical stack for children
-                    floem::views::v_stack_from_iter(children)
+                    floem::views::Stack::vertical_from_iter(children)
                         .style(move |s| {
                             s.absolute()
                                 .left_1_2()
@@ -438,7 +438,7 @@ impl IntoView for DialogHeader {
             })));
         }
 
-        Box::new(floem::views::v_stack_from_iter(children).style(|s| s.gap_2())) // gap-2 = 8px
+        Box::new(floem::views::Stack::vertical_from_iter(children).style(|s| s.gap_2())) // gap-2 = 8px
     }
 }
 

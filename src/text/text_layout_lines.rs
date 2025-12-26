@@ -115,7 +115,7 @@ impl TextLayoutLines {
     }
 
     // Iter over the visual lines given the range of offsets
-    pub fn visual_lines(&self, range: Range<usize>) -> VisualLineIter {
+    pub fn visual_lines(&self, range: Range<usize>) -> VisualLineIter<'_> {
         let height = self.point_of_offset(range.start).line_top as f32;
         let vline = self.vline_of_offset(range.start);
         VisualLineIter {

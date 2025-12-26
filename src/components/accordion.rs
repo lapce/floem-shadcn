@@ -115,7 +115,7 @@ impl AccordionItem {
         let item_id_content = id.clone();
 
         let trigger = floem::views::Container::new(
-            floem::views::h_stack((
+            floem::views::Stack::horizontal((
                 floem::views::Label::new(title).style(|s| {
                     s.with_shadcn_theme(|s, t| {
                         s.font_size(14.0)
@@ -187,7 +187,7 @@ impl AccordionItem {
                 })
             });
 
-        floem::views::v_stack((trigger, content_view)).style(|s| s.width_full())
+        floem::views::Stack::vertical((trigger, content_view)).style(|s| s.width_full())
     }
 }
 

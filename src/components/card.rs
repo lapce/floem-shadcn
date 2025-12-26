@@ -46,7 +46,7 @@ impl<C: IntoViewIter> Card<C> {
 
     /// Build the card view with reactive styling
     pub fn build(self) -> impl IntoView {
-        floem::views::v_stack_from_iter(self.children.into_view_iter()).style(|s| {
+        floem::views::Stack::vertical_from_iter(self.children.into_view_iter()).style(|s| {
             s.gap_6()
                 .rounded_xl()
                 .border(1.0)
@@ -154,7 +154,7 @@ impl IntoView for CardHeader {
             )));
         }
 
-        Box::new(floem::views::v_stack_from_iter(children).style(|s| s.gap(8.0).px_6())) // gap-2 px-6
+        Box::new(floem::views::Stack::vertical_from_iter(children).style(|s| s.gap(8.0).px_6())) // gap-2 px-6
     }
 }
 

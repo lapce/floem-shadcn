@@ -201,12 +201,12 @@ impl<I: IntoView + 'static> IntoView for Carousel<I> {
         // Layout based on orientation
         let carousel_body = match orientation {
             CarouselOrientation::Horizontal => {
-                floem::views::h_stack((prev_button, content, next_button))
+                floem::views::Stack::horizontal((prev_button, content, next_button))
                     .style(|s| s.width_full().items_center().gap(8.0))
                     .into_any()
             }
             CarouselOrientation::Vertical => {
-                floem::views::v_stack((prev_button, content, next_button))
+                floem::views::Stack::vertical((prev_button, content, next_button))
                     .style(|s| s.height_full().items_center().gap(8.0))
                     .into_any()
             }

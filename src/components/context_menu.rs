@@ -155,7 +155,7 @@ where
                 open.set(false);
             });
 
-        floem::views::Container::new(floem::views::stack((trigger_view, backdrop, content_view)))
+        floem::views::Container::new(floem::views::Stack::new((trigger_view, backdrop, content_view)))
             .style(|s| s.position(floem::style::Position::Relative))
     }
 }
@@ -325,7 +325,7 @@ impl IntoView for ContextMenuItem {
             floem::views::Empty::new().into_any()
         };
 
-        let row = floem::views::h_stack((label, shortcut_view)).style(move |s| {
+        let row = floem::views::Stack::horizontal((label, shortcut_view)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
                     .width_full()

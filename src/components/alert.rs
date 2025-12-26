@@ -128,11 +128,11 @@ impl Alert {
         }
 
         children.push(Box::new(
-            floem::views::v_stack_from_iter(content_children)
+            floem::views::Stack::vertical_from_iter(content_children)
                 .style(|s| s.gap(4.0).flex_grow(1.0))
         ));
 
-        floem::views::h_stack_from_iter(children)
+        floem::views::Stack::horizontal_from_iter(children)
             .style(move |s| {
                 s.width_full()
                     .padding(16.0)

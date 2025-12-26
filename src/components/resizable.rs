@@ -19,7 +19,7 @@
 
 use floem::prelude::*;
 use floem::{HasViewId, ViewId};
-use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::RwSignal;
 use floem::style::CursorStyle;
 use floem::views::Decorators;
 

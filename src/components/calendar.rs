@@ -212,11 +212,11 @@ impl IntoView for Calendar {
             })
         });
 
-        let header = floem::views::h_stack((prev_button, month_label, next_button))
+        let header = floem::views::Stack::horizontal((prev_button, month_label, next_button))
             .style(|s| s.width_full().padding_bottom(8.0).items_center());
 
         // Day names row
-        let day_names = floem::views::h_stack((
+        let day_names = floem::views::Stack::horizontal((
             day_header("Su"),
             day_header("Mo"),
             day_header("Tu"),
@@ -229,7 +229,7 @@ impl IntoView for Calendar {
 
         // Calendar grid - create cells for all 42 positions (6 weeks x 7 days)
         // We'll use reactive labels that update based on the current month
-        let grid = floem::views::v_stack((
+        let grid = floem::views::Stack::vertical((
             create_week_row(0, selected, view_year, view_month),
             create_week_row(1, selected, view_year, view_month),
             create_week_row(2, selected, view_year, view_month),
@@ -239,7 +239,7 @@ impl IntoView for Calendar {
         ))
         .style(|s| s.gap(2.0));
 
-        Box::new(floem::views::v_stack((header, day_names, grid)).style(|s| {
+        Box::new(floem::views::Stack::vertical((header, day_names, grid)).style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.padding(12.0)
                     .background(t.card)
@@ -257,8 +257,8 @@ fn create_week_row(
     view_year: RwSignal<i32>,
     view_month: RwSignal<u32>,
 ) -> impl IntoView {
-    floem::views::h_stack((
-        create_day_cell(week * 7 + 0, selected, view_year, view_month),
+    floem::views::Stack::horizontal((
+        create_day_cell(week * 7, selected, view_year, view_month),
         create_day_cell(week * 7 + 1, selected, view_year, view_month),
         create_day_cell(week * 7 + 2, selected, view_year, view_month),
         create_day_cell(week * 7 + 3, selected, view_year, view_month),
@@ -398,7 +398,7 @@ impl IntoView for CalendarSimple {
             });
 
         // Day names
-        let day_names = floem::views::h_stack((
+        let day_names = floem::views::Stack::horizontal((
             day_header("Su"),
             day_header("Mo"),
             day_header("Tu"),
@@ -413,7 +413,7 @@ impl IntoView for CalendarSimple {
         let first_day = SimpleDate::first_day_of_week(year, month) as i32;
         let days_in_month = SimpleDate::days_in_month(year, month) as i32;
 
-        let grid = floem::views::v_stack((
+        let grid = floem::views::Stack::vertical((
             create_static_week(0, first_day, days_in_month),
             create_static_week(1, first_day, days_in_month),
             create_static_week(2, first_day, days_in_month),
@@ -423,7 +423,7 @@ impl IntoView for CalendarSimple {
         ))
         .style(|s| s.gap(2.0));
 
-        Box::new(floem::views::v_stack((title, day_names, grid)).style(|s| {
+        Box::new(floem::views::Stack::vertical((title, day_names, grid)).style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.padding(12.0)
                     .background(t.card)
@@ -436,8 +436,8 @@ impl IntoView for CalendarSimple {
 }
 
 fn create_static_week(week: i32, first_day: i32, days_in_month: i32) -> impl IntoView {
-    floem::views::h_stack((
-        static_day_cell(week * 7 + 0, first_day, days_in_month),
+    floem::views::Stack::horizontal((
+        static_day_cell(week * 7, first_day, days_in_month),
         static_day_cell(week * 7 + 1, first_day, days_in_month),
         static_day_cell(week * 7 + 2, first_day, days_in_month),
         static_day_cell(week * 7 + 3, first_day, days_in_month),

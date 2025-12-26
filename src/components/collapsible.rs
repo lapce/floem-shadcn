@@ -13,7 +13,7 @@
 //! Collapsible::new(open)
 //!     .trigger(|| label(|| "Toggle"))
 //!     .content(|| {
-//!         v_stack((
+//!         Stack::vertical((
 //!             label(|| "Item 1"),
 //!             label(|| "Item 2"),
 //!             label(|| "Item 3"),
@@ -133,7 +133,7 @@ where
             floem::views::Empty::new().into_any()
         };
 
-        floem::views::v_stack((trigger_view, content_view))
+        floem::views::Stack::vertical((trigger_view, content_view))
     }
 }
 

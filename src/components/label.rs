@@ -191,7 +191,7 @@ impl<V: IntoView + 'static> IntoView for LabelWithIcon<V> {
             });
 
         Box::new(
-            floem::views::h_stack((self.icon, label))
+            floem::views::Stack::horizontal((self.icon, label))
                 .style(|s| {
                     s.display(floem::style::Display::Flex)
                         .flex_direction(floem::style::FlexDirection::Row)
@@ -283,7 +283,7 @@ impl<L: IntoView + 'static, I: IntoView + 'static> IntoView for FormField<L, I> 
         };
 
         Box::new(
-            floem::views::v_stack((self.label, self.input, desc_view, error_view))
+            floem::views::Stack::vertical((self.label, self.input, desc_view, error_view))
                 .style(|s| {
                     s.display(floem::style::Display::Flex)
                         .flex_direction(floem::style::FlexDirection::Column)

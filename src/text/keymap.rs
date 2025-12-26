@@ -513,7 +513,7 @@ impl Keymap {
     pub fn get(&self, key: &Key, modifiers: &Modifiers) -> Option<&Command> {
         let keypress = KeyPress {
             key: key.clone(),
-            modifiers: modifiers.clone(),
+            modifiers: *modifiers,
         };
 
         self.keymaps.get(&keypress).or_else(|| {

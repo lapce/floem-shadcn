@@ -11,7 +11,7 @@
 //! let open = RwSignal::new(false);
 //!
 //! Sheet::new(open, SheetContent::new(
-//!     v_stack((
+//!     Stack::vertical((
 //!         label(|| "Sheet Title"),
 //!         label(|| "Sheet content goes here..."),
 //!     ))
@@ -90,7 +90,7 @@ impl<V: IntoView + 'static> IntoView for Sheet<V> {
 
         // Use Overlay with fixed positioning
         let sheet_overlay = Overlay::new(
-            floem::views::stack((backdrop, content_wrapper))
+            floem::views::Stack::new((backdrop, content_wrapper))
                 .style(|s| s.width_full().height_full()),
         )
         .style(move |s| {

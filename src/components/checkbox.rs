@@ -144,7 +144,7 @@ impl Checkbox {
                 label_view.into_any()
             };
 
-            floem::views::h_stack((checkbox_box, label_view))
+            floem::views::Stack::horizontal((checkbox_box, label_view))
                 .style(|s| s.gap_2().items_center()) // gap-2 = 8px
                 .into_any()
         } else {

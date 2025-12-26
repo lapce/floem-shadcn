@@ -183,7 +183,7 @@ where
             floem::views::Empty::new().into_any()
         };
 
-        floem::views::Container::new(floem::views::stack((trigger_view, content_view)))
+        floem::views::Container::new(floem::views::Stack::new((trigger_view, content_view)))
             .style(|s| s.position(floem::style::Position::Relative))
     }
 }

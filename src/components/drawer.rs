@@ -116,7 +116,7 @@ impl<V: IntoView + 'static> IntoView for Drawer<V> {
         };
 
         // Drawer panel
-        let drawer_panel = floem::views::v_stack((handle, content_view)).style(move |s| {
+        let drawer_panel = floem::views::Stack::vertical((handle, content_view)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
                     .absolute()
@@ -175,7 +175,7 @@ impl<V: IntoView + 'static> IntoView for Drawer<V> {
 
         // Use Overlay with fixed positioning
         let drawer_overlay = Overlay::new(
-            floem::views::stack((backdrop, drawer_panel))
+            floem::views::Stack::new((backdrop, drawer_panel))
                 .style(|s| s.width_full().height_full()),
         )
         .style(move |s| {

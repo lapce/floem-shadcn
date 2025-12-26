@@ -8,14 +8,14 @@
 //! use floem_shadcn::components::scroll_area::ScrollArea;
 //!
 //! // Vertical scroll
-//! ScrollArea::new(v_stack((
+//! ScrollArea::new(Stack::vertical((
 //!     label(|| "Item 1"),
 //!     label(|| "Item 2"),
 //!     // ... many items
 //! ))).height(200.0);
 //!
 //! // Horizontal scroll
-//! ScrollArea::new(h_stack((
+//! ScrollArea::new(Stack::horizontal((
 //!     label(|| "Column 1"),
 //!     label(|| "Column 2"),
 //!     // ... many columns
@@ -117,13 +117,13 @@ impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
                 .style(move |s| {
                     s.with_shadcn_theme(move |s, t| {
                         let base = s.border_radius(t.radius).flex_grow(1.0).flex_basis(0.0);
-                        let with_dims = match (width, height) {
+                        
+                        match (width, height) {
                             (Some(w), Some(h)) => base.width(w).height(h),
                             (Some(w), None) => base.width(w),
                             (None, Some(h)) => base.height(h),
                             (None, None) => base,
-                        };
-                        with_dims
+                        }
                     })
                 })
                 .into_any(),
@@ -131,13 +131,13 @@ impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
                 .style(move |s| {
                     s.with_shadcn_theme(move |s, t| {
                         let base = s.border_radius(t.radius).flex_grow(1.0).flex_basis(0.0);
-                        let with_dims = match (width, height) {
+                        
+                        match (width, height) {
                             (Some(w), Some(h)) => base.width(w).height(h),
                             (Some(w), None) => base.width(w),
                             (None, Some(h)) => base.height(h),
                             (None, None) => base,
-                        };
-                        with_dims
+                        }
                     })
                 })
                 .into_any(),
@@ -145,13 +145,13 @@ impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
                 .style(move |s| {
                     s.with_shadcn_theme(move |s, t| {
                         let base = s.border_radius(t.radius).flex_grow(1.0).flex_basis(0.0);
-                        let with_dims = match (width, height) {
+                        
+                        match (width, height) {
                             (Some(w), Some(h)) => base.width(w).height(h),
                             (Some(w), None) => base.width(w),
                             (None, Some(h)) => base.height(h),
                             (None, None) => base,
-                        };
-                        with_dims
+                        }
                     })
                 })
                 .into_any(),
@@ -227,13 +227,13 @@ impl<V: IntoView + 'static> IntoView for ScrollAreaWithBar<V> {
                     .border_radius(t.radius)
                     .flex_grow(1.0)
                     .flex_basis(0.0);
-                let with_dims = match (width, height) {
+                
+                match (width, height) {
                     (Some(w), Some(h)) => base.width(w).height(h),
                     (Some(w), None) => base.width(w),
                     (None, Some(h)) => base.height(h),
                     (None, None) => base,
-                };
-                with_dims
+                }
             })
         }))
     }

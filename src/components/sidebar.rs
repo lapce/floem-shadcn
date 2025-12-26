@@ -136,7 +136,7 @@ impl IntoView for Sidebar {
         let footer_view: Box<dyn View> = footer.unwrap_or_else(|| ().into_any());
 
         Box::new(
-            v_stack((header_view, content_view, footer_view)).style(move |s| {
+            Stack::vertical((header_view, content_view, footer_view)).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     s.width(width)
                         .height_full()

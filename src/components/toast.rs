@@ -152,7 +152,7 @@ impl IntoView for ToastContainer {
                     })
                     .collect();
 
-                floem::views::v_stack_from_iter(views)
+                floem::views::Stack::vertical_from_iter(views)
                     .style(|s| s.gap(8.0))
                     .into_any()
             },
@@ -270,9 +270,9 @@ impl IntoView for Toast {
         };
 
         // Content stack
-        let content = floem::views::v_stack((title_view, desc_view)).style(|s| s.flex_grow(1.0));
+        let content = floem::views::Stack::vertical((title_view, desc_view)).style(|s| s.flex_grow(1.0));
 
-        Box::new(floem::views::h_stack((content, close_btn)).style(move |s| {
+        Box::new(floem::views::Stack::horizontal((content, close_btn)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
                     .min_width(300.0)

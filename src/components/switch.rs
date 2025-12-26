@@ -156,7 +156,7 @@ impl Switch {
                 label_view.into_any()
             };
 
-            floem::views::h_stack((track, label_view))
+            floem::views::Stack::horizontal((track, label_view))
                 .style(|s| s.gap_2().items_center()) // gap-2 = 8px
                 .into_any()
         } else {
