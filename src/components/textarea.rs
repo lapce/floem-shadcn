@@ -77,8 +77,8 @@ impl Textarea {
         let min_height = (self.rows as f64) * 24.0 + 16.0; // line height * rows + padding
 
         // Use our custom multi-line TextArea, passing our ViewId for proper HasViewId impl
-        let mut textarea = TextAreaView::with_text_and_id(self.initial_value, self.id)
-            .resizable(self.resizable);
+        let mut textarea =
+            TextAreaView::with_text_and_id(self.initial_value, self.id).resizable(self.resizable);
 
         if let Some(on_change) = self.on_change {
             textarea = textarea.on_update(move |text| {

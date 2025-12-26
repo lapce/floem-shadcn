@@ -45,7 +45,6 @@ use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
-
 // ============================================================================
 // Sidebar - Main container
 // ============================================================================
@@ -471,14 +470,16 @@ impl<V: IntoView + 'static> IntoView for SidebarGroupAction<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.with_shadcn_theme(|s, t| {
-                s.padding(4.0)
-                    .border_radius(t.radius_sm)
-                    .cursor(CursorStyle::Pointer)
-                    .hover(|s| s.background(t.accent))
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(|s, t| {
+                    s.padding(4.0)
+                        .border_radius(t.radius_sm)
+                        .cursor(CursorStyle::Pointer)
+                        .hover(|s| s.background(t.accent))
+                })
+            }),
+        )
     }
 }
 
@@ -626,34 +627,37 @@ impl IntoView for SidebarMenuButton {
         let is_active: Rc<Option<Box<dyn Fn() -> bool>>> = Rc::new(self.is_active);
 
         Box::new(
-            floem::views::Container::with_id(self.id, floem::views::Label::derived(move || label.clone()))
-                .style(move |s| {
-                    let is_active = is_active.clone();
-                    s.with_shadcn_theme(move |s, t| {
-                        let active = is_active.as_ref().as_ref().map(|f| f()).unwrap_or(false);
-                        let base = s
-                            .width_full()
-                            .padding(8.0)
-                            .padding_left(12.0)
-                            .padding_right(12.0)
-                            .border_radius(t.radius_sm)
-                            .font_size(14.0)
-                            .cursor(CursorStyle::Pointer)
-                            .transition(
-                                floem::style::Background,
-                                floem::style::Transition::linear(millis(100)),
-                            )
-                            .hover(move |s| s.background(t.accent));
-                        if active {
-                            base.background(t.accent)
-                                .color(t.accent_foreground)
-                                .font_weight(Weight::MEDIUM)
-                        } else {
-                            base.background(peniko::Color::TRANSPARENT)
-                                .color(t.foreground)
-                        }
-                    })
-                }),
+            floem::views::Container::with_id(
+                self.id,
+                floem::views::Label::derived(move || label.clone()),
+            )
+            .style(move |s| {
+                let is_active = is_active.clone();
+                s.with_shadcn_theme(move |s, t| {
+                    let active = is_active.as_ref().as_ref().map(|f| f()).unwrap_or(false);
+                    let base = s
+                        .width_full()
+                        .padding(8.0)
+                        .padding_left(12.0)
+                        .padding_right(12.0)
+                        .border_radius(t.radius_sm)
+                        .font_size(14.0)
+                        .cursor(CursorStyle::Pointer)
+                        .transition(
+                            floem::style::Background,
+                            floem::style::Transition::linear(millis(100)),
+                        )
+                        .hover(move |s| s.background(t.accent));
+                    if active {
+                        base.background(t.accent)
+                            .color(t.accent_foreground)
+                            .font_weight(Weight::MEDIUM)
+                    } else {
+                        base.background(peniko::Color::TRANSPARENT)
+                            .color(t.foreground)
+                    }
+                })
+            }),
         )
     }
 }

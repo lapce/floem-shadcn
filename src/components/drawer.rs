@@ -16,10 +16,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::views::{Decorators, Overlay};
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
+use floem::views::{Decorators, Overlay};
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
@@ -48,7 +48,9 @@ pub struct Drawer<V> {
 
 impl Drawer<()> {
     /// Create a new drawer
-    pub fn new(is_open: RwSignal<bool>) -> Self { Self { id: ViewId::new(),
+    pub fn new(is_open: RwSignal<bool>) -> Self {
+        Self {
+            id: ViewId::new(),
             is_open,
             side: DrawerSide::Bottom,
             content: None,
@@ -58,7 +60,8 @@ impl Drawer<()> {
 
 impl<V> Drawer<V> {
     /// Set the side from which the drawer appears
-    pub fn side(mut self, side: DrawerSide) -> Self { self.side = side;
+    pub fn side(mut self, side: DrawerSide) -> Self {
+        self.side = side;
         self
     }
 
@@ -72,7 +75,6 @@ impl<V> Drawer<V> {
         }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for Drawer<V> {
     fn view_id(&self) -> ViewId {
@@ -204,10 +206,14 @@ pub struct DrawerTrigger<V> {
 
 impl<V: IntoView + 'static> DrawerTrigger<V> {
     /// Create a new trigger
-    pub fn new(child: V, is_open: RwSignal<bool>) -> Self { Self { id: ViewId::new(), child, is_open }
+    pub fn new(child: V, is_open: RwSignal<bool>) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            is_open,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DrawerTrigger<V> {
     fn view_id(&self) -> ViewId {
@@ -248,10 +254,13 @@ pub struct DrawerContent<V> {
 
 impl<V: IntoView + 'static> DrawerContent<V> {
     /// Create new content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DrawerContent<V> {
     fn view_id(&self) -> ViewId {
@@ -268,12 +277,14 @@ impl<V: IntoView + 'static> IntoView for DrawerContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .padding(16.0)
-                .display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .padding(16.0)
+                    .display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -289,10 +300,13 @@ pub struct DrawerHeader<V> {
 
 impl<V: IntoView + 'static> DrawerHeader<V> {
     /// Create a new header
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DrawerHeader<V> {
     fn view_id(&self) -> ViewId {
@@ -309,13 +323,15 @@ impl<V: IntoView + 'static> IntoView for DrawerHeader<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .padding_bottom(16.0)
-                .display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-                .items_center()
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .padding_bottom(16.0)
+                    .display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .items_center()
+            }),
+        )
     }
 }
 
@@ -331,10 +347,13 @@ pub struct DrawerTitle {
 
 impl DrawerTitle {
     /// Create a new title
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
-
 
 impl HasViewId for DrawerTitle {
     fn view_id(&self) -> ViewId {
@@ -375,10 +394,13 @@ pub struct DrawerDescription {
 
 impl DrawerDescription {
     /// Create a new description
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
-
 
 impl HasViewId for DrawerDescription {
     fn view_id(&self) -> ViewId {
@@ -417,10 +439,13 @@ pub struct DrawerFooter<V> {
 
 impl<V: IntoView + 'static> DrawerFooter<V> {
     /// Create a new footer
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DrawerFooter<V> {
     fn view_id(&self) -> ViewId {
@@ -437,13 +462,15 @@ impl<V: IntoView + 'static> IntoView for DrawerFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .padding_top(16.0)
-                .display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-                .gap(8.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .padding_top(16.0)
+                    .display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .gap(8.0)
+            }),
+        )
     }
 }
 
@@ -460,10 +487,14 @@ pub struct DrawerClose<V> {
 
 impl<V: IntoView + 'static> DrawerClose<V> {
     /// Create a new close button
-    pub fn new(child: V, is_open: RwSignal<bool>) -> Self { Self { id: ViewId::new(), child, is_open }
+    pub fn new(child: V, is_open: RwSignal<bool>) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            is_open,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DrawerClose<V> {
     fn view_id(&self) -> ViewId {

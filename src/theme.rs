@@ -6,8 +6,8 @@
 
 use floem::prop;
 use floem::style::{Style, StylePropValue};
-use peniko::color::{AlphaColor, HueDirection, Oklch, Srgb};
 use peniko::Color;
+use peniko::color::{AlphaColor, HueDirection, Oklch, Srgb};
 
 /// Create a Color from OKLCH values.
 /// - `l`: Lightness (0.0 to 1.0)
@@ -96,33 +96,33 @@ impl ShadcnTheme {
         Self {
             mode: ThemeMode::Light,
 
-            background: oklch(1.0, 0.0, 0.0),           // --background: oklch(1 0 0)
-            foreground: oklch(0.145, 0.0, 0.0),        // --foreground: oklch(0.145 0 0)
+            background: oklch(1.0, 0.0, 0.0), // --background: oklch(1 0 0)
+            foreground: oklch(0.145, 0.0, 0.0), // --foreground: oklch(0.145 0 0)
 
-            card: oklch(1.0, 0.0, 0.0),                // --card: oklch(1 0 0)
-            card_foreground: oklch(0.145, 0.0, 0.0),  // --card-foreground: oklch(0.145 0 0)
+            card: oklch(1.0, 0.0, 0.0), // --card: oklch(1 0 0)
+            card_foreground: oklch(0.145, 0.0, 0.0), // --card-foreground: oklch(0.145 0 0)
 
-            popover: oklch(1.0, 0.0, 0.0),             // --popover: oklch(1 0 0)
+            popover: oklch(1.0, 0.0, 0.0), // --popover: oklch(1 0 0)
             popover_foreground: oklch(0.145, 0.0, 0.0), // --popover-foreground: oklch(0.145 0 0)
 
-            primary: oklch(0.205, 0.0, 0.0),           // --primary: oklch(0.205 0 0)
+            primary: oklch(0.205, 0.0, 0.0), // --primary: oklch(0.205 0 0)
             primary_foreground: oklch(0.985, 0.0, 0.0), // --primary-foreground: oklch(0.985 0 0)
 
-            secondary: oklch(0.97, 0.0, 0.0),          // --secondary: oklch(0.97 0 0)
+            secondary: oklch(0.97, 0.0, 0.0), // --secondary: oklch(0.97 0 0)
             secondary_foreground: oklch(0.205, 0.0, 0.0), // --secondary-foreground: oklch(0.205 0 0)
 
-            muted: oklch(0.97, 0.0, 0.0),              // --muted: oklch(0.97 0 0)
+            muted: oklch(0.97, 0.0, 0.0), // --muted: oklch(0.97 0 0)
             muted_foreground: oklch(0.556, 0.0, 0.0), // --muted-foreground: oklch(0.556 0 0)
 
-            accent: oklch(0.97, 0.0, 0.0),             // --accent: oklch(0.97 0 0)
+            accent: oklch(0.97, 0.0, 0.0), // --accent: oklch(0.97 0 0)
             accent_foreground: oklch(0.205, 0.0, 0.0), // --accent-foreground: oklch(0.205 0 0)
 
             destructive: oklch(0.577, 0.245, 27.325), // --destructive: oklch(0.577 0.245 27.325)
             destructive_foreground: oklch(0.985, 0.0, 0.0), // --destructive-foreground: oklch(0.985 0 0)
 
-            border: oklch(0.922, 0.0, 0.0),            // --border: oklch(0.922 0 0)
-            input: oklch(0.922, 0.0, 0.0),             // --input: oklch(0.922 0 0)
-            ring: oklch(0.708, 0.0, 0.0),              // --ring: oklch(0.708 0 0)
+            border: oklch(0.922, 0.0, 0.0), // --border: oklch(0.922 0 0)
+            input: oklch(0.922, 0.0, 0.0),  // --input: oklch(0.922 0 0)
+            ring: oklch(0.708, 0.0, 0.0),   // --ring: oklch(0.708 0 0)
 
             // Radius values (in pixels)
             radius: 6.0,
@@ -138,33 +138,33 @@ impl ShadcnTheme {
         Self {
             mode: ThemeMode::Dark,
 
-            background: oklch(0.145, 0.0, 0.0),         // --background: oklch(0.145 0 0)
-            foreground: oklch(0.985, 0.0, 0.0),        // --foreground: oklch(0.985 0 0)
+            background: oklch(0.145, 0.0, 0.0), // --background: oklch(0.145 0 0)
+            foreground: oklch(0.985, 0.0, 0.0), // --foreground: oklch(0.985 0 0)
 
-            card: oklch(0.205, 0.0, 0.0),              // --card: oklch(0.205 0 0)
-            card_foreground: oklch(0.985, 0.0, 0.0),  // --card-foreground: oklch(0.985 0 0)
+            card: oklch(0.205, 0.0, 0.0), // --card: oklch(0.205 0 0)
+            card_foreground: oklch(0.985, 0.0, 0.0), // --card-foreground: oklch(0.985 0 0)
 
-            popover: oklch(0.205, 0.0, 0.0),           // --popover: oklch(0.205 0 0)
+            popover: oklch(0.205, 0.0, 0.0), // --popover: oklch(0.205 0 0)
             popover_foreground: oklch(0.985, 0.0, 0.0), // --popover-foreground: oklch(0.985 0 0)
 
-            primary: oklch(0.922, 0.0, 0.0),           // --primary: oklch(0.922 0 0)
+            primary: oklch(0.922, 0.0, 0.0), // --primary: oklch(0.922 0 0)
             primary_foreground: oklch(0.205, 0.0, 0.0), // --primary-foreground: oklch(0.205 0 0)
 
-            secondary: oklch(0.269, 0.0, 0.0),         // --secondary: oklch(0.269 0 0)
+            secondary: oklch(0.269, 0.0, 0.0), // --secondary: oklch(0.269 0 0)
             secondary_foreground: oklch(0.985, 0.0, 0.0), // --secondary-foreground: oklch(0.985 0 0)
 
-            muted: oklch(0.269, 0.0, 0.0),             // --muted: oklch(0.269 0 0)
+            muted: oklch(0.269, 0.0, 0.0), // --muted: oklch(0.269 0 0)
             muted_foreground: oklch(0.708, 0.0, 0.0), // --muted-foreground: oklch(0.708 0 0)
 
-            accent: oklch(0.269, 0.0, 0.0),            // --accent: oklch(0.269 0 0)
+            accent: oklch(0.269, 0.0, 0.0), // --accent: oklch(0.269 0 0)
             accent_foreground: oklch(0.985, 0.0, 0.0), // --accent-foreground: oklch(0.985 0 0)
 
             destructive: oklch(0.704, 0.191, 22.216), // --destructive: oklch(0.704 0.191 22.216)
             destructive_foreground: oklch(0.985, 0.0, 0.0), // --destructive-foreground: oklch(0.985 0 0)
 
-            border: oklcha(1.0, 0.0, 0.0, 0.1),        // --border: oklch(1 0 0 / 10%)
-            input: oklcha(1.0, 0.0, 0.0, 0.1),         // --input: oklch(1 0 0 / 10%)
-            ring: oklch(0.556, 0.0, 0.0),              // --ring: oklch(0.556 0 0)
+            border: oklcha(1.0, 0.0, 0.0, 0.1), // --border: oklch(1 0 0 / 10%)
+            input: oklcha(1.0, 0.0, 0.0, 0.1),  // --input: oklch(1 0 0 / 10%)
+            ring: oklch(0.556, 0.0, 0.0),       // --ring: oklch(0.556 0 0)
 
             // Radius values (same as light)
             radius: 6.0,
@@ -315,4 +315,3 @@ impl ShadcnThemeExt for Style {
         self.with_context::<ShadcnThemeProp>(f)
     }
 }
-

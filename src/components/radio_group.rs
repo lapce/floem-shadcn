@@ -18,10 +18,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
@@ -39,10 +39,14 @@ pub struct RadioGroup<V> {
 
 impl<V: IntoView + 'static> RadioGroup<V> {
     /// Create a new radio group with the given selected signal and items
-    pub fn new(selected: RwSignal<String>, child: V) -> Self { Self { id: ViewId::new(), selected, child }
+    pub fn new(selected: RwSignal<String>, child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            selected,
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for RadioGroup<V> {
     fn view_id(&self) -> ViewId {
@@ -60,11 +64,13 @@ impl<V: IntoView + 'static> IntoView for RadioGroup<V> {
 
     fn into_view(self) -> Self::V {
         // shadcn/ui: grid gap-3
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .flex_direction(floem::style::FlexDirection::Column)
-                .gap_3() // gap-3 = 12px
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .gap_3() // gap-3 = 12px
+            }),
+        )
     }
 }
 
@@ -83,7 +89,9 @@ pub struct RadioGroupItem {
 
 impl RadioGroupItem {
     /// Create a new radio item with value and label
-    pub fn new(value: impl Into<String>, label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(value: impl Into<String>, label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             value: value.into(),
             label: label.into(),
             selected_signal: None,
@@ -92,12 +100,14 @@ impl RadioGroupItem {
     }
 
     /// Set the selected signal for this item
-    pub fn selected(mut self, signal: RwSignal<String>) -> Self { self.selected_signal = Some(signal);
+    pub fn selected(mut self, signal: RwSignal<String>) -> Self {
+        self.selected_signal = Some(signal);
         self
     }
 
     /// Set the item as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
@@ -170,8 +180,8 @@ impl RadioGroupItem {
         });
 
         // Container
-        let container =
-            floem::views::Stack::horizontal((radio_circle, label_view)).style(|s| s.gap_2().items_center());
+        let container = floem::views::Stack::horizontal((radio_circle, label_view))
+            .style(|s| s.gap_2().items_center());
 
         if !disabled {
             container
@@ -186,7 +196,6 @@ impl RadioGroupItem {
         }
     }
 }
-
 
 impl HasViewId for RadioGroupItem {
     fn view_id(&self) -> ViewId {

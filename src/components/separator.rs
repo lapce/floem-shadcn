@@ -15,8 +15,8 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -59,15 +59,14 @@ impl Separator {
     pub fn build(self) -> impl IntoView {
         let orientation = self.orientation;
 
-        floem::views::Empty::new()
-            .style(move |s| {
-                let base = s.flex_shrink(0.0);
-                let base = match orientation {
-                    SeparatorOrientation::Horizontal => base.width_full().height(1.0),
-                    SeparatorOrientation::Vertical => base.height_full().width(1.0),
-                };
-                base.with_shadcn_theme(|s, t| s.background(t.border))
-            })
+        floem::views::Empty::new().style(move |s| {
+            let base = s.flex_shrink(0.0);
+            let base = match orientation {
+                SeparatorOrientation::Horizontal => base.width_full().height(1.0),
+                SeparatorOrientation::Vertical => base.height_full().width(1.0),
+            };
+            base.with_shadcn_theme(|s, t| s.background(t.border))
+        })
     }
 }
 

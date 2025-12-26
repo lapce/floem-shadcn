@@ -27,10 +27,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::RwSignal;
 use floem::style::CursorStyle;
 use floem::views::{Decorators, text_input};
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -48,7 +48,9 @@ pub struct Command<C> {
 
 impl Command<()> {
     /// Create a new command palette
-    pub fn new(search: RwSignal<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(search: RwSignal<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             search,
             placeholder: "Type a command...".to_string(),
             content: None,
@@ -58,7 +60,8 @@ impl Command<()> {
 
 impl<C> Command<C> {
     /// Set the placeholder text
-    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self { self.placeholder = placeholder.into();
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
         self
     }
 
@@ -72,7 +75,6 @@ impl<C> Command<C> {
         }
     }
 }
-
 
 impl<C: IntoView + 'static> HasViewId for Command<C> {
     fn view_id(&self) -> ViewId {
@@ -120,15 +122,17 @@ impl<C: IntoView + 'static> IntoView for Command<C> {
             floem::views::Empty::new().into_any()
         };
 
-        Box::new(floem::views::Stack::vertical((input, content_view)).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .background(t.popover)
-                    .border(1.0)
-                    .border_color(t.border)
-                    .border_radius(t.radius)
-            })
-        }))
+        Box::new(
+            floem::views::Stack::vertical((input, content_view)).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.width_full()
+                        .background(t.popover)
+                        .border(1.0)
+                        .border_color(t.border)
+                        .border_radius(t.radius)
+                })
+            }),
+        )
     }
 }
 
@@ -145,18 +149,20 @@ pub struct CommandInput {
 
 impl CommandInput {
     /// Create a new command input
-    pub fn new(search: RwSignal<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(search: RwSignal<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             search,
             placeholder: "Search...".to_string(),
         }
     }
 
     /// Set placeholder text
-    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self { self.placeholder = placeholder.into();
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
         self
     }
 }
-
 
 impl HasViewId for CommandInput {
     fn view_id(&self) -> ViewId {
@@ -201,10 +207,13 @@ pub struct CommandList<V> {
 
 impl<V: IntoView + 'static> CommandList<V> {
     /// Create a new command list
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for CommandList<V> {
     fn view_id(&self) -> ViewId {
@@ -221,10 +230,12 @@ impl<V: IntoView + 'static> IntoView for CommandList<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -240,7 +251,11 @@ pub struct CommandEmpty {
 
 impl CommandEmpty {
     /// Create a new empty state
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
 
@@ -249,7 +264,6 @@ impl Default for CommandEmpty {
         Self::new("No results found.")
     }
 }
-
 
 impl HasViewId for CommandEmpty {
     fn view_id(&self) -> ViewId {
@@ -293,7 +307,9 @@ pub struct CommandGroup<V> {
 
 impl CommandGroup<()> {
     /// Create a new command group
-    pub fn new(heading: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(heading: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             heading: heading.into(),
             items: None,
         }
@@ -310,7 +326,6 @@ impl<V> CommandGroup<V> {
         }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for CommandGroup<V> {
     fn view_id(&self) -> ViewId {
@@ -373,7 +388,9 @@ pub struct CommandItem {
 
 impl CommandItem {
     /// Create a new command item
-    pub fn new(value: impl Into<String>, text: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(value: impl Into<String>, text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             value: value.into(),
             text: text.into(),
             disabled: false,
@@ -382,16 +399,17 @@ impl CommandItem {
     }
 
     /// Set selection handler
-    pub fn on_select(mut self, handler: impl Fn() + 'static) -> Self { self.on_select = Some(Box::new(handler));
+    pub fn on_select(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_select = Some(Box::new(handler));
         self
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
-
 
 impl HasViewId for CommandItem {
     fn view_id(&self) -> ViewId {
@@ -462,7 +480,9 @@ pub struct CommandItemCustom<V> {
 
 impl<V: IntoView + 'static> CommandItemCustom<V> {
     /// Create a new command item with custom content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             child,
             disabled: false,
             on_select: None,
@@ -470,16 +490,17 @@ impl<V: IntoView + 'static> CommandItemCustom<V> {
     }
 
     /// Set selection handler
-    pub fn on_select(mut self, handler: impl Fn() + 'static) -> Self { self.on_select = Some(Box::new(handler));
+    pub fn on_select(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_select = Some(Box::new(handler));
         self
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for CommandItemCustom<V> {
     fn view_id(&self) -> ViewId {
@@ -557,7 +578,6 @@ impl Default for CommandSeparator {
     }
 }
 
-
 impl HasViewId for CommandSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -597,10 +617,13 @@ pub struct CommandShortcut {
 
 impl CommandShortcut {
     /// Create a new shortcut hint
-    pub fn new(keys: impl Into<String>) -> Self { Self { id: ViewId::new(), keys: keys.into() }
+    pub fn new(keys: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            keys: keys.into(),
+        }
     }
 }
-
 
 impl HasViewId for CommandShortcut {
     fn view_id(&self) -> ViewId {

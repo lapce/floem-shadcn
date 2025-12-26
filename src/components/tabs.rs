@@ -21,11 +21,11 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::text::Weight;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -43,7 +43,11 @@ pub struct Tabs<V> {
 impl<V: IntoView + 'static> Tabs<V> {
     /// Create a new tabs container with the given active signal and content
     pub fn new(active: RwSignal<String>, child: V) -> Self {
-        Self { id: ViewId::new(), active, child }
+        Self {
+            id: ViewId::new(),
+            active,
+            child,
+        }
     }
 }
 
@@ -62,11 +66,13 @@ impl<V: IntoView + 'static> IntoView for Tabs<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .flex_direction(floem::style::FlexDirection::Column)
-                .gap(8.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .gap(8.0)
+            }),
+        )
     }
 }
 
@@ -83,7 +89,10 @@ pub struct TabsList<V> {
 impl<V: IntoView + 'static> TabsList<V> {
     /// Create a new tabs list with the given tabs
     pub fn new(child: V) -> Self {
-        Self { id: ViewId::new(), child }
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
 
@@ -102,16 +111,18 @@ impl<V: IntoView + 'static> IntoView for TabsList<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            s.with_shadcn_theme(|s, t| {
-                s.display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Row)
-                    .background(t.muted)
-                    .border_radius(6.0)
-                    .padding(4.0)
-                    .gap(4.0)
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                s.with_shadcn_theme(|s, t| {
+                    s.display(floem::style::Display::Flex)
+                        .flex_direction(floem::style::FlexDirection::Row)
+                        .background(t.muted)
+                        .border_radius(6.0)
+                        .padding(4.0)
+                        .gap(4.0)
+                })
+            }),
+        )
     }
 }
 
@@ -255,12 +266,14 @@ impl<V: IntoView + 'static> IntoView for TabsContent<V> {
         let id = self.id;
         let active_signal = self.active_signal;
 
-        Box::new(floem::views::Container::with_id(self.view_id, self.child).style(move |s| {
-            let is_active = active_signal.map(|sig| sig.get() == id).unwrap_or(true); // Show by default if no signal
+        Box::new(
+            floem::views::Container::with_id(self.view_id, self.child).style(move |s| {
+                let is_active = active_signal.map(|sig| sig.get() == id).unwrap_or(true); // Show by default if no signal
 
-            s.width_full()
-                .apply_if(!is_active, |s| s.display(floem::style::Display::None))
-        }))
+                s.width_full()
+                    .apply_if(!is_active, |s| s.display(floem::style::Display::None))
+            }),
+        )
     }
 }
 

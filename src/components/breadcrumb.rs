@@ -17,9 +17,9 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -36,7 +36,10 @@ pub struct Breadcrumb<V> {
 impl<V: IntoView + 'static> Breadcrumb<V> {
     /// Create a new breadcrumb with items
     pub fn new(child: V) -> Self {
-        Self { id: ViewId::new(), child }
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
 
@@ -55,13 +58,15 @@ impl<V: IntoView + 'static> IntoView for Breadcrumb<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Row)
-                .items_center()
-                .gap(4.0)
-                .flex_wrap(floem::style::FlexWrap::Wrap)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .items_center()
+                    .gap(4.0)
+                    .flex_wrap(floem::style::FlexWrap::Wrap)
+            }),
+        )
     }
 }
 
@@ -78,7 +83,10 @@ pub struct BreadcrumbList<V> {
 impl<V: IntoView + 'static> BreadcrumbList<V> {
     /// Create a new breadcrumb list
     pub fn new(child: V) -> Self {
-        Self { id: ViewId::new(), child }
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
 
@@ -97,13 +105,15 @@ impl<V: IntoView + 'static> IntoView for BreadcrumbList<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Row)
-                .items_center()
-                .gap(4.0)
-                .flex_wrap(floem::style::FlexWrap::Wrap)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .items_center()
+                    .gap(4.0)
+                    .flex_wrap(floem::style::FlexWrap::Wrap)
+            }),
+        )
     }
 }
 
@@ -274,7 +284,10 @@ pub struct BreadcrumbPage {
 impl BreadcrumbPage {
     /// Create a new breadcrumb page (current location)
     pub fn new(text: impl Into<String>) -> Self {
-        Self { id: ViewId::new(), text: text.into() }
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
 
@@ -386,7 +399,10 @@ pub struct BreadcrumbEllipsis {
 impl BreadcrumbEllipsis {
     /// Create a new ellipsis
     pub fn new() -> Self {
-        Self { id: ViewId::new(), on_click: None }
+        Self {
+            id: ViewId::new(),
+            on_click: None,
+        }
     }
 
     /// Set click handler (e.g., to expand collapsed items)

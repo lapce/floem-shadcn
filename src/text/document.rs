@@ -8,8 +8,8 @@ use floem::{
 };
 use floem_editor_core::{
     buffer::{
-        rope_text::{RopeText, RopeTextRef},
         Buffer, InvalLines,
+        rope_text::{RopeText, RopeTextRef},
     },
     command::{EditCommand, MoveCommand},
     cursor::{ColPosition, CursorAffinity},
@@ -440,17 +440,17 @@ impl Document {
             }
             MoveCommand::WordBackward => {
                 let region = self.cursor.get_untracked();
-                let new_offset = self.buffer.with_untracked(|b| {
-                    b.move_word_backward(region.end, Mode::Insert)
-                });
+                let new_offset = self
+                    .buffer
+                    .with_untracked(|b| b.move_word_backward(region.end, Mode::Insert));
                 self.set_offset(new_offset, modify);
                 self.horiz.set(None);
             }
             MoveCommand::WordForward => {
                 let region = self.cursor.get_untracked();
-                let new_offset = self.buffer.with_untracked(|b| {
-                    b.move_word_forward(region.end)
-                });
+                let new_offset = self
+                    .buffer
+                    .with_untracked(|b| b.move_word_forward(region.end));
                 self.set_offset(new_offset, modify);
                 self.horiz.set(None);
             }
@@ -468,10 +468,7 @@ impl Document {
                 );
             }
             EditCommand::InsertTab => {
-                self.edit(
-                    [(self.cursor.get_untracked(), "\t")],
-                    EditType::InsertChars,
-                );
+                self.edit([(self.cursor.get_untracked(), "\t")], EditType::InsertChars);
             }
             EditCommand::DeleteBackward => {
                 let region = self.cursor.get_untracked();
@@ -529,7 +526,8 @@ impl Document {
                 drop(lines);
 
                 if region.end > line_start {
-                    let delete_region = SelRegion::new(line_start, region.end, CursorAffinity::Forward, None);
+                    let delete_region =
+                        SelRegion::new(line_start, region.end, CursorAffinity::Forward, None);
                     self.edit([(delete_region, "")], EditType::Delete);
                 }
             }
@@ -565,9 +563,9 @@ impl Document {
 
         let start = region.min();
         let end = region.max();
-        let text = self.buffer.with_untracked(|b| {
-            b.text().slice_to_cow(start..end).into_owned()
-        });
+        let text = self
+            .buffer
+            .with_untracked(|b| b.text().slice_to_cow(start..end).into_owned());
 
         if text.is_empty() {
             return false;
@@ -586,9 +584,9 @@ impl Document {
 
         let start = region.min();
         let end = region.max();
-        let text = self.buffer.with_untracked(|b| {
-            b.text().slice_to_cow(start..end).into_owned()
-        });
+        let text = self
+            .buffer
+            .with_untracked(|b| b.text().slice_to_cow(start..end).into_owned());
 
         if text.is_empty() {
             return false;
@@ -1026,12 +1024,18 @@ mod tests {
         // Move down - should go to empty line (position 2)
         doc.run_move_command(&MoveCommand::Down, false);
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.end, 2, "After Down from 'a', cursor should be at position 2 (empty line)");
+        assert_eq!(
+            cursor.end, 2,
+            "After Down from 'a', cursor should be at position 2 (empty line)"
+        );
 
         // Move down again - should go to 'b' (position 3)
         doc.run_move_command(&MoveCommand::Down, false);
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.end, 3, "After Down from empty line, cursor should be at position 3 ('b')");
+        assert_eq!(
+            cursor.end, 3,
+            "After Down from empty line, cursor should be at position 3 ('b')"
+        );
     }
 
     // ==========================================================================
@@ -1051,7 +1055,10 @@ mod tests {
         // Shift+Right should extend selection
         doc.run_move_command(&MoveCommand::Right, true);
         let cursor = doc.cursor().get_untracked();
-        assert!(!cursor.is_caret(), "Selection should not be a caret after Shift+Right");
+        assert!(
+            !cursor.is_caret(),
+            "Selection should not be a caret after Shift+Right"
+        );
         assert_eq!(cursor.start, 0, "Selection start should remain at 0");
         assert_eq!(cursor.end, 1, "Selection end should be at 1");
 
@@ -1077,7 +1084,10 @@ mod tests {
         doc.run_move_command(&MoveCommand::Left, true);
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret());
-        assert_eq!(cursor.start, 3, "Selection start (anchor) should remain at 3");
+        assert_eq!(
+            cursor.start, 3,
+            "Selection start (anchor) should remain at 3"
+        );
         assert_eq!(cursor.end, 2, "Selection end should be at 2");
 
         // Selection min/max
@@ -1179,7 +1189,10 @@ mod tests {
         assert!(!cursor.is_caret());
         assert_eq!(cursor.start, 2, "Anchor should remain at 2");
         // End should be in line2
-        assert!(cursor.end >= 6, "Selection end should be in line2 or beyond");
+        assert!(
+            cursor.end >= 6,
+            "Selection end should be in line2 or beyond"
+        );
     }
 
     #[test]
@@ -1209,8 +1222,8 @@ mod tests {
         doc.set_offset(3, false);
 
         // Select left twice, then right three times
-        doc.run_move_command(&MoveCommand::Left, true);  // anchor=3, end=2
-        doc.run_move_command(&MoveCommand::Left, true);  // anchor=3, end=1
+        doc.run_move_command(&MoveCommand::Left, true); // anchor=3, end=2
+        doc.run_move_command(&MoveCommand::Left, true); // anchor=3, end=1
 
         let cursor = doc.cursor().get_untracked();
         assert_eq!(cursor.start, 3);
@@ -1235,8 +1248,8 @@ mod tests {
     /// Helper to create a PointerState for testing clicks
     fn create_pointer_state(x: f64, y: f64, count: u8) -> PointerState {
         use dpi::PhysicalPosition;
-        use ui_events::pointer::{ContactGeometry, PointerButtons, PointerOrientation};
         use ui_events::keyboard::Modifiers;
+        use ui_events::pointer::{ContactGeometry, PointerButtons, PointerOrientation};
 
         PointerState {
             time: 0,
@@ -1269,7 +1282,11 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Double-click should create a selection");
-        assert_eq!(cursor.min(), 0, "Selection should start at beginning of 'hello'");
+        assert_eq!(
+            cursor.min(),
+            0,
+            "Selection should start at beginning of 'hello'"
+        );
         assert_eq!(cursor.max(), 5, "Selection should end after 'hello'");
     }
 
@@ -1290,7 +1307,11 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Double-click should create a selection");
-        assert_eq!(cursor.min(), 4, "Selection should start at beginning of 'two'");
+        assert_eq!(
+            cursor.min(),
+            4,
+            "Selection should start at beginning of 'two'"
+        );
         assert_eq!(cursor.max(), 7, "Selection should end after 'two'");
     }
 
@@ -1332,8 +1353,16 @@ mod tests {
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Triple-click should create a selection");
         // line2 starts at offset 6 and ends at offset 12 (including newline)
-        assert_eq!(cursor.min(), 6, "Selection should start at beginning of line2");
-        assert_eq!(cursor.max(), 12, "Selection should end after line2 (including newline)");
+        assert_eq!(
+            cursor.min(),
+            6,
+            "Selection should start at beginning of line2"
+        );
+        assert_eq!(
+            cursor.max(),
+            12,
+            "Selection should end after line2 (including newline)"
+        );
     }
 
     #[test]
@@ -1352,7 +1381,11 @@ mod tests {
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Triple-click should create a selection");
         assert_eq!(cursor.min(), 0, "Selection should start at 0");
-        assert_eq!(cursor.max(), 6, "Selection should end at 6 (after 'first\\n')");
+        assert_eq!(
+            cursor.max(),
+            6,
+            "Selection should end at 6 (after 'first\\n')"
+        );
     }
 
     #[test]
@@ -1370,7 +1403,11 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Triple-click should create a selection");
-        assert_eq!(cursor.min(), 13, "Selection should start at beginning of 'third'");
+        assert_eq!(
+            cursor.min(),
+            13,
+            "Selection should start at beginning of 'third'"
+        );
         // Last line doesn't have a newline, so selection goes to end
         assert_eq!(cursor.max(), 18, "Selection should end at end of text");
     }
@@ -1438,9 +1475,16 @@ mod tests {
     }
 
     /// Helper to create a PointerButtonEvent for testing
-    fn create_pointer_button_event(x: f64, y: f64, count: u8, button: PointerButton) -> PointerButtonEvent {
+    fn create_pointer_button_event(
+        x: f64,
+        y: f64,
+        count: u8,
+        button: PointerButton,
+    ) -> PointerButtonEvent {
         use dpi::PhysicalPosition;
-        use ui_events::pointer::{ContactGeometry, PointerButtons, PointerInfo, PointerOrientation, PointerType};
+        use ui_events::pointer::{
+            ContactGeometry, PointerButtons, PointerInfo, PointerOrientation, PointerType,
+        };
 
         PointerButtonEvent {
             button: Some(button),
@@ -1475,12 +1519,20 @@ mod tests {
         drop(lines);
 
         // Create a PointerButtonEvent with count=2 (double-click)
-        let event = create_pointer_button_event(point.x, point.glyph_top, 2, PointerButton::Primary);
+        let event =
+            create_pointer_button_event(point.x, point.glyph_top, 2, PointerButton::Primary);
         doc.pointer_down(&event);
 
         let cursor = doc.cursor().get_untracked();
-        assert!(!cursor.is_caret(), "Double-click via pointer_down should create a selection");
-        assert_eq!(cursor.min(), 0, "Selection should start at beginning of 'hello'");
+        assert!(
+            !cursor.is_caret(),
+            "Double-click via pointer_down should create a selection"
+        );
+        assert_eq!(
+            cursor.min(),
+            0,
+            "Selection should start at beginning of 'hello'"
+        );
         assert_eq!(cursor.max(), 5, "Selection should end after 'hello'");
     }
 
@@ -1495,13 +1547,21 @@ mod tests {
         drop(lines);
 
         // Create a PointerButtonEvent with count=3 (triple-click)
-        let event = create_pointer_button_event(point.x, point.glyph_top, 3, PointerButton::Primary);
+        let event =
+            create_pointer_button_event(point.x, point.glyph_top, 3, PointerButton::Primary);
         doc.pointer_down(&event);
 
         let cursor = doc.cursor().get_untracked();
-        assert!(!cursor.is_caret(), "Triple-click via pointer_down should create a selection");
+        assert!(
+            !cursor.is_caret(),
+            "Triple-click via pointer_down should create a selection"
+        );
         assert_eq!(cursor.min(), 0, "Selection should start at 0");
-        assert_eq!(cursor.max(), 11, "Selection should end after first line (including newline)");
+        assert_eq!(
+            cursor.max(),
+            11,
+            "Selection should end after first line (including newline)"
+        );
     }
 
     #[test]
@@ -1516,7 +1576,8 @@ mod tests {
         drop(lines);
 
         // Create a PointerButtonEvent with count=0 (edge case)
-        let event = create_pointer_button_event(point.x, point.glyph_top, 0, PointerButton::Primary);
+        let event =
+            create_pointer_button_event(point.x, point.glyph_top, 0, PointerButton::Primary);
         doc.pointer_down(&event);
 
         // Cursor should be unchanged since count=0 doesn't match any case
@@ -1532,7 +1593,9 @@ mod tests {
     /// Helper to create a PointerUpdate for testing pointer move
     fn create_pointer_update(x: f64, y: f64) -> PointerUpdate {
         use dpi::PhysicalPosition;
-        use ui_events::pointer::{ContactGeometry, PointerButtons, PointerInfo, PointerOrientation, PointerType};
+        use ui_events::pointer::{
+            ContactGeometry, PointerButtons, PointerInfo, PointerOrientation, PointerType,
+        };
 
         let state = PointerState {
             time: 0,
@@ -1567,11 +1630,16 @@ mod tests {
         // Get positions
         let lines = doc.text_layouts().borrow();
         let click_point = lines.point_of_offset(1); // 'e' in hello
-        let move_point = lines.point_of_offset(8);  // 'o' in world
+        let move_point = lines.point_of_offset(8); // 'o' in world
         drop(lines);
 
         // Double-click to select "hello"
-        let down_event = create_pointer_button_event(click_point.x, click_point.glyph_top, 2, PointerButton::Primary);
+        let down_event = create_pointer_button_event(
+            click_point.x,
+            click_point.glyph_top,
+            2,
+            PointerButton::Primary,
+        );
         doc.pointer_down(&down_event);
 
         // Verify word is selected
@@ -1585,8 +1653,16 @@ mod tests {
 
         // Selection should NOT change because active is false for double-click
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.min(), 0, "Selection start should remain at 0 after move");
-        assert_eq!(cursor.max(), 5, "Selection end should remain at 5 after move");
+        assert_eq!(
+            cursor.min(),
+            0,
+            "Selection start should remain at 0 after move"
+        );
+        assert_eq!(
+            cursor.max(),
+            5,
+            "Selection end should remain at 5 after move"
+        );
     }
 
     #[test]
@@ -1596,12 +1672,17 @@ mod tests {
 
         // Get positions
         let lines = doc.text_layouts().borrow();
-        let click_point = lines.point_of_offset(3);  // 's' in first
-        let move_point = lines.point_of_offset(15);  // somewhere in second line
+        let click_point = lines.point_of_offset(3); // 's' in first
+        let move_point = lines.point_of_offset(15); // somewhere in second line
         drop(lines);
 
         // Triple-click to select first line
-        let down_event = create_pointer_button_event(click_point.x, click_point.glyph_top, 3, PointerButton::Primary);
+        let down_event = create_pointer_button_event(
+            click_point.x,
+            click_point.glyph_top,
+            3,
+            PointerButton::Primary,
+        );
         doc.pointer_down(&down_event);
 
         // Verify line is selected
@@ -1615,8 +1696,16 @@ mod tests {
 
         // Selection should NOT change because active is false for triple-click
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.min(), 0, "Selection start should remain at 0 after move");
-        assert_eq!(cursor.max(), 11, "Selection end should remain at 11 after move");
+        assert_eq!(
+            cursor.min(),
+            0,
+            "Selection start should remain at 0 after move"
+        );
+        assert_eq!(
+            cursor.max(),
+            11,
+            "Selection end should remain at 11 after move"
+        );
     }
 
     #[test]
@@ -1630,7 +1719,12 @@ mod tests {
         drop(lines);
 
         // Double-click to select "hello"
-        let down_event = create_pointer_button_event(click_point.x, click_point.glyph_top, 2, PointerButton::Primary);
+        let down_event = create_pointer_button_event(
+            click_point.x,
+            click_point.glyph_top,
+            2,
+            PointerButton::Primary,
+        );
         doc.pointer_down(&down_event);
 
         let cursor = doc.cursor().get_untracked();
@@ -1638,12 +1732,17 @@ mod tests {
         assert_eq!(cursor.max(), 5);
 
         // Pointer up at different location
-        let up_event = create_pointer_button_event(up_point.x, up_point.glyph_top, 2, PointerButton::Primary);
+        let up_event =
+            create_pointer_button_event(up_point.x, up_point.glyph_top, 2, PointerButton::Primary);
         doc.pointer_up(&up_event);
 
         // Selection should remain unchanged
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.min(), 0, "Selection should remain at 0-5 after pointer up");
+        assert_eq!(
+            cursor.min(),
+            0,
+            "Selection should remain at 0-5 after pointer up"
+        );
         assert_eq!(cursor.max(), 5);
     }
 
@@ -1654,12 +1753,17 @@ mod tests {
         doc.set_width(200.0);
 
         let lines = doc.text_layouts().borrow();
-        let click_point = lines.point_of_offset(2);  // 'l' in hello
-        let drag_point = lines.point_of_offset(8);   // 'o' in world
+        let click_point = lines.point_of_offset(2); // 'l' in hello
+        let drag_point = lines.point_of_offset(8); // 'o' in world
         drop(lines);
 
         // Single-click
-        let down_event = create_pointer_button_event(click_point.x, click_point.glyph_top, 1, PointerButton::Primary);
+        let down_event = create_pointer_button_event(
+            click_point.x,
+            click_point.glyph_top,
+            1,
+            PointerButton::Primary,
+        );
         doc.pointer_down(&down_event);
 
         // Verify cursor is set
@@ -1674,7 +1778,10 @@ mod tests {
         // Selection SHOULD be extended for single-click drag
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Drag should create a selection");
-        assert_eq!(cursor.start, 2, "Selection anchor should be at click position");
+        assert_eq!(
+            cursor.start, 2,
+            "Selection anchor should be at click position"
+        );
         assert_eq!(cursor.end, 8, "Selection end should be at drag position");
     }
 
@@ -1690,7 +1797,12 @@ mod tests {
         drop(lines);
 
         // Single-click and drag
-        let down_event = create_pointer_button_event(click_point.x, click_point.glyph_top, 1, PointerButton::Primary);
+        let down_event = create_pointer_button_event(
+            click_point.x,
+            click_point.glyph_top,
+            1,
+            PointerButton::Primary,
+        );
         doc.pointer_down(&down_event);
 
         let move_event = create_pointer_update(drag_point.x, drag_point.glyph_top);
@@ -1701,7 +1813,12 @@ mod tests {
         assert_eq!(cursor.end, 6);
 
         // Pointer up
-        let up_event = create_pointer_button_event(drag_point.x, drag_point.glyph_top, 1, PointerButton::Primary);
+        let up_event = create_pointer_button_event(
+            drag_point.x,
+            drag_point.glyph_top,
+            1,
+            PointerButton::Primary,
+        );
         doc.pointer_up(&up_event);
 
         // Moving after pointer up should NOT change selection
@@ -1709,8 +1826,14 @@ mod tests {
         doc.pointer_move(&move_after_up);
 
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.start, 2, "Selection should not change after pointer up");
-        assert_eq!(cursor.end, 6, "Selection should not change after pointer up");
+        assert_eq!(
+            cursor.start, 2,
+            "Selection should not change after pointer up"
+        );
+        assert_eq!(
+            cursor.end, 6,
+            "Selection should not change after pointer up"
+        );
     }
 
     // ==========================================================================
@@ -1752,7 +1875,10 @@ mod tests {
         doc.run_move_command(&MoveCommand::LineStart, false);
 
         let cursor = doc.cursor().get_untracked();
-        assert_eq!(cursor.end, 6, "LineStart should move to start of current line (second)");
+        assert_eq!(
+            cursor.end, 6,
+            "LineStart should move to start of current line (second)"
+        );
     }
 
     #[test]
@@ -1765,7 +1891,10 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         // Line end should be before the newline (position 12)
-        assert_eq!(cursor.end, 12, "LineEnd should move to end of current line (before newline)");
+        assert_eq!(
+            cursor.end, 12,
+            "LineEnd should move to end of current line (before newline)"
+        );
     }
 
     #[test]
@@ -1778,7 +1907,10 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         assert!(cursor.is_caret());
-        assert_eq!(cursor.end, 0, "DocumentStart should move to beginning of document");
+        assert_eq!(
+            cursor.end, 0,
+            "DocumentStart should move to beginning of document"
+        );
     }
 
     #[test]
@@ -1819,7 +1951,10 @@ mod tests {
         let cursor = doc.cursor().get_untracked();
         assert!(cursor.is_caret());
         // Word backward should move to start of "world"
-        assert!(cursor.end <= 6, "WordBackward should move to start of 'world'");
+        assert!(
+            cursor.end <= 6,
+            "WordBackward should move to start of 'world'"
+        );
     }
 
     #[test]
@@ -1833,7 +1968,10 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Should create selection");
-        assert_eq!(cursor.start, 7, "Selection anchor should stay at original position");
+        assert_eq!(
+            cursor.start, 7,
+            "Selection anchor should stay at original position"
+        );
         assert_eq!(cursor.end, 0, "Selection end should be at line start");
     }
 
@@ -1848,7 +1986,10 @@ mod tests {
 
         let cursor = doc.cursor().get_untracked();
         assert!(!cursor.is_caret(), "Should create selection");
-        assert_eq!(cursor.start, 3, "Selection anchor should stay at original position");
+        assert_eq!(
+            cursor.start, 3,
+            "Selection anchor should stay at original position"
+        );
         assert_eq!(cursor.end, 11, "Selection end should be at document end");
     }
 
@@ -1877,7 +2018,11 @@ mod tests {
 
         // Should delete "world"
         let text = doc.text();
-        assert!(text.starts_with("hello"), "Should keep 'hello', got: {}", text);
+        assert!(
+            text.starts_with("hello"),
+            "Should keep 'hello', got: {}",
+            text
+        );
         assert!(text.len() < 11, "Should have deleted some text");
     }
 
@@ -1891,7 +2036,11 @@ mod tests {
 
         // Should delete "hello"
         let text = doc.text();
-        assert!(!text.starts_with("hello"), "Should have deleted 'hello', got: {}", text);
+        assert!(
+            !text.starts_with("hello"),
+            "Should have deleted 'hello', got: {}",
+            text
+        );
     }
 
     #[test]

@@ -14,10 +14,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::components::calendar::SimpleDate;
 use crate::theme::ShadcnThemeExt;
@@ -36,7 +36,9 @@ pub struct DatePicker {
 
 impl DatePicker {
     /// Create a new date picker
-    pub fn new(selected: RwSignal<Option<SimpleDate>>) -> Self { Self { id: ViewId::new(),
+    pub fn new(selected: RwSignal<Option<SimpleDate>>) -> Self {
+        Self {
+            id: ViewId::new(),
             selected,
             placeholder: "Pick a date".to_string(),
             disabled: false,
@@ -44,16 +46,17 @@ impl DatePicker {
     }
 
     /// Set placeholder text
-    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self { self.placeholder = placeholder.into();
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
         self
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
-
 
 impl HasViewId for DatePicker {
     fn view_id(&self) -> ViewId {
@@ -485,7 +488,9 @@ pub struct DateRangePicker {
 
 impl DateRangePicker {
     /// Create a new date range picker
-    pub fn new(start: RwSignal<Option<SimpleDate>>, end: RwSignal<Option<SimpleDate>>) -> Self { Self { id: ViewId::new(),
+    pub fn new(start: RwSignal<Option<SimpleDate>>, end: RwSignal<Option<SimpleDate>>) -> Self {
+        Self {
+            id: ViewId::new(),
             start,
             end,
             placeholder: "Pick a date range".to_string(),
@@ -494,16 +499,17 @@ impl DateRangePicker {
     }
 
     /// Set placeholder text
-    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self { self.placeholder = placeholder.into();
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
         self
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
-
 
 impl HasViewId for DateRangePicker {
     fn view_id(&self) -> ViewId {

@@ -24,10 +24,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -43,10 +43,13 @@ pub struct Menubar<V> {
 
 impl<V: IntoView + 'static> Menubar<V> {
     /// Create a new menubar
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for Menubar<V> {
     fn view_id(&self) -> ViewId {
@@ -63,17 +66,19 @@ impl<V: IntoView + 'static> IntoView for Menubar<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Row)
-                    .items_center()
-                    .padding(4.0)
-                    .background(t.background)
-                    .border_bottom(1.0)
-                    .border_color(t.border)
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.display(floem::style::Display::Flex)
+                        .flex_direction(floem::style::FlexDirection::Row)
+                        .items_center()
+                        .padding(4.0)
+                        .background(t.background)
+                        .border_bottom(1.0)
+                        .border_color(t.border)
+                })
+            }),
+        )
     }
 }
 
@@ -90,7 +95,9 @@ pub struct MenubarMenu<C> {
 
 impl MenubarMenu<()> {
     /// Create a new menu
-    pub fn new(label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             content: None,
         }
@@ -107,7 +114,6 @@ impl<C> MenubarMenu<C> {
         }
     }
 }
-
 
 impl<C: IntoView + 'static> HasViewId for MenubarMenu<C> {
     fn view_id(&self) -> ViewId {
@@ -229,12 +235,13 @@ pub struct MenubarTrigger {
 
 impl MenubarTrigger {
     /// Create a new trigger
-    pub fn new(label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
         }
     }
 }
-
 
 impl HasViewId for MenubarTrigger {
     fn view_id(&self) -> ViewId {
@@ -282,10 +289,13 @@ pub struct MenubarContent<V> {
 
 impl<V: IntoView + 'static> MenubarContent<V> {
     /// Create new menu content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for MenubarContent<V> {
     fn view_id(&self) -> ViewId {
@@ -302,10 +312,12 @@ impl<V: IntoView + 'static> IntoView for MenubarContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -324,7 +336,9 @@ pub struct MenubarItem {
 
 impl MenubarItem {
     /// Create a new menu item
-    pub fn new(label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             shortcut: None,
             disabled: false,
@@ -333,21 +347,23 @@ impl MenubarItem {
     }
 
     /// Add keyboard shortcut hint
-    pub fn shortcut(mut self, shortcut: impl Into<String>) -> Self { self.shortcut = Some(shortcut.into());
+    pub fn shortcut(mut self, shortcut: impl Into<String>) -> Self {
+        self.shortcut = Some(shortcut.into());
         self
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
     /// Set selection handler
-    pub fn on_select(mut self, handler: impl Fn() + 'static) -> Self { self.on_select = Some(Box::new(handler));
+    pub fn on_select(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_select = Some(Box::new(handler));
         self
     }
 }
-
 
 impl HasViewId for MenubarItem {
     fn view_id(&self) -> ViewId {
@@ -450,7 +466,6 @@ impl Default for MenubarSeparator {
     }
 }
 
-
 impl HasViewId for MenubarSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -492,7 +507,9 @@ pub struct MenubarCheckboxItem {
 
 impl MenubarCheckboxItem {
     /// Create a new checkbox item
-    pub fn new(label: impl Into<String>, checked: RwSignal<bool>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>, checked: RwSignal<bool>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             checked,
             disabled: false,
@@ -500,11 +517,11 @@ impl MenubarCheckboxItem {
     }
 
     /// Set as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
-
 
 impl HasViewId for MenubarCheckboxItem {
     fn view_id(&self) -> ViewId {
@@ -591,10 +608,13 @@ pub struct MenubarShortcut {
 
 impl MenubarShortcut {
     /// Create a new shortcut display
-    pub fn new(keys: impl Into<String>) -> Self { Self { id: ViewId::new(), keys: keys.into() }
+    pub fn new(keys: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            keys: keys.into(),
+        }
     }
 }
-
 
 impl HasViewId for MenubarShortcut {
     fn view_id(&self) -> ViewId {

@@ -15,10 +15,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -37,7 +37,9 @@ pub struct Pagination {
 
 impl Pagination {
     /// Create a new pagination component
-    pub fn new(current_page: RwSignal<usize>, total_pages: usize) -> Self { Self { id: ViewId::new(),
+    pub fn new(current_page: RwSignal<usize>, total_pages: usize) -> Self {
+        Self {
+            id: ViewId::new(),
             current_page,
             total_pages,
             show_edges: true,
@@ -46,16 +48,17 @@ impl Pagination {
     }
 
     /// Show/hide first and last page buttons
-    pub fn show_edges(mut self, show: bool) -> Self { self.show_edges = show;
+    pub fn show_edges(mut self, show: bool) -> Self {
+        self.show_edges = show;
         self
     }
 
     /// Number of siblings on each side of current page
-    pub fn siblings(mut self, count: usize) -> Self { self.siblings = count;
+    pub fn siblings(mut self, count: usize) -> Self {
+        self.siblings = count;
         self
     }
 }
-
 
 impl HasViewId for Pagination {
     fn view_id(&self) -> ViewId {
@@ -285,10 +288,13 @@ pub struct PaginationContent<V> {
 
 impl<V: IntoView + 'static> PaginationContent<V> {
     /// Create new pagination content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for PaginationContent<V> {
     fn view_id(&self) -> ViewId {
@@ -305,12 +311,14 @@ impl<V: IntoView + 'static> IntoView for PaginationContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Row)
-                .gap(4.0)
-                .items_center()
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .gap(4.0)
+                    .items_center()
+            }),
+        )
     }
 }
 
@@ -326,10 +334,13 @@ pub struct PaginationItem<V> {
 
 impl<V: IntoView + 'static> PaginationItem<V> {
     /// Create a new item
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for PaginationItem<V> {
     fn view_id(&self) -> ViewId {
@@ -364,7 +375,9 @@ pub struct PaginationLink {
 
 impl PaginationLink {
     /// Create a new page link
-    pub fn new(page: usize, current_page: RwSignal<usize>) -> Self { Self { id: ViewId::new(),
+    pub fn new(page: usize, current_page: RwSignal<usize>) -> Self {
+        Self {
+            id: ViewId::new(),
             page,
             current_page,
             is_active: false,
@@ -372,11 +385,11 @@ impl PaginationLink {
     }
 
     /// Mark as active/current
-    pub fn active(mut self, is_active: bool) -> Self { self.is_active = is_active;
+    pub fn active(mut self, is_active: bool) -> Self {
+        self.is_active = is_active;
         self
     }
 }
-
 
 impl HasViewId for PaginationLink {
     fn view_id(&self) -> ViewId {
@@ -445,18 +458,20 @@ pub struct PaginationPrevious {
 
 impl PaginationPrevious {
     /// Create a new previous button
-    pub fn new(current_page: RwSignal<usize>) -> Self { Self { id: ViewId::new(),
+    pub fn new(current_page: RwSignal<usize>) -> Self {
+        Self {
+            id: ViewId::new(),
             current_page,
             label: "Previous".to_string(),
         }
     }
 
     /// Set custom label
-    pub fn label(mut self, label: impl Into<String>) -> Self { self.label = label.into();
+    pub fn label(mut self, label: impl Into<String>) -> Self {
+        self.label = label.into();
         self
     }
 }
-
 
 impl HasViewId for PaginationPrevious {
     fn view_id(&self) -> ViewId {
@@ -533,7 +548,9 @@ pub struct PaginationNext {
 
 impl PaginationNext {
     /// Create a new next button
-    pub fn new(current_page: RwSignal<usize>, total_pages: usize) -> Self { Self { id: ViewId::new(),
+    pub fn new(current_page: RwSignal<usize>, total_pages: usize) -> Self {
+        Self {
+            id: ViewId::new(),
             current_page,
             total_pages,
             label: "Next".to_string(),
@@ -541,11 +558,11 @@ impl PaginationNext {
     }
 
     /// Set custom label
-    pub fn label(mut self, label: impl Into<String>) -> Self { self.label = label.into();
+    pub fn label(mut self, label: impl Into<String>) -> Self {
+        self.label = label.into();
         self
     }
 }
-
 
 impl HasViewId for PaginationNext {
     fn view_id(&self) -> ViewId {
@@ -628,7 +645,6 @@ impl Default for PaginationEllipsis {
         Self::new()
     }
 }
-
 
 impl HasViewId for PaginationEllipsis {
     fn view_id(&self) -> ViewId {

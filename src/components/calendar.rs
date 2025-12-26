@@ -14,10 +14,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -239,15 +239,17 @@ impl IntoView for Calendar {
         ))
         .style(|s| s.gap(2.0));
 
-        Box::new(floem::views::Stack::vertical((header, day_names, grid)).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.padding(12.0)
-                    .background(t.card)
-                    .border(1.0)
-                    .border_color(t.border)
-                    .border_radius(t.radius)
-            })
-        }))
+        Box::new(
+            floem::views::Stack::vertical((header, day_names, grid)).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.padding(12.0)
+                        .background(t.card)
+                        .border(1.0)
+                        .border_color(t.border)
+                        .border_radius(t.radius)
+                })
+            }),
+        )
     }
 }
 
@@ -362,7 +364,11 @@ pub struct CalendarSimple {
 impl CalendarSimple {
     /// Create a simple calendar for a specific month
     pub fn new(year: i32, month: u32) -> Self {
-        Self { id: ViewId::new(), year, month }
+        Self {
+            id: ViewId::new(),
+            year,
+            month,
+        }
     }
 }
 
@@ -423,15 +429,17 @@ impl IntoView for CalendarSimple {
         ))
         .style(|s| s.gap(2.0));
 
-        Box::new(floem::views::Stack::vertical((title, day_names, grid)).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.padding(12.0)
-                    .background(t.card)
-                    .border(1.0)
-                    .border_color(t.border)
-                    .border_radius(t.radius)
-            })
-        }))
+        Box::new(
+            floem::views::Stack::vertical((title, day_names, grid)).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.padding(12.0)
+                        .background(t.card)
+                        .border(1.0)
+                        .border_color(t.border)
+                        .border_radius(t.radius)
+                })
+            }),
+        )
     }
 }
 

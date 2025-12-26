@@ -18,10 +18,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::RwSignal;
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -46,32 +46,35 @@ pub struct ResizablePanelGroup<V> {
 
 impl<V: IntoView + 'static> ResizablePanelGroup<V> {
     /// Create a horizontal panel group
-    pub fn horizontal(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn horizontal(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             direction: ResizableDirection::Horizontal,
             child,
         }
     }
 
     /// Create a vertical panel group
-    pub fn vertical(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn vertical(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             direction: ResizableDirection::Vertical,
             child,
         }
     }
 
     /// Set the direction
-    pub fn direction(mut self, direction: ResizableDirection) -> Self { self.direction = direction;
+    pub fn direction(mut self, direction: ResizableDirection) -> Self {
+        self.direction = direction;
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ResizablePanelGroup<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ResizablePanel<V> {
     fn view_id(&self) -> ViewId {
@@ -90,21 +93,23 @@ impl<V: IntoView + 'static> IntoView for ResizablePanelGroup<V> {
     fn into_view(self) -> Self::V {
         let direction = self.direction;
 
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            let base = s
-                .width_full()
-                .height_full()
-                .display(floem::style::Display::Flex);
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                let base = s
+                    .width_full()
+                    .height_full()
+                    .display(floem::style::Display::Flex);
 
-            match direction {
-                ResizableDirection::Horizontal => {
-                    base.flex_direction(floem::style::FlexDirection::Row)
+                match direction {
+                    ResizableDirection::Horizontal => {
+                        base.flex_direction(floem::style::FlexDirection::Row)
+                    }
+                    ResizableDirection::Vertical => {
+                        base.flex_direction(floem::style::FlexDirection::Column)
+                    }
                 }
-                ResizableDirection::Vertical => {
-                    base.flex_direction(floem::style::FlexDirection::Column)
-                }
-            }
-        }))
+            }),
+        )
     }
 }
 
@@ -124,7 +129,9 @@ pub struct ResizablePanel<V> {
 
 impl<V: IntoView + 'static> ResizablePanel<V> {
     /// Create a new resizable panel
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             child,
             default_size: None,
             min_size: None,
@@ -134,22 +141,26 @@ impl<V: IntoView + 'static> ResizablePanel<V> {
     }
 
     /// Set default size (percentage 0-100)
-    pub fn default_size(mut self, size: f64) -> Self { self.default_size = Some(size);
+    pub fn default_size(mut self, size: f64) -> Self {
+        self.default_size = Some(size);
         self
     }
 
     /// Set minimum size (percentage)
-    pub fn min_size(mut self, size: f64) -> Self { self.min_size = Some(size);
+    pub fn min_size(mut self, size: f64) -> Self {
+        self.min_size = Some(size);
         self
     }
 
     /// Set maximum size (percentage)
-    pub fn max_size(mut self, size: f64) -> Self { self.max_size = Some(size);
+    pub fn max_size(mut self, size: f64) -> Self {
+        self.max_size = Some(size);
         self
     }
 
     /// Connect to a size signal for controlled sizing
-    pub fn size(mut self, signal: RwSignal<f64>) -> Self { self.size_signal = Some(signal);
+    pub fn size(mut self, signal: RwSignal<f64>) -> Self {
+        self.size_signal = Some(signal);
         self
     }
 }
@@ -168,26 +179,28 @@ impl<V: IntoView + 'static> IntoView for ResizablePanel<V> {
         let max_size = self.max_size;
         let size_signal = self.size_signal;
 
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            let size = size_signal.map(|sig| sig.get()).unwrap_or(default_size);
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                let size = size_signal.map(|sig| sig.get()).unwrap_or(default_size);
 
-            let base = s
-                .flex_basis(floem::unit::PxPctAuto::Pct(size))
-                .flex_grow(0.0)
-                .flex_shrink(0.0);
+                let base = s
+                    .flex_basis(floem::unit::PxPctAuto::Pct(size))
+                    .flex_grow(0.0)
+                    .flex_shrink(0.0);
 
-            let with_min = if let Some(min) = min_size {
-                base.min_width_pct(min)
-            } else {
-                base
-            };
+                let with_min = if let Some(min) = min_size {
+                    base.min_width_pct(min)
+                } else {
+                    base
+                };
 
-            if let Some(max) = max_size {
-                with_min.max_width_pct(max)
-            } else {
-                with_min
-            }
-        }))
+                if let Some(max) = max_size {
+                    with_min.max_width_pct(max)
+                } else {
+                    with_min
+                }
+            }),
+        )
     }
 }
 
@@ -204,19 +217,23 @@ pub struct ResizableHandle {
 
 impl ResizableHandle {
     /// Create a new resize handle
-    pub fn new() -> Self { Self { id: ViewId::new(),
+    pub fn new() -> Self {
+        Self {
+            id: ViewId::new(),
             direction: ResizableDirection::Horizontal,
             with_handle: false,
         }
     }
 
     /// Set the direction (determines cursor and styling)
-    pub fn direction(mut self, direction: ResizableDirection) -> Self { self.direction = direction;
+    pub fn direction(mut self, direction: ResizableDirection) -> Self {
+        self.direction = direction;
         self
     }
 
     /// Show a visual handle indicator
-    pub fn with_handle(mut self) -> Self { self.with_handle = true;
+    pub fn with_handle(mut self) -> Self {
+        self.with_handle = true;
         self
     }
 }
@@ -226,7 +243,6 @@ impl Default for ResizableHandle {
         Self::new()
     }
 }
-
 
 impl HasViewId for ResizableHandle {
     fn view_id(&self) -> ViewId {

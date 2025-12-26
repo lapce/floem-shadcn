@@ -23,10 +23,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -42,10 +42,13 @@ pub struct NavigationMenu<V> {
 
 impl<V: IntoView + 'static> NavigationMenu<V> {
     /// Create a new navigation menu
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for NavigationMenu<V> {
     fn view_id(&self) -> ViewId {
@@ -62,16 +65,18 @@ impl<V: IntoView + 'static> IntoView for NavigationMenu<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Row)
-                    .items_center()
-                    .gap(4.0)
-                    .padding(4.0)
-                    .background(t.background)
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.display(floem::style::Display::Flex)
+                        .flex_direction(floem::style::FlexDirection::Row)
+                        .items_center()
+                        .gap(4.0)
+                        .padding(4.0)
+                        .background(t.background)
+                })
+            }),
+        )
     }
 }
 
@@ -87,10 +92,13 @@ pub struct NavigationMenuList<V> {
 
 impl<V: IntoView + 'static> NavigationMenuList<V> {
     /// Create a navigation menu list
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for NavigationMenuList<V> {
     fn view_id(&self) -> ViewId {
@@ -107,12 +115,14 @@ impl<V: IntoView + 'static> IntoView for NavigationMenuList<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Row)
-                .items_center()
-                .gap(4.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .items_center()
+                    .gap(4.0)
+            }),
+        )
     }
 }
 
@@ -129,7 +139,9 @@ pub struct NavigationMenuItem<C> {
 
 impl NavigationMenuItem<()> {
     /// Create a new menu item
-    pub fn new(label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             content: None,
         }
@@ -146,7 +158,6 @@ impl<C> NavigationMenuItem<C> {
         }
     }
 }
-
 
 impl<C: IntoView + 'static> HasViewId for NavigationMenuItem<C> {
     fn view_id(&self) -> ViewId {
@@ -246,12 +257,13 @@ pub struct NavigationMenuTrigger {
 
 impl NavigationMenuTrigger {
     /// Create a new trigger
-    pub fn new(label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
         }
     }
 }
-
 
 impl HasViewId for NavigationMenuTrigger {
     fn view_id(&self) -> ViewId {
@@ -270,20 +282,22 @@ impl IntoView for NavigationMenuTrigger {
     fn into_view(self) -> Self::V {
         let label = self.label;
 
-        Box::new(floem::views::Label::with_id(self.id, format!("{} ▾", label)).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.padding_left(12.0)
-                    .padding_right(12.0)
-                    .padding_top(8.0)
-                    .padding_bottom(8.0)
-                    .font_size(14.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
-                    .color(t.foreground)
-                    .border_radius(t.radius)
-                    .cursor(CursorStyle::Pointer)
-                    .hover(|s| s.background(t.accent).color(t.accent_foreground))
-            })
-        }))
+        Box::new(
+            floem::views::Label::with_id(self.id, format!("{} ▾", label)).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.padding_left(12.0)
+                        .padding_right(12.0)
+                        .padding_top(8.0)
+                        .padding_bottom(8.0)
+                        .font_size(14.0)
+                        .font_weight(floem::text::Weight::MEDIUM)
+                        .color(t.foreground)
+                        .border_radius(t.radius)
+                        .cursor(CursorStyle::Pointer)
+                        .hover(|s| s.background(t.accent).color(t.accent_foreground))
+                })
+            }),
+        )
     }
 }
 
@@ -299,10 +313,13 @@ pub struct NavigationMenuContent<V> {
 
 impl<V: IntoView + 'static> NavigationMenuContent<V> {
     /// Create new navigation content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for NavigationMenuContent<V> {
     fn view_id(&self) -> ViewId {
@@ -319,11 +336,13 @@ impl<V: IntoView + 'static> IntoView for NavigationMenuContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-                .gap(4.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .gap(4.0)
+            }),
+        )
     }
 }
 
@@ -342,7 +361,9 @@ pub struct NavigationMenuLink {
 
 impl NavigationMenuLink {
     /// Create a new navigation link
-    pub fn new(label: impl Into<String>, href: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(label: impl Into<String>, href: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             href: href.into(),
             description: None,
@@ -351,7 +372,9 @@ impl NavigationMenuLink {
     }
 
     /// Create a simple link without href
-    pub fn simple(label: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn simple(label: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             label: label.into(),
             href: String::new(),
             description: None,
@@ -360,16 +383,17 @@ impl NavigationMenuLink {
     }
 
     /// Add description text
-    pub fn description(mut self, desc: impl Into<String>) -> Self { self.description = Some(desc.into());
+    pub fn description(mut self, desc: impl Into<String>) -> Self {
+        self.description = Some(desc.into());
         self
     }
 
     /// Set click handler
-    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self { self.on_click = Some(Box::new(handler));
+    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
         self
     }
 }
-
 
 impl HasViewId for NavigationMenuLink {
     fn view_id(&self) -> ViewId {
@@ -449,7 +473,6 @@ impl Default for NavigationMenuIndicator {
     }
 }
 
-
 impl HasViewId for NavigationMenuIndicator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -488,10 +511,13 @@ pub struct NavigationMenuViewport<V> {
 
 impl<V: IntoView + 'static> NavigationMenuViewport<V> {
     /// Create a new viewport
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for NavigationMenuViewport<V> {
     fn view_id(&self) -> ViewId {

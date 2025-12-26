@@ -23,8 +23,8 @@ use ui_events::{
 };
 
 use super::{
-    Command, Document, Keymap, apply_styles_to_document, extract_padding, extract_text_styles,
-    get_glyph_dimensions, is_cursor_visible, CURSOR_BLINK_INTERVAL_MS,
+    CURSOR_BLINK_INTERVAL_MS, Command, Document, Keymap, apply_styles_to_document, extract_padding,
+    extract_text_styles, get_glyph_dimensions, is_cursor_visible,
 };
 
 /// A single-line text input view
@@ -227,7 +227,8 @@ impl TextInput {
                 if mods.is_empty() {
                     if let Key::Character(c) = key {
                         // Filter out newlines for single-line input
-                        let filtered: String = c.chars().filter(|&ch| ch != '\n' && ch != '\r').collect();
+                        let filtered: String =
+                            c.chars().filter(|&ch| ch != '\n' && ch != '\r').collect();
                         if !filtered.is_empty() {
                             document.insert_text(&filtered);
                             id.request_layout();
@@ -244,7 +245,10 @@ impl TextInput {
             Box::new(move |event| {
                 if let Event::ImeCommit(text) = event {
                     // Filter out newlines from IME input
-                    let filtered: String = text.chars().filter(|&ch| ch != '\n' && ch != '\r').collect();
+                    let filtered: String = text
+                        .chars()
+                        .filter(|&ch| ch != '\n' && ch != '\r')
+                        .collect();
                     if !filtered.is_empty() {
                         doc_signal.get_untracked().insert_text(&filtered);
                         id.request_layout();
@@ -296,7 +300,10 @@ impl TextInput {
         Effect::new(move |_| {
             let new_value = set_value();
             // Filter out newlines
-            let filtered: String = new_value.chars().filter(|&ch| ch != '\n' && ch != '\r').collect();
+            let filtered: String = new_value
+                .chars()
+                .filter(|&ch| ch != '\n' && ch != '\r')
+                .collect();
             // Check if document already has this value
             let current_text = doc.with_untracked(|d| d.text());
             if current_text == filtered {
@@ -337,11 +344,7 @@ impl View for TextInput {
     }
 
     fn view_style(&self) -> Option<Style> {
-        Some(
-            Style::new()
-                .cursor(StyleCursorStyle::Text)
-                .focusable(true),
-        )
+        Some(Style::new().cursor(StyleCursorStyle::Text).focusable(true))
     }
 
     fn compute_layout(&mut self, _cx: &mut ComputeLayoutCx) -> Option<Rect> {
@@ -385,12 +388,10 @@ impl View for TextInput {
         let height = layout.size.height as f64 - padding.0 - padding.2;
 
         cx.save();
-        cx.clip(
-            &Rect::from_origin_size(
-                Point::new(padding.3, padding.0),
-                Size::new(visible_width, height),
-            ),
-        );
+        cx.clip(&Rect::from_origin_size(
+            Point::new(padding.3, padding.0),
+            Size::new(visible_width, height),
+        ));
 
         let doc = self.doc.get_untracked();
         let text = doc.text();
@@ -443,7 +444,11 @@ impl View for TextInput {
         if cx.is_focused(self.id) {
             let cursor = doc.cursor().get_untracked();
             if cursor.is_caret() {
-                let elapsed_ms = self.last_cursor_action.get_untracked().elapsed().as_millis();
+                let elapsed_ms = self
+                    .last_cursor_action
+                    .get_untracked()
+                    .elapsed()
+                    .as_millis();
 
                 if is_cursor_visible(elapsed_ms) {
                     let p = lines.point_of_offset(cursor.end);

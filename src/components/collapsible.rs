@@ -101,17 +101,21 @@ where
 
         // Trigger wrapper
         let trigger_view = if let Some(trigger_fn) = trigger {
-            let view = floem::views::Container::new(trigger_fn())
-                .style(move |s| {
-                    s.cursor(if disabled { CursorStyle::Default } else { CursorStyle::Pointer })
-                });
+            let view = floem::views::Container::new(trigger_fn()).style(move |s| {
+                s.cursor(if disabled {
+                    CursorStyle::Default
+                } else {
+                    CursorStyle::Pointer
+                })
+            });
 
             if disabled {
                 view.into_any()
             } else {
                 view.on_click_stop(move |_| {
                     open.update(|v| *v = !*v);
-                }).into_any()
+                })
+                .into_any()
             }
         } else {
             floem::views::Empty::new().into_any()
@@ -181,15 +185,20 @@ pub struct CollapsibleTrigger<V> {
 
 impl<V: IntoView + 'static> CollapsibleTrigger<V> {
     /// Create a new collapsible trigger
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child, open: None }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            open: None,
+        }
     }
 
     /// Connect to open signal
-    pub fn open(mut self, open: RwSignal<bool>) -> Self { self.open = Some(open);
+    pub fn open(mut self, open: RwSignal<bool>) -> Self {
+        self.open = Some(open);
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for CollapsibleTrigger<V> {
     fn view_id(&self) -> ViewId {
@@ -208,8 +217,8 @@ impl<V: IntoView + 'static> IntoView for CollapsibleTrigger<V> {
     fn into_view(self) -> Self::V {
         let open = self.open;
 
-        let container = floem::views::Container::with_id(self.id, self.child)
-            .style(|s| s.with_shadcn_theme(move |s, t| {
+        let container = floem::views::Container::with_id(self.id, self.child).style(|s| {
+            s.with_shadcn_theme(move |s, t| {
                 s.display(floem::style::Display::Flex)
                     .flex_direction(floem::style::FlexDirection::Row)
                     .items_center()
@@ -219,7 +228,8 @@ impl<V: IntoView + 'static> IntoView for CollapsibleTrigger<V> {
                     .border_radius(t.radius)
                     .cursor(CursorStyle::Pointer)
                     .hover(|s| s.background(t.muted))
-            }));
+            })
+        });
 
         if let Some(signal) = open {
             Box::new(container.on_click_stop(move |_| {
@@ -244,15 +254,20 @@ pub struct CollapsibleContent<V> {
 
 impl<V: IntoView + 'static> CollapsibleContent<V> {
     /// Create a new collapsible content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child, open: None }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            open: None,
+        }
     }
 
     /// Connect to open signal
-    pub fn open(mut self, open: RwSignal<bool>) -> Self { self.open = Some(open);
+    pub fn open(mut self, open: RwSignal<bool>) -> Self {
+        self.open = Some(open);
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for CollapsibleContent<V> {
     fn view_id(&self) -> ViewId {
@@ -272,17 +287,16 @@ impl<V: IntoView + 'static> IntoView for CollapsibleContent<V> {
         let open = self.open;
 
         Box::new(
-            floem::views::Container::with_id(self.id, self.child)
-                .style(move |s| {
-                    let is_open = open.map(|sig| sig.get()).unwrap_or(true);
-                    let base = s.padding_top(8.0);
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                let is_open = open.map(|sig| sig.get()).unwrap_or(true);
+                let base = s.padding_top(8.0);
 
-                    if is_open {
-                        base
-                    } else {
-                        base.display(floem::style::Display::None)
-                    }
-                })
+                if is_open {
+                    base
+                } else {
+                    base.display(floem::style::Display::None)
+                }
+            }),
         )
     }
 }

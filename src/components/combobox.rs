@@ -21,10 +21,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::text::TextInput;
@@ -165,9 +165,7 @@ impl IntoView for Combobox {
             // ChevronDown icon - size-4 text-muted-foreground
             floem::views::Label::new("▼").style(|s| {
                 s.with_shadcn_theme(move |s, t| {
-                    s.font_size(10.0)
-                        .color(t.muted_foreground)
-                        .flex_shrink(0.0)
+                    s.font_size(10.0).color(t.muted_foreground).flex_shrink(0.0)
                 })
             }),
         ))
@@ -283,25 +281,24 @@ impl IntoView for Combobox {
                         search.set(String::new());
                     }),
                 // Dropdown content - positioned relative to trigger using window coordinates
-                floem::views::Stack::vertical((search_input, items_container))
-                    .style(move |s| {
-                        s.with_shadcn_theme(move |s, t| {
-                            let origin = trigger_origin.get();
-                            let size = trigger_size.get();
-                            // Position below the trigger using window coordinates
-                            s.absolute()
-                                .inset_left(origin.x)
-                                .inset_top(origin.y + size.height + 4.0) // 4px gap below trigger
-                                .min_width(size.width.max(200.0))
-                                .background(t.popover)
-                                .color(t.popover_foreground)
-                                .border_1()
-                                .border_color(t.border)
-                                .rounded_md()
-                                .shadow_lg()
-                                .z_index(100)
-                        })
-                    }),
+                floem::views::Stack::vertical((search_input, items_container)).style(move |s| {
+                    s.with_shadcn_theme(move |s, t| {
+                        let origin = trigger_origin.get();
+                        let size = trigger_size.get();
+                        // Position below the trigger using window coordinates
+                        s.absolute()
+                            .inset_left(origin.x)
+                            .inset_top(origin.y + size.height + 4.0) // 4px gap below trigger
+                            .min_width(size.width.max(200.0))
+                            .background(t.popover)
+                            .color(t.popover_foreground)
+                            .border_1()
+                            .border_color(t.border)
+                            .rounded_md()
+                            .shadow_lg()
+                            .z_index(100)
+                    })
+                }),
             ))
             .style(move |s| {
                 let open = is_open.get();
@@ -554,31 +551,33 @@ impl<V: IntoView + 'static> IntoView for ComboboxContent<V> {
 
         // shadcn/ui ComboboxContent (v4):
         // bg-popover text-popover-foreground rounded-md shadow-md ring-1
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let open = is_open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top_pct(100.0)
-                    .inset_left(0.0)
-                    .inset_right(0.0)
-                    .margin_top(4.0)
-                    .p_1() // p-1 = 4px
-                    .background(t.popover) // bg-popover
-                    .color(t.popover_foreground) // text-popover-foreground
-                    .border_1() // ring-1
-                    .border_color(t.border)
-                    .rounded_md() // rounded-md
-                    .shadow_lg() // shadow-md
-                    .z_index(100)
-                    .flex_direction(floem::style::FlexDirection::Column);
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
+                    let open = is_open.get();
+                    let base = s
+                        .position(floem::style::Position::Absolute)
+                        .inset_top_pct(100.0)
+                        .inset_left(0.0)
+                        .inset_right(0.0)
+                        .margin_top(4.0)
+                        .p_1() // p-1 = 4px
+                        .background(t.popover) // bg-popover
+                        .color(t.popover_foreground) // text-popover-foreground
+                        .border_1() // ring-1
+                        .border_color(t.border)
+                        .rounded_md() // rounded-md
+                        .shadow_lg() // shadow-md
+                        .z_index(100)
+                        .flex_direction(floem::style::FlexDirection::Column);
+                    if open {
+                        base
+                    } else {
+                        base.display(floem::style::Display::None)
+                    }
+                })
+            }),
+        )
     }
 }
 

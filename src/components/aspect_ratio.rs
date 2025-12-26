@@ -105,22 +105,18 @@ where
 
         let inner = if let Some(child_fn) = child {
             floem::views::Container::new(child_fn())
-                .style(|s| {
-                    s.position(floem::style::Position::Absolute)
-                        .inset(0.0)
-                })
+                .style(|s| s.position(floem::style::Position::Absolute).inset(0.0))
                 .into_any()
         } else {
             floem::views::Empty::new().into_any()
         };
 
-        floem::views::Container::new(inner)
-            .style(move |s| {
-                s.position(floem::style::Position::Relative)
-                    .width_full()
-                    // Use aspect_ratio style property
-                    .aspect_ratio(ratio as f32)
-            })
+        floem::views::Container::new(inner).style(move |s| {
+            s.position(floem::style::Position::Relative)
+                .width_full()
+                // Use aspect_ratio style property
+                .aspect_ratio(ratio as f32)
+        })
     }
 }
 
@@ -164,23 +160,30 @@ pub struct AspectRatioSimple<V> {
 
 impl<V: IntoView + 'static> AspectRatioSimple<V> {
     /// Create a new aspect ratio container
-    pub fn new(ratio: f64, child: V) -> Self { Self { id: ViewId::new(), ratio, child }
+    pub fn new(ratio: f64, child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            ratio,
+            child,
+        }
     }
 
     /// Create a square (1:1) aspect ratio
-    pub fn square(child: V) -> Self { Self::new(1.0, child)
+    pub fn square(child: V) -> Self {
+        Self::new(1.0, child)
     }
 
     /// Create a video (16:9) aspect ratio
-    pub fn video(child: V) -> Self { Self::new(16.0 / 9.0, child)
+    pub fn video(child: V) -> Self {
+        Self::new(16.0 / 9.0, child)
     }
 
     /// Change the aspect ratio
-    pub fn ratio(mut self, ratio: f64) -> Self { self.ratio = ratio;
+    pub fn ratio(mut self, ratio: f64) -> Self {
+        self.ratio = ratio;
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for AspectRatioSimple<V> {
     fn view_id(&self) -> ViewId {
@@ -200,18 +203,12 @@ impl<V: IntoView + 'static> IntoView for AspectRatioSimple<V> {
         let ratio = self.ratio;
 
         let inner = floem::views::Container::new(self.child)
-            .style(|s| {
-                s.position(floem::style::Position::Absolute)
-                    .inset(0.0)
-            });
+            .style(|s| s.position(floem::style::Position::Absolute).inset(0.0));
 
-        Box::new(
-            floem::views::Container::new(inner)
-                .style(move |s| {
-                    s.position(floem::style::Position::Relative)
-                        .width_full()
-                        .aspect_ratio(ratio as f32)
-                })
-        )
+        Box::new(floem::views::Container::new(inner).style(move |s| {
+            s.position(floem::style::Position::Relative)
+                .width_full()
+                .aspect_ratio(ratio as f32)
+        }))
     }
 }

@@ -6,7 +6,7 @@ mod text_input;
 mod text_layout_lines;
 
 pub use document::Document;
-pub use keymap::{Command, KeyPress, Keymap, KeymapBuilder, CURSOR_BLINK_INTERVAL_MS};
+pub use keymap::{CURSOR_BLINK_INTERVAL_MS, Command, KeyPress, Keymap, KeymapBuilder};
 pub use style_utils::{
     Padding, TextStyles, apply_styles_to_document, extract_padding, extract_text_styles,
     get_glyph_dimensions, is_cursor_visible,

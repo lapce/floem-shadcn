@@ -21,10 +21,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::views::{Decorators, Overlay};
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
+use floem::views::{Decorators, Overlay};
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
@@ -147,11 +147,7 @@ impl IntoView for AlertDialog {
 
         // Title
         let title_view = floem::views::Label::new(title).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.text_lg()
-                    .font_semibold()
-                    .color(t.foreground)
-            })
+            s.with_shadcn_theme(move |s, t| s.text_lg().font_semibold().color(t.foreground))
         });
 
         // Description
@@ -224,8 +220,8 @@ impl IntoView for AlertDialog {
             });
 
         // Footer with buttons
-        let footer =
-            floem::views::Stack::horizontal((cancel_btn, action_btn)).style(|s| s.gap(8.0).justify_end());
+        let footer = floem::views::Stack::horizontal((cancel_btn, action_btn))
+            .style(|s| s.gap(8.0).justify_end());
 
         // Dialog content in Overlay - escapes parent clipping
         let dialog_overlay = Overlay::new(
@@ -289,7 +285,11 @@ pub struct AlertDialogTrigger<V> {
 impl<V: IntoView + 'static> AlertDialogTrigger<V> {
     /// Create a new trigger
     pub fn new(child: V, is_open: RwSignal<bool>) -> Self {
-        Self { id: ViewId::new(), child, is_open }
+        Self {
+            id: ViewId::new(),
+            child,
+            is_open,
+        }
     }
 }
 
@@ -334,7 +334,11 @@ pub struct AlertDialogContent<V> {
 impl<V: IntoView + 'static> AlertDialogContent<V> {
     /// Create new content
     pub fn new(child: V, is_open: RwSignal<bool>) -> Self {
-        Self { id: ViewId::new(), child, is_open }
+        Self {
+            id: ViewId::new(),
+            child,
+            is_open,
+        }
     }
 }
 
@@ -415,7 +419,10 @@ pub struct AlertDialogHeader<V> {
 impl<V: IntoView + 'static> AlertDialogHeader<V> {
     /// Create a new header
     pub fn new(child: V) -> Self {
-        Self { id: ViewId::new(), child }
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
 
@@ -434,11 +441,13 @@ impl<V: IntoView + 'static> IntoView for AlertDialogHeader<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-                .margin_bottom(16.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .margin_bottom(16.0)
+            }),
+        )
     }
 }
 
@@ -455,7 +464,10 @@ pub struct AlertDialogFooter<V> {
 impl<V: IntoView + 'static> AlertDialogFooter<V> {
     /// Create a new footer
     pub fn new(child: V) -> Self {
-        Self { id: ViewId::new(), child }
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
 
@@ -474,12 +486,14 @@ impl<V: IntoView + 'static> IntoView for AlertDialogFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Row)
-                .justify_end()
-                .gap(8.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .justify_end()
+                    .gap(8.0)
+            }),
+        )
     }
 }
 
@@ -496,7 +510,10 @@ pub struct AlertDialogTitle {
 impl AlertDialogTitle {
     /// Create a new title
     pub fn new(text: impl Into<String>) -> Self {
-        Self { id: ViewId::new(), text: text.into() }
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
 
@@ -540,7 +557,10 @@ pub struct AlertDialogDescription {
 impl AlertDialogDescription {
     /// Create a new description
     pub fn new(text: impl Into<String>) -> Self {
-        Self { id: ViewId::new(), text: text.into() }
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
 

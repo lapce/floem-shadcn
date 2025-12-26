@@ -18,8 +18,8 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -84,24 +84,23 @@ impl Skeleton {
         let height = self.height;
         let border_radius = self.border_radius.unwrap_or(4.0);
 
-        floem::views::Empty::new()
-            .style(move |s| {
-                let mut style = s.border_radius(border_radius);
+        floem::views::Empty::new().style(move |s| {
+            let mut style = s.border_radius(border_radius);
 
-                if let Some(w) = width {
-                    style = style.width(w);
-                } else {
-                    style = style.width_full();
-                }
+            if let Some(w) = width {
+                style = style.width(w);
+            } else {
+                style = style.width_full();
+            }
 
-                if let Some(h) = height {
-                    style = style.height(h);
-                } else {
-                    style = style.height(20.0);
-                }
+            if let Some(h) = height {
+                style = style.height(h);
+            } else {
+                style = style.height(20.0);
+            }
 
-                style.with_shadcn_theme(|s, t| s.background(t.muted))
-            })
+            style.with_shadcn_theme(|s, t| s.background(t.muted))
+        })
     }
 }
 

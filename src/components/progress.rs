@@ -18,9 +18,9 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -62,25 +62,26 @@ impl Progress {
         let max = self.max;
 
         // The track (background)
-        
 
         floem::views::Container::new(
             // The indicator (foreground)
-            floem::views::Empty::new()
-                .style(move |s| {
-                    let percent = if let Some(v) = value {
-                        ((v.get() / max) * 100.0).clamp(0.0, 100.0)
-                    } else {
-                        // Indeterminate - show 30% width
-                        30.0
-                    };
+            floem::views::Empty::new().style(move |s| {
+                let percent = if let Some(v) = value {
+                    ((v.get() / max) * 100.0).clamp(0.0, 100.0)
+                } else {
+                    // Indeterminate - show 30% width
+                    30.0
+                };
 
-                    s.height_full()
-                        .width_pct(percent)
-                        .border_radius(4.0)
-                        .transition(floem::style::Width, floem::style::Transition::linear(millis(200)))
-                        .with_shadcn_theme(|s, t| s.background(t.primary))
-                })
+                s.height_full()
+                    .width_pct(percent)
+                    .border_radius(4.0)
+                    .transition(
+                        floem::style::Width,
+                        floem::style::Transition::linear(millis(200)),
+                    )
+                    .with_shadcn_theme(|s, t| s.background(t.primary))
+            }),
         )
         .style(|s| {
             s.width_full()

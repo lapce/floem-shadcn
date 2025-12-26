@@ -20,9 +20,9 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::text::Weight;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -83,80 +83,76 @@ impl Alert {
         };
 
         children.push(Box::new(
-            floem::views::svg(move || icon_svg.to_string())
-                .style(move |s| {
-                    s.width(16.0).height(16.0).flex_shrink(0.0)
-                        .with_shadcn_theme(move |s, t| {
-                            let color = match variant {
-                                AlertVariant::Default => t.foreground,
-                                AlertVariant::Destructive => t.destructive,
-                            };
-                            s.color(color)
-                        })
-                })
+            floem::views::svg(move || icon_svg.to_string()).style(move |s| {
+                s.width(16.0)
+                    .height(16.0)
+                    .flex_shrink(0.0)
+                    .with_shadcn_theme(move |s, t| {
+                        let color = match variant {
+                            AlertVariant::Default => t.foreground,
+                            AlertVariant::Destructive => t.destructive,
+                        };
+                        s.color(color)
+                    })
+            }),
         ));
 
         // Content container
         let mut content_children: Vec<Box<dyn View>> = Vec::new();
 
         if let Some(title) = self.title {
-            content_children.push(Box::new(
-                floem::views::Label::new(title)
-                    .style(move |s| {
-                        s.font_size(14.0)
-                            .font_weight(Weight::MEDIUM)
-                            .line_height(1.0)
-                            .with_shadcn_theme(move |s, t| {
-                                let color = match variant {
-                                    AlertVariant::Default => t.foreground,
-                                    AlertVariant::Destructive => t.destructive,
-                                };
-                                s.color(color)
-                            })
+            content_children.push(Box::new(floem::views::Label::new(title).style(move |s| {
+                s.font_size(14.0)
+                    .font_weight(Weight::MEDIUM)
+                    .line_height(1.0)
+                    .with_shadcn_theme(move |s, t| {
+                        let color = match variant {
+                            AlertVariant::Default => t.foreground,
+                            AlertVariant::Destructive => t.destructive,
+                        };
+                        s.color(color)
                     })
-            ));
+            })));
         }
 
         if let Some(description) = self.description {
-            content_children.push(Box::new(
-                floem::views::Label::new(description)
-                    .style(move |s| {
-                        s.font_size(14.0)
-                            .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-                    })
-            ));
+            content_children.push(Box::new(floem::views::Label::new(description).style(
+                move |s| {
+                    s.font_size(14.0)
+                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
+                },
+            )));
         }
 
         children.push(Box::new(
             floem::views::Stack::vertical_from_iter(content_children)
-                .style(|s| s.gap(4.0).flex_grow(1.0))
+                .style(|s| s.gap(4.0).flex_grow(1.0)),
         ));
 
-        floem::views::Stack::horizontal_from_iter(children)
-            .style(move |s| {
-                s.width_full()
-                    .padding(16.0)
-                    .border_radius(8.0)
-                    .border(1.0)
-                    .gap(12.0)
-                    .items_start()
-                    .with_shadcn_theme(move |s, t| {
-                        let (bg, border_color) = match variant {
-                            AlertVariant::Default => (t.background, t.border),
-                            AlertVariant::Destructive => {
-                                // Subtle red background
-                                let destructive_bg = peniko::Color::from_rgba8(
-                                    t.destructive.to_rgba8().r,
-                                    t.destructive.to_rgba8().g,
-                                    t.destructive.to_rgba8().b,
-                                    25, // Low alpha for subtle background
-                                );
-                                (destructive_bg, t.destructive)
-                            }
-                        };
-                        s.border_color(border_color).background(bg)
-                    })
-            })
+        floem::views::Stack::horizontal_from_iter(children).style(move |s| {
+            s.width_full()
+                .padding(16.0)
+                .border_radius(8.0)
+                .border(1.0)
+                .gap(12.0)
+                .items_start()
+                .with_shadcn_theme(move |s, t| {
+                    let (bg, border_color) = match variant {
+                        AlertVariant::Default => (t.background, t.border),
+                        AlertVariant::Destructive => {
+                            // Subtle red background
+                            let destructive_bg = peniko::Color::from_rgba8(
+                                t.destructive.to_rgba8().r,
+                                t.destructive.to_rgba8().g,
+                                t.destructive.to_rgba8().b,
+                                25, // Low alpha for subtle background
+                            );
+                            (destructive_bg, t.destructive)
+                        }
+                    };
+                    s.border_color(border_color).background(bg)
+                })
+        })
     }
 }
 

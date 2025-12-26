@@ -19,9 +19,9 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -209,13 +209,13 @@ where
     }
 }
 
-
-impl<T, C, TV, CV> HasViewId for HoverCard<T, C> where
+impl<T, C, TV, CV> HasViewId for HoverCard<T, C>
+where
     T: Fn() -> TV + 'static,
     C: Fn() -> CV + 'static,
     TV: IntoView + 'static,
     CV: IntoView + 'static,
- {
+{
     fn view_id(&self) -> ViewId {
         ViewId::new()
     }
@@ -227,7 +227,7 @@ where
     C: Fn() -> CV + 'static,
     TV: IntoView + 'static,
     CV: IntoView + 'static,
- {
+{
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -252,10 +252,13 @@ pub struct HoverCardContent<V> {
 
 impl<V: IntoView + 'static> HoverCardContent<V> {
     /// Create new hover card content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for HoverCardContent<V> {
     fn view_id(&self) -> ViewId {
@@ -272,11 +275,13 @@ impl<V: IntoView + 'static> IntoView for HoverCardContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-                .gap(8.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .gap(8.0)
+            }),
+        )
     }
 }
 
@@ -292,10 +297,13 @@ pub struct HoverCardTrigger<V> {
 
 impl<V: IntoView + 'static> HoverCardTrigger<V> {
     /// Create new hover card trigger
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for HoverCardTrigger<V> {
     fn view_id(&self) -> ViewId {

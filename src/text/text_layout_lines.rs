@@ -8,8 +8,8 @@ use floem::{
     text::{LayoutLine, LayoutRun, LineEnding, TextLayout},
 };
 use lapce_xi_rope::{
-    tree::{Leaf, Node, NodeInfo, TreeBuilder, UnitAffinity, UnitConverter},
     Cursor, Delta, DeltaElement, Interval,
+    tree::{Leaf, Node, NodeInfo, TreeBuilder, UnitAffinity, UnitConverter},
 };
 
 const MIN_LEAF: usize = 511;
@@ -61,7 +61,8 @@ impl TextLayoutLines {
     }
 
     pub fn visual_line(&self, actual_line: usize) -> usize {
-        self.tree.count_unit::<usize, VlineLineConverter>(actual_line)
+        self.tree
+            .count_unit::<usize, VlineLineConverter>(actual_line)
     }
 
     pub fn actual_line(&self, visual_line: usize) -> usize {
@@ -430,10 +431,10 @@ impl TextLayoutLineBuilder {
                 if is_last_visual_line {
                     utf8_len += match line_ending {
                         LineEnding::None => 0,
-                        LineEnding::Lf => 1,      // \n
-                        LineEnding::CrLf => 2,    // \r\n
-                        LineEnding::Cr => 1,      // \r
-                        _ => 1,                   // Other endings treated as 1 byte
+                        LineEnding::Lf => 1,   // \n
+                        LineEnding::CrLf => 2, // \r\n
+                        LineEnding::Cr => 1,   // \r
+                        _ => 1,                // Other endings treated as 1 byte
                     };
                 }
 
@@ -816,7 +817,7 @@ impl<'a> Iterator for VisualLineIter<'a> {
 mod test {
     use floem::{
         kurbo::Point,
-        text::{Attrs, AttrsList, FamilyOwned, LineHeightValue, TextLayout, Weight, FONT_SYSTEM},
+        text::{Attrs, AttrsList, FONT_SYSTEM, FamilyOwned, LineHeightValue, TextLayout, Weight},
     };
 
     use super::TextLayoutLineBuilder;
@@ -1275,7 +1276,8 @@ mod test {
     fn test_roundtrip_offset_vline() {
         let attrs_list = default_attrs_list();
         let mut builder = TextLayoutLineBuilder::new();
-        let text_layout = TextLayout::new_with_text("hello\nworld\nfoo\nbar\n", attrs_list.clone(), None);
+        let text_layout =
+            TextLayout::new_with_text("hello\nworld\nfoo\nbar\n", attrs_list.clone(), None);
         builder.push_text_layout(&text_layout);
         let lines = builder.build();
 
@@ -1384,7 +1386,8 @@ mod test {
         let mut builder = TextLayoutLineBuilder::new();
 
         // Mix of short lines, empty lines, and longer content
-        let text_layout = TextLayout::new_with_text("a\n\nbb\nccc\n\ndddd", attrs_list.clone(), None);
+        let text_layout =
+            TextLayout::new_with_text("a\n\nbb\nccc\n\ndddd", attrs_list.clone(), None);
         builder.push_text_layout(&text_layout);
         let lines = builder.build();
 

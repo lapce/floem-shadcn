@@ -14,9 +14,9 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -34,7 +34,9 @@ pub struct InputOTP {
 
 impl InputOTP {
     /// Create a new OTP input
-    pub fn new(value: RwSignal<String>, max_length: usize) -> Self { Self { id: ViewId::new(),
+    pub fn new(value: RwSignal<String>, max_length: usize) -> Self {
+        Self {
+            id: ViewId::new(),
             value,
             max_length,
             mask: false,
@@ -42,11 +44,11 @@ impl InputOTP {
     }
 
     /// Mask the input (show dots instead of digits)
-    pub fn mask(mut self) -> Self { self.mask = true;
+    pub fn mask(mut self) -> Self {
+        self.mask = true;
         self
     }
 }
-
 
 impl HasViewId for InputOTP {
     fn view_id(&self) -> ViewId {
@@ -155,10 +157,13 @@ pub struct InputOTPGroup<V> {
 
 impl<V: IntoView + 'static> InputOTPGroup<V> {
     /// Create a new OTP group
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for InputOTPGroup<V> {
     fn view_id(&self) -> ViewId {
@@ -175,11 +180,13 @@ impl<V: IntoView + 'static> IntoView for InputOTPGroup<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Row)
-                .gap(8.0)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .gap(8.0)
+            }),
+        )
     }
 }
 
@@ -197,7 +204,9 @@ pub struct InputOTPSlot {
 
 impl InputOTPSlot {
     /// Create a new OTP slot
-    pub fn new(value: RwSignal<String>, index: usize) -> Self { Self { id: ViewId::new(),
+    pub fn new(value: RwSignal<String>, index: usize) -> Self {
+        Self {
+            id: ViewId::new(),
             value,
             index,
             mask: false,
@@ -205,11 +214,11 @@ impl InputOTPSlot {
     }
 
     /// Mask the digit
-    pub fn mask(mut self) -> Self { self.mask = true;
+    pub fn mask(mut self) -> Self {
+        self.mask = true;
         self
     }
 }
-
 
 impl HasViewId for InputOTPSlot {
     fn view_id(&self) -> ViewId {
@@ -296,7 +305,6 @@ impl Default for InputOTPSeparator {
     }
 }
 
-
 impl HasViewId for InputOTPSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -337,7 +345,9 @@ pub struct PinInput {
 
 impl PinInput {
     /// Create a new PIN input
-    pub fn new(value: RwSignal<String>, length: usize) -> Self { Self { id: ViewId::new(),
+    pub fn new(value: RwSignal<String>, length: usize) -> Self {
+        Self {
+            id: ViewId::new(),
             value,
             length,
             mask: true, // PINs are usually masked
@@ -345,11 +355,11 @@ impl PinInput {
     }
 
     /// Show digits instead of dots
-    pub fn show_digits(mut self) -> Self { self.mask = false;
+    pub fn show_digits(mut self) -> Self {
+        self.mask = false;
         self
     }
 }
-
 
 impl HasViewId for PinInput {
     fn view_id(&self) -> ViewId {

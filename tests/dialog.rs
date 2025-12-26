@@ -26,11 +26,9 @@ fn test_dialog_opens_via_trigger() {
     // Note: Don't add on_click_stop to the child button - DialogTrigger handles the click
     let dialog = Dialog::new((
         DialogTrigger::new(Button::new("Open Dialog")),
-        DialogContent::new((
-            DialogHeader::new()
-                .title("Test Dialog")
-                .description("This is a test dialog"),
-        )),
+        DialogContent::new((DialogHeader::new()
+            .title("Test Dialog")
+            .description("This is a test dialog"),)),
     ));
     let open = dialog.open_signal();
 
@@ -334,11 +332,9 @@ fn test_dialog_centering() {
 
     let dialog = Dialog::new((
         DialogTrigger::new(Button::new("Open")),
-        DialogContent::new((
-            DialogHeader::new()
-                .title("Centered Dialog")
-                .description("This should be centered"),
-        )),
+        DialogContent::new((DialogHeader::new()
+            .title("Centered Dialog")
+            .description("This should be centered"),)),
     ));
     let open = dialog.open_signal();
     let dialog_id = dialog.view_id();
@@ -501,7 +497,10 @@ fn test_clicking_dialog_content_does_not_close() {
             "Content bounds: ({:.1}, {:.1}) to ({:.1}, {:.1})",
             x0, y0, x1, y1
         );
-        eprintln!("Clicking at content center: ({:.1}, {:.1})", center_x, center_y);
+        eprintln!(
+            "Clicking at content center: ({:.1}, {:.1})",
+            center_x, center_y
+        );
 
         harness.click(center_x, center_y);
         harness.rebuild();
@@ -524,11 +523,9 @@ fn test_clicking_dialog_content_does_not_close() {
 fn test_clicking_backdrop_closes_dialog() {
     let dialog = Dialog::new((
         DialogTrigger::new(Button::new("Open")),
-        DialogContent::new((
-            DialogHeader::new()
-                .title("Dialog")
-                .description("Click outside to close"),
-        )),
+        DialogContent::new((DialogHeader::new()
+            .title("Dialog")
+            .description("Click outside to close"),)),
     ));
     let open = dialog.open_signal();
 

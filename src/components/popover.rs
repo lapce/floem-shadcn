@@ -16,10 +16,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -188,13 +188,13 @@ where
     }
 }
 
-
-impl<T, C, TV, CV> HasViewId for Popover<T, C> where
+impl<T, C, TV, CV> HasViewId for Popover<T, C>
+where
     T: Fn() -> TV + 'static,
     C: Fn() -> CV + 'static,
     TV: IntoView + 'static,
     CV: IntoView + 'static,
- {
+{
     fn view_id(&self) -> ViewId {
         ViewId::new()
     }
@@ -206,7 +206,7 @@ where
     C: Fn() -> CV + 'static,
     TV: IntoView + 'static,
     CV: IntoView + 'static,
- {
+{
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -232,10 +232,14 @@ pub struct PopoverTrigger<V> {
 
 impl<V: IntoView + 'static> PopoverTrigger<V> {
     /// Create a new popover trigger
-    pub fn new(open: RwSignal<bool>, child: V) -> Self { Self { id: ViewId::new(), open, child }
+    pub fn new(open: RwSignal<bool>, child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            open,
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for PopoverTrigger<V> {
     fn view_id(&self) -> ViewId {
@@ -276,10 +280,14 @@ pub struct PopoverContent<V> {
 
 impl<V: IntoView + 'static> PopoverContent<V> {
     /// Create new popover content
-    pub fn new(open: RwSignal<bool>, child: V) -> Self { Self { id: ViewId::new(), open, child }
+    pub fn new(open: RwSignal<bool>, child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            open,
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for PopoverContent<V> {
     fn view_id(&self) -> ViewId {
@@ -297,24 +305,26 @@ impl<V: IntoView + 'static> IntoView for PopoverContent<V> {
 
     fn into_view(self) -> Self::V {
         let open = self.open;
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let is_open = open.get();
-                let base = s
-                    .padding(16.0)
-                    .background(t.popover)
-                    .border(1.0)
-                    .border_color(t.border)
-                    .border_radius(t.radius)
-                    .box_shadow_blur(8.0)
-                    .box_shadow_color(t.foreground.with_alpha(0.1))
-                    .z_index(50);
-                if is_open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
+                    let is_open = open.get();
+                    let base = s
+                        .padding(16.0)
+                        .background(t.popover)
+                        .border(1.0)
+                        .border_color(t.border)
+                        .border_radius(t.radius)
+                        .box_shadow_blur(8.0)
+                        .box_shadow_color(t.foreground.with_alpha(0.1))
+                        .z_index(50);
+                    if is_open {
+                        base
+                    } else {
+                        base.display(floem::style::Display::None)
+                    }
+                })
+            }),
+        )
     }
 }

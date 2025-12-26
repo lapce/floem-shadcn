@@ -18,10 +18,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
@@ -99,7 +99,8 @@ impl Checkbox {
                         s.background(t.primary).border_color(t.primary)
                     })
                     .apply_if(!is_checked, |s| {
-                        s.background(peniko::Color::TRANSPARENT).border_color(t.input)
+                        s.background(peniko::Color::TRANSPARENT)
+                            .border_color(t.input)
                     })
                     // Disabled state: cursor-not-allowed, opacity-50
                     .apply_if(disabled, |s| s.cursor(CursorStyle::Default))

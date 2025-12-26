@@ -23,8 +23,8 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -52,7 +52,9 @@ pub struct ScrollArea<V> {
 
 impl<V: IntoView + 'static> ScrollArea<V> {
     /// Create a new scroll area
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             child,
             orientation: ScrollOrientation::Vertical,
             width: None,
@@ -61,36 +63,41 @@ impl<V: IntoView + 'static> ScrollArea<V> {
     }
 
     /// Set scroll orientation
-    pub fn orientation(mut self, orientation: ScrollOrientation) -> Self { self.orientation = orientation;
+    pub fn orientation(mut self, orientation: ScrollOrientation) -> Self {
+        self.orientation = orientation;
         self
     }
 
     /// Set to horizontal scrolling
-    pub fn horizontal(mut self) -> Self { self.orientation = ScrollOrientation::Horizontal;
+    pub fn horizontal(mut self) -> Self {
+        self.orientation = ScrollOrientation::Horizontal;
         self
     }
 
     /// Set to vertical scrolling
-    pub fn vertical(mut self) -> Self { self.orientation = ScrollOrientation::Vertical;
+    pub fn vertical(mut self) -> Self {
+        self.orientation = ScrollOrientation::Vertical;
         self
     }
 
     /// Set to both horizontal and vertical scrolling
-    pub fn both(mut self) -> Self { self.orientation = ScrollOrientation::Both;
+    pub fn both(mut self) -> Self {
+        self.orientation = ScrollOrientation::Both;
         self
     }
 
     /// Set fixed width
-    pub fn width(mut self, width: f64) -> Self { self.width = Some(width);
+    pub fn width(mut self, width: f64) -> Self {
+        self.width = Some(width);
         self
     }
 
     /// Set fixed height
-    pub fn height(mut self, height: f64) -> Self { self.height = Some(height);
+    pub fn height(mut self, height: f64) -> Self {
+        self.height = Some(height);
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ScrollArea<V> {
     fn view_id(&self) -> ViewId {
@@ -117,7 +124,7 @@ impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
                 .style(move |s| {
                     s.with_shadcn_theme(move |s, t| {
                         let base = s.border_radius(t.radius).flex_grow(1.0).flex_basis(0.0);
-                        
+
                         match (width, height) {
                             (Some(w), Some(h)) => base.width(w).height(h),
                             (Some(w), None) => base.width(w),
@@ -131,7 +138,7 @@ impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
                 .style(move |s| {
                     s.with_shadcn_theme(move |s, t| {
                         let base = s.border_radius(t.radius).flex_grow(1.0).flex_basis(0.0);
-                        
+
                         match (width, height) {
                             (Some(w), Some(h)) => base.width(w).height(h),
                             (Some(w), None) => base.width(w),
@@ -145,7 +152,7 @@ impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
                 .style(move |s| {
                     s.with_shadcn_theme(move |s, t| {
                         let base = s.border_radius(t.radius).flex_grow(1.0).flex_basis(0.0);
-                        
+
                         match (width, height) {
                             (Some(w), Some(h)) => base.width(w).height(h),
                             (Some(w), None) => base.width(w),
@@ -176,7 +183,9 @@ pub struct ScrollAreaWithBar<V> {
 
 impl<V: IntoView + 'static> ScrollAreaWithBar<V> {
     /// Create a new scroll area with visible scrollbar
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             child,
             height: None,
             width: None,
@@ -185,21 +194,23 @@ impl<V: IntoView + 'static> ScrollAreaWithBar<V> {
     }
 
     /// Set fixed height
-    pub fn height(mut self, height: f64) -> Self { self.height = Some(height);
+    pub fn height(mut self, height: f64) -> Self {
+        self.height = Some(height);
         self
     }
 
     /// Set fixed width
-    pub fn width(mut self, width: f64) -> Self { self.width = Some(width);
+    pub fn width(mut self, width: f64) -> Self {
+        self.width = Some(width);
         self
     }
 
     /// Toggle scrollbar visibility
-    pub fn show_scrollbar(mut self, show: bool) -> Self { self.show_scrollbar = show;
+    pub fn show_scrollbar(mut self, show: bool) -> Self {
+        self.show_scrollbar = show;
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ScrollAreaWithBar<V> {
     fn view_id(&self) -> ViewId {
@@ -227,7 +238,7 @@ impl<V: IntoView + 'static> IntoView for ScrollAreaWithBar<V> {
                     .border_radius(t.radius)
                     .flex_grow(1.0)
                     .flex_basis(0.0);
-                
+
                 match (width, height) {
                     (Some(w), Some(h)) => base.width(w).height(h),
                     (Some(w), None) => base.width(w),

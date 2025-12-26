@@ -15,9 +15,9 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::text::Weight;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -56,14 +56,11 @@ impl Avatar {
         let fallback = self.fallback_text.unwrap_or_default();
         let font_size = size * 0.4;
 
-        floem::views::Container::new(
-            floem::views::Label::new(fallback)
-                .style(move |s| {
-                    s.font_size(font_size)
-                        .font_weight(Weight::MEDIUM)
-                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-                })
-        )
+        floem::views::Container::new(floem::views::Label::new(fallback).style(move |s| {
+            s.font_size(font_size)
+                .font_weight(Weight::MEDIUM)
+                .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
+        }))
         .style(move |s| {
             s.width(size)
                 .height(size)

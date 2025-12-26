@@ -425,23 +425,24 @@ fn dialog_demo() -> impl IntoView {
     demo_section(
         "Dialog",
         "A modal dialog component for important interactions.",
-        v_stack((
-            subsection(
-                "Basic Dialog",
-                Dialog::new((
-                    DialogTrigger::new(Button::new("Open Dialog")),
-                    DialogContent::new((
-                        DialogHeader::new()
-                            .title("Are you sure?")
-                            .description("This action cannot be undone. This will permanently delete your account."),
-                        DialogFooter::new(h_stack((
+        v_stack((subsection(
+            "Basic Dialog",
+            Dialog::new((
+                DialogTrigger::new(Button::new("Open Dialog")),
+                DialogContent::new((
+                    DialogHeader::new().title("Are you sure?").description(
+                        "This action cannot be undone. This will permanently delete your account.",
+                    ),
+                    DialogFooter::new(
+                        h_stack((
                             DialogClose::new(Button::new("Cancel").outline()),
                             DialogClose::new(Button::new("Continue").destructive()),
-                        )).style(|s| s.gap_2())),
-                    )),
+                        ))
+                        .style(|s| s.gap_2()),
+                    ),
                 )),
-            ),
-        ))
+            )),
+        ),))
         .style(|s| s.gap_8()),
     )
 }
@@ -1111,14 +1112,12 @@ fn select_demo() -> impl IntoView {
                         SelectItemData::new("cherry", "Cherry"),
                         SelectItemData::new("date", "Date"),
                     ]),
-                Label::derived(move || {
-                    format!("Selected: {}", selected.get().unwrap_or_default())
-                })
-                .style(|s| {
-                    s.font_size(12.0)
-                        .margin_top(8.0)
-                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-                }),
+                Label::derived(move || format!("Selected: {}", selected.get().unwrap_or_default()))
+                    .style(|s| {
+                        s.font_size(12.0)
+                            .margin_top(8.0)
+                            .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
+                    }),
             ))
             .style(|s| s.gap_2()),
         ),))

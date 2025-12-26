@@ -13,17 +13,18 @@ fn test_select_basic_click() {
 
     // Create a simple button to verify click works
     let test_button = floem::views::Label::new("Test Button")
-        .style(|s| s.size(100.0, 40.0).background(peniko::Color::from_rgb8(255, 0, 0)))
+        .style(|s| {
+            s.size(100.0, 40.0)
+                .background(peniko::Color::from_rgb8(255, 0, 0))
+        })
         .on_click_stop(move |_| {
             click_count.update(|c| *c += 1);
         });
 
-    let select = Select::new(selected)
-        .placeholder("Select...")
-        .items(vec![
-            SelectItemData::new("a", "Option A"),
-            SelectItemData::new("b", "Option B"),
-        ]);
+    let select = Select::new(selected).placeholder("Select...").items(vec![
+        SelectItemData::new("a", "Option A"),
+        SelectItemData::new("b", "Option B"),
+    ]);
 
     let view = floem::views::Stack::vertical((test_button, select))
         .style(|s| s.size(400.0, 300.0).gap(10.0));
@@ -36,7 +37,10 @@ fn test_select_basic_click() {
     // Click the test button first to verify clicking works
     harness.click(50.0, 20.0);
     harness.rebuild();
-    eprintln!("Click count after clicking test button: {}", click_count.get());
+    eprintln!(
+        "Click count after clicking test button: {}",
+        click_count.get()
+    );
 
     // Now click on select trigger (should be at y ~50 after the button)
     harness.click(60.0, 70.0);
@@ -89,7 +93,10 @@ fn test_select_dropdown_position() {
     harness.click(110.0, 100.0);
     harness.rebuild();
 
-    eprintln!("Selected after clicking at (110, 100): {:?}", selected.get());
+    eprintln!(
+        "Selected after clicking at (110, 100): {:?}",
+        selected.get()
+    );
 
     // For now, just verify the test runs - we'll assert after confirming clicks work
 }
@@ -101,12 +108,10 @@ fn test_select_dropdown_position() {
 fn test_select_dropdown_position_at_origin() {
     let selected = RwSignal::new(None::<String>);
 
-    let select = Select::new(selected)
-        .placeholder("Select...")
-        .items(vec![
-            SelectItemData::new("a", "Option A"),
-            SelectItemData::new("b", "Option B"),
-        ]);
+    let select = Select::new(selected).placeholder("Select...").items(vec![
+        SelectItemData::new("a", "Option A"),
+        SelectItemData::new("b", "Option B"),
+    ]);
 
     let view = floem::views::Stack::vertical((select,)).style(|s| s.size(400.0, 300.0));
 

@@ -17,8 +17,8 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -93,23 +93,20 @@ impl IntoView for FormLabel {
             text
         };
 
-        Box::new(
-            floem::views::Label::new(display_text)
-                .style(move |s| {
-                    s.font_size(14.0)
-                        .font_weight(floem::text::Weight::MEDIUM)
-                        .line_height(1.0)
-                        .with_shadcn_theme(move |s, t| {
-                            if error {
-                                s.color(t.destructive)
-                            } else if disabled {
-                                s.color(t.muted_foreground)
-                            } else {
-                                s.color(t.foreground)
-                            }
-                        })
+        Box::new(floem::views::Label::new(display_text).style(move |s| {
+            s.font_size(14.0)
+                .font_weight(floem::text::Weight::MEDIUM)
+                .line_height(1.0)
+                .with_shadcn_theme(move |s, t| {
+                    if error {
+                        s.color(t.destructive)
+                    } else if disabled {
+                        s.color(t.muted_foreground)
+                    } else {
+                        s.color(t.foreground)
+                    }
                 })
-        )
+        }))
     }
 }
 
@@ -176,28 +173,26 @@ impl<V: IntoView + 'static> IntoView for LabelWithIcon<V> {
             text
         };
 
-        let label = floem::views::Label::new(display_text)
-            .style(move |s| {
-                s.font_size(14.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
-                    .line_height(1.0)
-                    .with_shadcn_theme(move |s, t| {
-                        if disabled {
-                            s.color(t.muted_foreground)
-                        } else {
-                            s.color(t.foreground)
-                        }
-                    })
-            });
+        let label = floem::views::Label::new(display_text).style(move |s| {
+            s.font_size(14.0)
+                .font_weight(floem::text::Weight::MEDIUM)
+                .line_height(1.0)
+                .with_shadcn_theme(move |s, t| {
+                    if disabled {
+                        s.color(t.muted_foreground)
+                    } else {
+                        s.color(t.foreground)
+                    }
+                })
+        });
 
         Box::new(
-            floem::views::Stack::horizontal((self.icon, label))
-                .style(|s| {
-                    s.display(floem::style::Display::Flex)
-                        .flex_direction(floem::style::FlexDirection::Row)
-                        .items_center()
-                        .gap(6.0)
-                })
+            floem::views::Stack::horizontal((self.icon, label)).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .items_center()
+                    .gap(6.0)
+            }),
         )
     }
 }
@@ -283,12 +278,13 @@ impl<L: IntoView + 'static, I: IntoView + 'static> IntoView for FormField<L, I> 
         };
 
         Box::new(
-            floem::views::Stack::vertical((self.label, self.input, desc_view, error_view))
-                .style(|s| {
+            floem::views::Stack::vertical((self.label, self.input, desc_view, error_view)).style(
+                |s| {
                     s.display(floem::style::Display::Flex)
                         .flex_direction(floem::style::FlexDirection::Column)
                         .gap(6.0)
-                })
+                },
+            ),
         )
     }
 }

@@ -19,10 +19,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{Decorators, Overlay};
+use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
@@ -106,17 +106,19 @@ pub struct ToastContainer {
 
 impl ToastContainer {
     /// Create a new toast container
-    pub fn new(toasts: RwSignal<Vec<ToastData>>) -> Self { Self { id: ViewId::new(), toasts }
+    pub fn new(toasts: RwSignal<Vec<ToastData>>) -> Self {
+        Self {
+            id: ViewId::new(),
+            toasts,
+        }
     }
 }
-
 
 impl HasViewId for Toast {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 
 impl HasViewId for ToastContainer {
     fn view_id(&self) -> ViewId {
@@ -166,17 +168,15 @@ impl IntoView for ToastContainer {
         });
 
         // Use Overlay with fixed positioning
-        Box::new(
-            Overlay::new(toast_list).style(move |s| {
-                let has_toasts = !toasts.get().is_empty();
-                s.fixed()
-                    .inset_0()
-                    .width_full()
-                    .height_full()
-                    .pointer_events_none()
-                    .apply_if(!has_toasts, |s| s.hide())
-            }),
-        )
+        Box::new(Overlay::new(toast_list).style(move |s| {
+            let has_toasts = !toasts.get().is_empty();
+            s.fixed()
+                .inset_0()
+                .width_full()
+                .height_full()
+                .pointer_events_none()
+                .apply_if(!has_toasts, |s| s.hide())
+        }))
     }
 }
 
@@ -193,14 +193,17 @@ pub struct Toast {
 
 impl Toast {
     /// Create a new toast from data
-    pub fn new(data: ToastData) -> Self { Self { id: ViewId::new(),
+    pub fn new(data: ToastData) -> Self {
+        Self {
+            id: ViewId::new(),
             data,
             on_close: None,
         }
     }
 
     /// Set close handler
-    pub fn on_close(mut self, handler: impl Fn() + 'static) -> Self { self.on_close = Some(Box::new(handler));
+    pub fn on_close(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_close = Some(Box::new(handler));
         self
     }
 }
@@ -270,31 +273,34 @@ impl IntoView for Toast {
         };
 
         // Content stack
-        let content = floem::views::Stack::vertical((title_view, desc_view)).style(|s| s.flex_grow(1.0));
+        let content =
+            floem::views::Stack::vertical((title_view, desc_view)).style(|s| s.flex_grow(1.0));
 
-        Box::new(floem::views::Stack::horizontal((content, close_btn)).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let base = s
-                    .min_width(300.0)
-                    .max_width(420.0)
-                    .padding(16.0)
-                    .border(1.0)
-                    .border_radius(t.radius)
-                    .box_shadow_blur(8.0)
-                    .box_shadow_color(t.foreground.with_alpha(0.1))
-                    .items_start()
-                    .gap(8.0)
-                    .pointer_events_auto(); // Enable clicks on toast (parent overlay has pointer-events: none)
-                match variant {
-                    ToastVariant::Default | ToastVariant::Success => {
-                        base.background(t.background).border_color(t.border)
+        Box::new(
+            floem::views::Stack::horizontal((content, close_btn)).style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
+                    let base = s
+                        .min_width(300.0)
+                        .max_width(420.0)
+                        .padding(16.0)
+                        .border(1.0)
+                        .border_radius(t.radius)
+                        .box_shadow_blur(8.0)
+                        .box_shadow_color(t.foreground.with_alpha(0.1))
+                        .items_start()
+                        .gap(8.0)
+                        .pointer_events_auto(); // Enable clicks on toast (parent overlay has pointer-events: none)
+                    match variant {
+                        ToastVariant::Default | ToastVariant::Success => {
+                            base.background(t.background).border_color(t.border)
+                        }
+                        ToastVariant::Destructive => {
+                            base.background(t.destructive).border_color(t.destructive)
+                        }
                     }
-                    ToastVariant::Destructive => {
-                        base.background(t.destructive).border_color(t.destructive)
-                    }
-                }
-            })
-        }))
+                })
+            }),
+        )
     }
 }
 
@@ -311,18 +317,20 @@ pub struct ToastAction {
 
 impl ToastAction {
     /// Create a new toast action button
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             text: text.into(),
             on_click: None,
         }
     }
 
     /// Set click handler
-    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self { self.on_click = Some(Box::new(handler));
+    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
         self
     }
 }
-
 
 impl HasViewId for ToastAction {
     fn view_id(&self) -> ViewId {

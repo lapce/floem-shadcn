@@ -21,10 +21,10 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -134,12 +134,12 @@ where
     }
 }
 
-
-impl<T, C, TV> HasViewId for DropdownMenu<T, C> where
+impl<T, C, TV> HasViewId for DropdownMenu<T, C>
+where
     T: Fn() -> TV + 'static,
     C: IntoView + 'static,
     TV: IntoView + 'static,
- {
+{
     fn view_id(&self) -> ViewId {
         ViewId::new()
     }
@@ -150,7 +150,7 @@ where
     T: Fn() -> TV + 'static,
     C: IntoView + 'static,
     TV: IntoView + 'static,
- {
+{
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -175,10 +175,13 @@ pub struct DropdownMenuContent<V> {
 
 impl<V: IntoView + 'static> DropdownMenuContent<V> {
     /// Create new dropdown menu content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DropdownMenuContent<V> {
     fn view_id(&self) -> ViewId {
@@ -195,10 +198,12 @@ impl<V: IntoView + 'static> IntoView for DropdownMenuContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -217,7 +222,9 @@ pub struct DropdownMenuItem {
 
 impl DropdownMenuItem {
     /// Create a new menu item
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             text: text.into(),
             disabled: false,
             destructive: false,
@@ -226,21 +233,23 @@ impl DropdownMenuItem {
     }
 
     /// Set click handler
-    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self { self.on_click = Some(Box::new(handler));
+    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
         self
     }
 
     /// Mark as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
     /// Mark as destructive (red text)
-    pub fn destructive(mut self) -> Self { self.destructive = true;
+    pub fn destructive(mut self) -> Self {
+        self.destructive = true;
         self
     }
 }
-
 
 impl HasViewId for DropdownMenuItem {
     fn view_id(&self) -> ViewId {
@@ -317,7 +326,9 @@ pub struct DropdownMenuItemCustom<V> {
 
 impl<V: IntoView + 'static> DropdownMenuItemCustom<V> {
     /// Create a new custom menu item
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(),
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
             child,
             disabled: false,
             on_click: None,
@@ -325,16 +336,17 @@ impl<V: IntoView + 'static> DropdownMenuItemCustom<V> {
     }
 
     /// Set click handler
-    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self { self.on_click = Some(Box::new(handler));
+    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
         self
     }
 
     /// Mark as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DropdownMenuItemCustom<V> {
     fn view_id(&self) -> ViewId {
@@ -407,7 +419,6 @@ impl Default for DropdownMenuSeparator {
     }
 }
 
-
 impl HasViewId for DropdownMenuSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -447,10 +458,13 @@ pub struct DropdownMenuLabel {
 
 impl DropdownMenuLabel {
     /// Create a new menu label
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
-
 
 impl HasViewId for DropdownMenuLabel {
     fn view_id(&self) -> ViewId {
@@ -496,10 +510,13 @@ pub struct DropdownMenuGroup<V> {
 
 impl<V: IntoView + 'static> DropdownMenuGroup<V> {
     /// Create a new menu group
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for DropdownMenuGroup<V> {
     fn view_id(&self) -> ViewId {
@@ -516,10 +533,12 @@ impl<V: IntoView + 'static> IntoView for DropdownMenuGroup<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -535,10 +554,13 @@ pub struct DropdownMenuShortcut {
 
 impl DropdownMenuShortcut {
     /// Create a new shortcut hint
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
-
 
 impl HasViewId for DropdownMenuShortcut {
     fn view_id(&self) -> ViewId {

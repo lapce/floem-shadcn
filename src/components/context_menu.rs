@@ -155,8 +155,12 @@ where
                 open.set(false);
             });
 
-        floem::views::Container::new(floem::views::Stack::new((trigger_view, backdrop, content_view)))
-            .style(|s| s.position(floem::style::Position::Relative))
+        floem::views::Container::new(floem::views::Stack::new((
+            trigger_view,
+            backdrop,
+            content_view,
+        )))
+        .style(|s| s.position(floem::style::Position::Relative))
     }
 }
 
@@ -201,10 +205,13 @@ pub struct ContextMenuContent<V> {
 
 impl<V: IntoView + 'static> ContextMenuContent<V> {
     /// Create new context menu content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ContextMenuContent<V> {
     fn view_id(&self) -> ViewId {
@@ -221,10 +228,12 @@ impl<V: IntoView + 'static> IntoView for ContextMenuContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -244,7 +253,9 @@ pub struct ContextMenuItem {
 
 impl ContextMenuItem {
     /// Create a new menu item
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             text: text.into(),
             disabled: false,
             destructive: false,
@@ -254,26 +265,29 @@ impl ContextMenuItem {
     }
 
     /// Set click handler
-    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self { self.on_click = Some(Box::new(handler));
+    pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
         self
     }
 
     /// Mark as disabled
-    pub fn disabled(mut self, disabled: bool) -> Self { self.disabled = disabled;
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
     /// Mark as destructive (red text)
-    pub fn destructive(mut self) -> Self { self.destructive = true;
+    pub fn destructive(mut self) -> Self {
+        self.destructive = true;
         self
     }
 
     /// Add keyboard shortcut hint
-    pub fn shortcut(mut self, shortcut: impl Into<String>) -> Self { self.shortcut = Some(shortcut.into());
+    pub fn shortcut(mut self, shortcut: impl Into<String>) -> Self {
+        self.shortcut = Some(shortcut.into());
         self
     }
 }
-
 
 impl HasViewId for ContextMenuItem {
     fn view_id(&self) -> ViewId {
@@ -378,7 +392,6 @@ impl Default for ContextMenuSeparator {
     }
 }
 
-
 impl HasViewId for ContextMenuSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
@@ -418,10 +431,13 @@ pub struct ContextMenuLabel {
 
 impl ContextMenuLabel {
     /// Create a new menu label
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
-
 
 impl HasViewId for ContextMenuLabel {
     fn view_id(&self) -> ViewId {
@@ -467,10 +483,13 @@ pub struct ContextMenuGroup<V> {
 
 impl<V: IntoView + 'static> ContextMenuGroup<V> {
     /// Create a new menu group
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for ContextMenuGroup<V> {
     fn view_id(&self) -> ViewId {
@@ -487,9 +506,11 @@ impl<V: IntoView + 'static> IntoView for ContextMenuGroup<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }

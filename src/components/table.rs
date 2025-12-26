@@ -31,8 +31,8 @@
 //! ```
 
 use floem::prelude::*;
-use floem::{HasViewId, ViewId};
 use floem::views::Decorators;
+use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
 
@@ -48,10 +48,13 @@ pub struct Table<V> {
 
 impl<V: IntoView + 'static> Table<V> {
     /// Create a new table
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for Table<V> {
     fn view_id(&self) -> ViewId {
@@ -68,14 +71,16 @@ impl<V: IntoView + 'static> IntoView for Table<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .border(1.0)
-                    .border_color(t.border)
-                    .border_radius(t.radius)
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.width_full()
+                        .border(1.0)
+                        .border_color(t.border)
+                        .border_radius(t.radius)
+                })
+            }),
+        )
     }
 }
 
@@ -91,17 +96,19 @@ pub struct TableHeader<V> {
 
 impl<V: IntoView + 'static> TableHeader<V> {
     /// Create a new table header
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for TableHeader<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 
 impl HasViewId for TableHead {
     fn view_id(&self) -> ViewId {
@@ -137,10 +144,13 @@ pub struct TableBody<V> {
 
 impl<V: IntoView + 'static> TableBody<V> {
     /// Create a new table body
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for TableBody<V> {
     fn view_id(&self) -> ViewId {
@@ -157,11 +167,13 @@ impl<V: IntoView + 'static> IntoView for TableBody<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .display(floem::style::Display::Flex)
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .display(floem::style::Display::Flex)
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 
@@ -177,10 +189,13 @@ pub struct TableFooter<V> {
 
 impl<V: IntoView + 'static> TableFooter<V> {
     /// Create a new table footer
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for TableFooter<V> {
     fn view_id(&self) -> ViewId {
@@ -197,14 +212,16 @@ impl<V: IntoView + 'static> IntoView for TableFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .background(t.muted)
-                    .border_top(1.0)
-                    .border_color(t.border)
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.width_full()
+                        .background(t.muted)
+                        .border_top(1.0)
+                        .border_color(t.border)
+                })
+            }),
+        )
     }
 }
 
@@ -220,10 +237,13 @@ pub struct TableRow<V> {
 
 impl<V: IntoView + 'static> TableRow<V> {
     /// Create a new table row
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+        }
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for TableRow<V> {
     fn view_id(&self) -> ViewId {
@@ -240,16 +260,18 @@ impl<V: IntoView + 'static> IntoView for TableRow<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Row)
-                    .border_bottom(1.0)
-                    .border_color(t.border)
-                    .hover(|s| s.background(t.muted.with_alpha(0.5)))
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.with_shadcn_theme(move |s, t| {
+                    s.width_full()
+                        .display(floem::style::Display::Flex)
+                        .flex_direction(floem::style::FlexDirection::Row)
+                        .border_bottom(1.0)
+                        .border_color(t.border)
+                        .hover(|s| s.background(t.muted.with_alpha(0.5)))
+                })
+            }),
+        )
     }
 }
 
@@ -266,14 +288,17 @@ pub struct TableHead {
 
 impl TableHead {
     /// Create a new table header cell
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             text: text.into(),
             width: None,
         }
     }
 
     /// Set fixed width for the column
-    pub fn width(mut self, width: f64) -> Self { self.width = Some(width);
+    pub fn width(mut self, width: f64) -> Self {
+        self.width = Some(width);
         self
     }
 }
@@ -321,15 +346,20 @@ pub struct TableHeadCustom<V> {
 
 impl<V: IntoView + 'static> TableHeadCustom<V> {
     /// Create a new table header cell with custom content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child, width: None }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            width: None,
+        }
     }
 
     /// Set fixed width for the column
-    pub fn width(mut self, width: f64) -> Self { self.width = Some(width);
+    pub fn width(mut self, width: f64) -> Self {
+        self.width = Some(width);
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for TableHeadCustom<V> {
     fn view_id(&self) -> ViewId {
@@ -348,21 +378,23 @@ impl<V: IntoView + 'static> IntoView for TableHeadCustom<V> {
     fn into_view(self) -> Self::V {
         let width = self.width;
 
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let base = s
-                    .padding(12.0)
-                    .font_size(14.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
-                    .color(t.muted_foreground)
-                    .flex_grow(1.0);
-                if let Some(w) = width {
-                    base.width(w).flex_grow(0.0)
-                } else {
-                    base
-                }
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
+                    let base = s
+                        .padding(12.0)
+                        .font_size(14.0)
+                        .font_weight(floem::text::Weight::MEDIUM)
+                        .color(t.muted_foreground)
+                        .flex_grow(1.0);
+                    if let Some(w) = width {
+                        base.width(w).flex_grow(0.0)
+                    } else {
+                        base
+                    }
+                })
+            }),
+        )
     }
 }
 
@@ -379,18 +411,20 @@ pub struct TableCell {
 
 impl TableCell {
     /// Create a new table cell
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(),
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
             text: text.into(),
             width: None,
         }
     }
 
     /// Set fixed width for the cell
-    pub fn width(mut self, width: f64) -> Self { self.width = Some(width);
+    pub fn width(mut self, width: f64) -> Self {
+        self.width = Some(width);
         self
     }
 }
-
 
 impl HasViewId for TableCell {
     fn view_id(&self) -> ViewId {
@@ -440,15 +474,20 @@ pub struct TableCellCustom<V> {
 
 impl<V: IntoView + 'static> TableCellCustom<V> {
     /// Create a new table cell with custom content
-    pub fn new(child: V) -> Self { Self { id: ViewId::new(), child, width: None }
+    pub fn new(child: V) -> Self {
+        Self {
+            id: ViewId::new(),
+            child,
+            width: None,
+        }
     }
 
     /// Set fixed width for the cell
-    pub fn width(mut self, width: f64) -> Self { self.width = Some(width);
+    pub fn width(mut self, width: f64) -> Self {
+        self.width = Some(width);
         self
     }
 }
-
 
 impl<V: IntoView + 'static> HasViewId for TableCellCustom<V> {
     fn view_id(&self) -> ViewId {
@@ -467,20 +506,22 @@ impl<V: IntoView + 'static> IntoView for TableCellCustom<V> {
     fn into_view(self) -> Self::V {
         let width = self.width;
 
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let base = s
-                    .padding(12.0)
-                    .font_size(14.0)
-                    .color(t.foreground)
-                    .flex_grow(1.0);
-                if let Some(w) = width {
-                    base.width(w).flex_grow(0.0)
-                } else {
-                    base
-                }
-            })
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(move |s| {
+                s.with_shadcn_theme(move |s, t| {
+                    let base = s
+                        .padding(12.0)
+                        .font_size(14.0)
+                        .color(t.foreground)
+                        .flex_grow(1.0);
+                    if let Some(w) = width {
+                        base.width(w).flex_grow(0.0)
+                    } else {
+                        base
+                    }
+                })
+            }),
+        )
     }
 }
 
@@ -496,10 +537,13 @@ pub struct TableCaption {
 
 impl TableCaption {
     /// Create a new table caption
-    pub fn new(text: impl Into<String>) -> Self { Self { id: ViewId::new(), text: text.into() }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            id: ViewId::new(),
+            text: text.into(),
+        }
     }
 }
-
 
 impl HasViewId for TableCaption {
     fn view_id(&self) -> ViewId {

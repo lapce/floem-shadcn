@@ -251,12 +251,14 @@ impl<V: IntoView + 'static> IntoView for CarouselItem<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .display(floem::style::Display::Flex)
-                .items_center()
-                .justify_center()
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .display(floem::style::Display::Flex)
+                    .items_center()
+                    .justify_center()
+            }),
+        )
     }
 }
 

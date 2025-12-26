@@ -62,10 +62,12 @@ impl<V: IntoView + 'static> IntoView for Accordion<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| {
-            s.width_full()
-                .flex_direction(floem::style::FlexDirection::Column)
-        }))
+        Box::new(
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full()
+                    .flex_direction(floem::style::FlexDirection::Column)
+            }),
+        )
     }
 }
 

@@ -10,7 +10,7 @@ use floem::{
     unit::PxPct,
 };
 
-use super::{Document, CURSOR_BLINK_INTERVAL_MS};
+use super::{CURSOR_BLINK_INTERVAL_MS, Document};
 
 /// Padding values (top, right, bottom, left)
 pub type Padding = (f64, f64, f64, f64);

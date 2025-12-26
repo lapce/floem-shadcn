@@ -644,9 +644,9 @@ impl View for TextArea {
 mod tests {
     use super::*;
     use floem::reactive::SignalGet;
-    use floem_test::prelude::*;
     use floem::views::Decorators;
     use floem_editor_core::command::{EditCommand, MoveCommand};
+    use floem_test::prelude::*;
 
     /// Test to verify that Effects run when signals change in test environment
     #[test]

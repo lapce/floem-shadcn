@@ -1,9 +1,9 @@
 //! Tests for the Slider component click position calculations.
 
+use floem::ViewId;
 use floem::prelude::*;
 use floem::reactive::RwSignal;
 use floem::views::Decorators;
-use floem::ViewId;
 use floem_test::prelude::*;
 use ui_events::pointer::PointerEvent;
 
@@ -40,7 +40,10 @@ fn create_test_slider(value: RwSignal<f64>, width: f64) -> (ViewId, impl IntoVie
             eprintln!("layout_rect: {:?}", layout);
             eprintln!("content_rect: {:?}", content_rect);
             eprintln!("physical position.x: {}", pointer_event.state.position.x);
-            eprintln!("logical position.x: {}", pointer_event.state.logical_point().x);
+            eprintln!(
+                "logical position.x: {}",
+                pointer_event.state.logical_point().x
+            );
             eprintln!("scale_factor: {}", pointer_event.state.scale_factor);
 
             // Use logical_point() to convert physical to logical coordinates
@@ -305,10 +308,10 @@ fn test_slider_scale_2x_click_positions() {
     let value = RwSignal::new(0.0);
 
     let positions_and_expected: Vec<(f64, f64)> = vec![
-        (8.0, 0.0),    // Start of track
-        (79.0, 25.0),  // 25%
-        (150.0, 50.0), // Middle
-        (221.0, 75.0), // 75%
+        (8.0, 0.0),     // Start of track
+        (79.0, 25.0),   // 25%
+        (150.0, 50.0),  // Middle
+        (221.0, 75.0),  // 75%
         (292.0, 100.0), // End of track
     ];
 
@@ -506,19 +509,31 @@ fn test_slider_drag_within_bounds() {
     harness.pointer_down(8.0, 8.0);
     let start_value = value.get();
     eprintln!("After pointer down at x=8: value = {}", start_value);
-    assert!(start_value < 5.0, "Initial click should be near 0%, got {}", start_value);
+    assert!(
+        start_value < 5.0,
+        "Initial click should be near 0%, got {}",
+        start_value
+    );
 
     // Drag to middle
     harness.pointer_move(150.0, 8.0);
     let mid_value = value.get();
     eprintln!("After pointer move to x=150: value = {}", mid_value);
-    assert!((mid_value - 50.0).abs() < 10.0, "Drag to middle should be ~50%, got {}", mid_value);
+    assert!(
+        (mid_value - 50.0).abs() < 10.0,
+        "Drag to middle should be ~50%, got {}",
+        mid_value
+    );
 
     // Drag to end
     harness.pointer_move(292.0, 8.0);
     let end_value = value.get();
     eprintln!("After pointer move to x=292: value = {}", end_value);
-    assert!(end_value > 95.0, "Drag to end should be ~100%, got {}", end_value);
+    assert!(
+        end_value > 95.0,
+        "Drag to end should be ~100%, got {}",
+        end_value
+    );
 
     // Release
     harness.pointer_up(292.0, 8.0);
@@ -679,7 +694,10 @@ fn test_slider_drag_outside_bounds_with_capture() {
     harness.pointer_move(350.0, 8.0);
 
     let outside_value = value.get();
-    eprintln!("After pointer move to x=350 (outside): value = {}", outside_value);
+    eprintln!(
+        "After pointer move to x=350 (outside): value = {}",
+        outside_value
+    );
 
     // With capture, the slider should still receive the move event
     // Value should be clamped to 100% since we're past the end
@@ -830,7 +848,10 @@ fn test_slider_value_persists_after_click_with_rebuild() {
     // Another rebuild
     harness.rebuild();
     let value_after_second_rebuild = value.get();
-    eprintln!("After second rebuild: value = {}", value_after_second_rebuild);
+    eprintln!(
+        "After second rebuild: value = {}",
+        value_after_second_rebuild
+    );
 
     // Value should NOT reset to 0 at any point
     assert!(
@@ -1043,7 +1064,10 @@ fn test_coordinate_systems_with_pointer_capture() {
     // This test documents the behavior - in a real scenario with pointer capture,
     // PointerMove would give view-relative coordinates which differ from the
     // window coordinates in PointerDown
-    assert!(coords.len() >= 2, "Should have received both PointerDown and PointerMove");
+    assert!(
+        coords.len() >= 2,
+        "Should have received both PointerDown and PointerMove"
+    );
 }
 
 /// Test that the slider correctly handles the transition from window coords (PointerDown)
@@ -1069,7 +1093,10 @@ fn test_slider_drag_with_coordinate_transition() {
     // Move to middle - if coordinate handling is wrong, this would give wrong value
     harness.pointer_move(200.0, 8.0);
     let value_at_middle = value.get();
-    eprintln!("After pointer_move to x=200: value = {:.1}", value_at_middle);
+    eprintln!(
+        "After pointer_move to x=200: value = {:.1}",
+        value_at_middle
+    );
 
     // Move to right
     harness.pointer_move(350.0, 8.0);
@@ -1117,7 +1144,10 @@ fn test_value_does_not_reset_after_pointer_move() {
 
     harness.pointer_down(200.0, 8.0);
     let value_after_down = value.get();
-    eprintln!("After pointer_down at x=200: value = {:.1}", value_after_down);
+    eprintln!(
+        "After pointer_down at x=200: value = {:.1}",
+        value_after_down
+    );
 
     harness.rebuild();
 
@@ -1125,7 +1155,10 @@ fn test_value_does_not_reset_after_pointer_move() {
     // the coords were misinterpreted
     harness.pointer_move(200.0, 8.0);
     let value_after_move = value.get();
-    eprintln!("After pointer_move at x=200: value = {:.1}", value_after_move);
+    eprintln!(
+        "After pointer_move at x=200: value = {:.1}",
+        value_after_move
+    );
 
     // Value should remain approximately the same (not reset to 0)
     assert!(
