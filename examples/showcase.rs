@@ -5,7 +5,7 @@
 use floem::IntoView;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::text::Weight;
-use floem::views::{Decorators, Label, h_stack, v_stack};
+use floem::views::{Decorators, Label, Stack};
 use floem_shadcn::prelude::*;
 use floem_shadcn::theme::{ShadcnTheme, ShadcnThemeExt, ThemeMode};
 use floem_tailwind::TailwindExt;
@@ -20,11 +20,11 @@ fn app_view() -> impl IntoView {
     // Track current theme mode for reactive theme switching
     let theme_mode = RwSignal::new(ThemeMode::Light);
 
-    h_stack((
+    Stack::horizontal((
         // Sidebar navigation using full Sidebar APIs
         Sidebar::new()
             .header(SidebarHeader::new(
-                v_stack((
+                Stack::vertical((
                     Label::derived(|| "floem-shadcn")
                         .style(|s| s.font_size(18.0).font_weight(Weight::BOLD)),
                     Button::new("Toggle Theme")
@@ -41,11 +41,11 @@ fn app_view() -> impl IntoView {
                 ))
                 .style(|s| s.gap_3()),
             ))
-            .content(SidebarContent::new(v_stack((
+            .content(SidebarContent::new(Stack::vertical((
                 // Group 1: Form Inputs
-                SidebarGroup::new(v_stack((
+                SidebarGroup::new(Stack::vertical((
                     SidebarGroupLabel::new("Form Inputs"),
-                    SidebarGroupContent::new(SidebarMenu::new(v_stack((
+                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
                         sidebar_button("Buttons", active_section),
                         sidebar_button("Badges", active_section),
                         sidebar_button("Cards", active_section),
@@ -64,9 +64,9 @@ fn app_view() -> impl IntoView {
                 ))),
                 SidebarSeparator::new(),
                 // Group 2: Layout & Feedback
-                SidebarGroup::new(v_stack((
+                SidebarGroup::new(Stack::vertical((
                     SidebarGroupLabel::new("Layout & Feedback"),
-                    SidebarGroupContent::new(SidebarMenu::new(v_stack((
+                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
                         sidebar_button("Tabs", active_section),
                         sidebar_button("Accordion", active_section),
                         sidebar_button("Collapsible", active_section),
@@ -86,9 +86,9 @@ fn app_view() -> impl IntoView {
                 ))),
                 SidebarSeparator::new(),
                 // Group 3: Overlays & Navigation
-                SidebarGroup::new(v_stack((
+                SidebarGroup::new(Stack::vertical((
                     SidebarGroupLabel::new("Overlays & Navigation"),
-                    SidebarGroupContent::new(SidebarMenu::new(v_stack((
+                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
                         sidebar_button("Popover", active_section),
                         sidebar_button("Sheet", active_section),
                         sidebar_button("Dropdown Menu", active_section),
@@ -101,9 +101,9 @@ fn app_view() -> impl IntoView {
                 ))),
                 SidebarSeparator::new(),
                 // Group 4: Data & Misc
-                SidebarGroup::new(v_stack((
+                SidebarGroup::new(Stack::vertical((
                     SidebarGroupLabel::new("Data & Misc"),
-                    SidebarGroupContent::new(SidebarMenu::new(v_stack((
+                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
                         sidebar_button("Table", active_section),
                         sidebar_button("Calendar", active_section),
                         sidebar_button("Carousel", active_section),
@@ -196,11 +196,11 @@ fn buttons_demo() -> impl IntoView {
     demo_section(
         "Buttons",
         "A button component with multiple variants and sizes.",
-        v_stack((
+        Stack::vertical((
             // Button variants
             subsection(
                 "Variants",
-                h_stack((
+                Stack::horizontal((
                     Button::new("Default"),
                     Button::new("Secondary").secondary(),
                     Button::new("Destructive").destructive(),
@@ -213,7 +213,7 @@ fn buttons_demo() -> impl IntoView {
             // Button sizes
             subsection(
                 "Sizes",
-                h_stack((
+                Stack::horizontal((
                     Button::new("Small").sm(),
                     Button::new("Default"),
                     Button::new("Large").lg(),
@@ -229,9 +229,9 @@ fn badges_demo() -> impl IntoView {
     demo_section(
         "Badges",
         "A badge component for displaying status or labels.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Variants",
-            h_stack((
+            Stack::horizontal((
                 Badge::new("Default"),
                 Badge::new("Secondary").secondary(),
                 Badge::new("Destructive").destructive(),
@@ -248,12 +248,12 @@ fn cards_demo() -> impl IntoView {
     demo_section(
         "Cards",
         "A card component for grouping related content.",
-        v_stack((Card::new((
+        Stack::vertical((Card::new((
             CardHeader::new()
                 .title("Create project")
                 .description("Deploy your new project in one-click."),
             CardContent::new(
-                v_stack((
+                Stack::vertical((
                     Label::derived(|| "Name")
                         .style(|s| s.font_size(14.0).font_weight(Weight::MEDIUM).mb_2()),
                     Input::new()
@@ -265,7 +265,7 @@ fn cards_demo() -> impl IntoView {
                 .style(|s| s.gap_2().w_full()),
             ),
             CardFooter::new(
-                h_stack((Button::new("Cancel").outline(), Button::new("Deploy")))
+                Stack::horizontal((Button::new("Cancel").outline(), Button::new("Deploy")))
                     .style(|s| s.gap_2()),
             ),
         ))
@@ -280,9 +280,9 @@ fn inputs_demo() -> impl IntoView {
     demo_section(
         "Inputs",
         "A text input component with placeholder support.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 form_field(
                     "Email",
                     Input::new()
@@ -307,7 +307,7 @@ fn sidebar_demo() -> impl IntoView {
     demo_section(
         "Sidebar",
         "A sidebar component for navigation.",
-        v_stack((
+        Stack::vertical((
             Label::derived(
                 || "The sidebar you see on the left is built using the Sidebar component.",
             )
@@ -326,10 +326,10 @@ fn checkbox_demo() -> impl IntoView {
     demo_section(
         "Checkbox",
         "A checkbox component for toggling boolean values.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic",
-                v_stack((
+                Stack::vertical((
                     Checkbox::new(checked1).label("Accept terms and conditions"),
                     Checkbox::new(checked2).label("Send me updates"),
                     Checkbox::new(checked3).label("Enable notifications"),
@@ -338,7 +338,7 @@ fn checkbox_demo() -> impl IntoView {
             ),
             subsection(
                 "Disabled",
-                v_stack((Checkbox::new(RwSignal::new(false))
+                Stack::vertical((Checkbox::new(RwSignal::new(false))
                     .label("Disabled checkbox")
                     .disabled(true),))
                 .style(|s| s.gap_3()),
@@ -355,10 +355,10 @@ fn switch_demo() -> impl IntoView {
     demo_section(
         "Switch",
         "A toggle switch component like iOS.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic",
-                v_stack((
+                Stack::vertical((
                     Switch::new(enabled1).label("Airplane mode"),
                     Switch::new(enabled2).label("Dark mode"),
                 ))
@@ -366,7 +366,7 @@ fn switch_demo() -> impl IntoView {
             ),
             subsection(
                 "Disabled",
-                v_stack((Switch::new(RwSignal::new(false))
+                Stack::vertical((Switch::new(RwSignal::new(false))
                     .label("Disabled switch")
                     .disabled(true),))
                 .style(|s| s.gap_3()),
@@ -382,10 +382,10 @@ fn tabs_demo() -> impl IntoView {
     demo_section(
         "Tabs",
         "A tabs component for switching between content panels.",
-        v_stack((Tabs::new(
+        Stack::vertical((Tabs::new(
             active_tab,
-            v_stack((
-                TabsList::new(h_stack((
+            Stack::vertical((
+                TabsList::new(Stack::horizontal((
                     Tab::new("account", "Account").active(active_tab),
                     Tab::new("password", "Password").active(active_tab),
                     Tab::new("settings", "Settings").active(active_tab),
@@ -425,7 +425,7 @@ fn dialog_demo() -> impl IntoView {
     demo_section(
         "Dialog",
         "A modal dialog component for important interactions.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic Dialog",
             Dialog::new((
                 DialogTrigger::new(Button::new("Open Dialog")),
@@ -434,7 +434,7 @@ fn dialog_demo() -> impl IntoView {
                         "This action cannot be undone. This will permanently delete your account.",
                     ),
                     DialogFooter::new(
-                        h_stack((
+                        Stack::horizontal((
                             DialogClose::new(Button::new("Cancel").outline()),
                             DialogClose::new(Button::new("Continue").destructive()),
                         ))
@@ -451,7 +451,7 @@ fn alert_demo() -> impl IntoView {
     demo_section(
         "Alert",
         "An alert component for displaying feedback messages.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Default",
                 Alert::new()
@@ -474,7 +474,7 @@ fn textarea_demo() -> impl IntoView {
     demo_section(
         "Textarea",
         "A multi-line text input component.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic",
                 Textarea::new("")
@@ -497,10 +497,10 @@ fn avatar_demo() -> impl IntoView {
     demo_section(
         "Avatar",
         "An avatar component for displaying user images with fallback.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Sizes",
-                h_stack((
+                Stack::horizontal((
                     Avatar::new().fallback("SM").size(32.0),
                     Avatar::new().fallback("MD").size(40.0),
                     Avatar::new().fallback("LG").size(48.0),
@@ -510,7 +510,7 @@ fn avatar_demo() -> impl IntoView {
             ),
             subsection(
                 "Initials",
-                h_stack((
+                Stack::horizontal((
                     Avatar::new().fallback("JD"),
                     Avatar::new().fallback("AB"),
                     Avatar::new().fallback("MK"),
@@ -528,11 +528,11 @@ fn progress_demo() -> impl IntoView {
     demo_section(
         "Progress",
         "A progress bar component for showing completion status.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 Progress::new(progress_value),
-                h_stack((
+                Stack::horizontal((
                     Button::new("-10").sm().outline().on_click_stop(move |_| {
                         progress_value.update(|v| *v = (*v - 10.0).max(0.0))
                     }),
@@ -552,10 +552,10 @@ fn separator_demo() -> impl IntoView {
     demo_section(
         "Separator",
         "A visual divider between content sections.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Horizontal",
-                v_stack((
+                Stack::vertical((
                     Label::derived(|| "Content above"),
                     Separator::new(),
                     Label::derived(|| "Content below"),
@@ -564,7 +564,7 @@ fn separator_demo() -> impl IntoView {
             ),
             subsection(
                 "Vertical",
-                h_stack((
+                Stack::horizontal((
                     Label::derived(|| "Left"),
                     Separator::new().vertical(),
                     Label::derived(|| "Right"),
@@ -580,10 +580,10 @@ fn skeleton_demo() -> impl IntoView {
     demo_section(
         "Skeleton",
         "A loading placeholder component.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic Shapes",
-                v_stack((
+                Stack::vertical((
                     Skeleton::text(),
                     Skeleton::new().width(200.0).height(20.0),
                     Skeleton::new().width(150.0).height(20.0),
@@ -592,9 +592,9 @@ fn skeleton_demo() -> impl IntoView {
             ),
             subsection(
                 "Card Skeleton",
-                h_stack((
+                Stack::horizontal((
                     Skeleton::new().circle(48.0),
-                    v_stack((
+                    Stack::vertical((
                         Skeleton::new().width(150.0).height(16.0),
                         Skeleton::new().width(100.0).height(14.0),
                     ))
@@ -611,9 +611,9 @@ fn tooltip_demo() -> impl IntoView {
     demo_section(
         "Tooltip",
         "A tooltip component for showing hints on hover.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            h_stack((
+            Stack::horizontal((
                 Button::new("Hover me").tooltip_styled("This is a tooltip!"),
                 Button::new("Another")
                     .outline()
@@ -631,9 +631,9 @@ fn accordion_demo() -> impl IntoView {
     demo_section(
         "Accordion",
         "A collapsible content component.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 AccordionItem::new(
                     "item-1",
                     "Is it accessible?",
@@ -664,9 +664,9 @@ fn slider_demo() -> impl IntoView {
     demo_section(
         "Slider",
         "A slider component for selecting values from a range.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 Slider::new(value),
                 Label::derived(move || format!("Value: {:.0}", value.get()))
                     .style(|s| s.font_size(14.0)),
@@ -683,10 +683,10 @@ fn radio_demo() -> impl IntoView {
     demo_section(
         "Radio Group",
         "A set of radio buttons for selecting one option.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic",
-                v_stack((
+                Stack::vertical((
                     RadioGroupItem::new("option1", "Default").selected(selected),
                     RadioGroupItem::new("option2", "Comfortable").selected(selected),
                     RadioGroupItem::new("option3", "Compact").selected(selected),
@@ -711,12 +711,12 @@ fn popover_demo() -> impl IntoView {
     demo_section(
         "Popover",
         "A floating panel that appears when triggered.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             Popover::new(popover_open)
                 .trigger(|| Button::new("Open Popover"))
                 .content(|| {
-                    v_stack((
+                    Stack::vertical((
                         Label::derived(|| "Dimensions")
                             .style(|s| s.font_size(14.0).font_weight(Weight::MEDIUM)),
                         Label::derived(|| "Set the dimensions for the layer.").style(|s| {
@@ -738,19 +738,19 @@ fn sheet_demo() -> impl IntoView {
     demo_section(
         "Sheet",
         "A slide-out panel overlay for additional content.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Right Sheet",
-                v_stack((
+                Stack::vertical((
                     Button::new("Open Sheet").on_click_stop(move |_| sheet_open.set(true)),
                     Sheet::new(sheet_open, SheetContent::new(
-                        v_stack((
-                            SheetHeader::new(v_stack((
+                        Stack::vertical((
+                            SheetHeader::new(Stack::vertical((
                                 SheetTitle::new("Edit Profile"),
                                 SheetDescription::new("Make changes to your profile here. Click save when you're done."),
                             ))),
                             // Some content
-                            v_stack((
+                            Stack::vertical((
                                 Label::derived(|| "Name").style(|s| s.font_size(14.0).font_weight(Weight::MEDIUM)),
                                 Label::derived(|| "Enter your name here...").style(|s| {
                                     s.font_size(14.0).with_shadcn_theme(|s, t| s.color(t.muted_foreground))
@@ -766,15 +766,15 @@ fn sheet_demo() -> impl IntoView {
             ),
             subsection(
                 "Left Sheet",
-                v_stack((
+                Stack::vertical((
                     Button::new("Open Left Sheet").outline().on_click_stop(move |_| sheet_left_open.set(true)),
                     Sheet::new(sheet_left_open, SheetContent::new(
-                        v_stack((
-                            SheetHeader::new(v_stack((
+                        Stack::vertical((
+                            SheetHeader::new(Stack::vertical((
                                 SheetTitle::new("Navigation"),
                                 SheetDescription::new("Browse menu options."),
                             ))),
-                            v_stack((
+                            Stack::vertical((
                                 Label::new("Home"),
                                 Label::new("Products"),
                                 Label::new("About"),
@@ -794,7 +794,7 @@ fn breadcrumb_demo() -> impl IntoView {
     demo_section(
         "Breadcrumb",
         "A navigation trail showing the current location.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic",
                 Breadcrumb::new((
@@ -824,7 +824,7 @@ fn table_demo() -> impl IntoView {
     demo_section(
         "Table",
         "A responsive table component for displaying data.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic Table",
             Table::new((
                 TableHeader::new(TableRow::new((
@@ -865,7 +865,7 @@ fn dropdown_demo() -> impl IntoView {
     demo_section(
         "Dropdown Menu",
         "A menu that appears when triggered.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             DropdownMenu::new(dropdown_open)
                 .trigger(|| Button::new("Open Menu").outline())
@@ -889,37 +889,27 @@ fn toast_demo() -> impl IntoView {
     demo_section(
         "Toast",
         "A notification popup for feedback messages.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Trigger Toasts",
-                h_stack((
-                    Button::new("Default Toast").on_click_stop({
-                        let toasts = toasts;
-                        move |_| {
-                            push_toast(
-                                toasts,
-                                ToastData::new("Scheduled", "Your meeting has been scheduled."),
-                            );
-                        }
+                Stack::horizontal((
+                    Button::new("Default Toast").on_click_stop(move |_| {
+                        push_toast(
+                            toasts,
+                            ToastData::new("Scheduled", "Your meeting has been scheduled."),
+                        );
                     }),
-                    Button::new("Success").outline().on_click_stop({
-                        let toasts = toasts;
-                        move |_| {
-                            push_toast(
-                                toasts,
-                                ToastData::new("Success!", "Your changes have been saved.")
-                                    .success(),
-                            );
-                        }
+                    Button::new("Success").outline().on_click_stop(move |_| {
+                        push_toast(
+                            toasts,
+                            ToastData::new("Success!", "Your changes have been saved.").success(),
+                        );
                     }),
-                    Button::new("Error").destructive().on_click_stop({
-                        let toasts = toasts;
-                        move |_| {
-                            push_toast(
-                                toasts,
-                                ToastData::new("Error", "Something went wrong.").destructive(),
-                            );
-                        }
+                    Button::new("Error").destructive().on_click_stop(move |_| {
+                        push_toast(
+                            toasts,
+                            ToastData::new("Error", "Something went wrong.").destructive(),
+                        );
                     }),
                 ))
                 .style(|s| s.gap_2()),
@@ -939,10 +929,10 @@ fn toggle_demo() -> impl IntoView {
     demo_section(
         "Toggle",
         "A two-state button that can be on or off.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Basic",
-                h_stack((
+                Stack::horizontal((
                     Toggle::new(bold, "B"),
                     Toggle::new(italic, "I"),
                     Toggle::new(underline, "U"),
@@ -951,7 +941,7 @@ fn toggle_demo() -> impl IntoView {
             ),
             subsection(
                 "Outline Variant",
-                h_stack((
+                Stack::horizontal((
                     Toggle::new(RwSignal::new(true), "Bold").outline(),
                     Toggle::new(RwSignal::new(false), "Italic").outline(),
                 ))
@@ -959,7 +949,7 @@ fn toggle_demo() -> impl IntoView {
             ),
             subsection(
                 "Sizes",
-                h_stack((
+                Stack::horizontal((
                     Toggle::new(RwSignal::new(false), "Sm").sm(),
                     Toggle::new(RwSignal::new(true), "Default"),
                     Toggle::new(RwSignal::new(false), "Lg").lg(),
@@ -978,10 +968,10 @@ fn toggle_group_demo() -> impl IntoView {
     demo_section(
         "Toggle Group",
         "A group of toggle buttons with single or multiple selection.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Single Selection",
-                v_stack((
+                Stack::vertical((
                     ToggleGroup::single(
                         alignment,
                         (
@@ -999,7 +989,7 @@ fn toggle_group_demo() -> impl IntoView {
             ),
             subsection(
                 "Multiple Selection",
-                v_stack((
+                Stack::vertical((
                     ToggleGroupMultiple::new(
                         formatting,
                         (
@@ -1026,7 +1016,7 @@ fn hover_card_demo() -> impl IntoView {
     demo_section(
         "Hover Card",
         "A card that appears when hovering over a trigger.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             HoverCard::new()
                 .trigger(|| {
@@ -1037,7 +1027,7 @@ fn hover_card_demo() -> impl IntoView {
                     })
                 })
                 .content(|| {
-                    v_stack((
+                    Stack::vertical((
                         Label::derived(|| "Floem")
                             .style(|s| s.font_size(16.0).font_weight(Weight::SEMIBOLD)),
                         Label::derived(|| "A native Rust UI library with fine-grained reactivity.")
@@ -1064,7 +1054,7 @@ fn context_menu_demo() -> impl IntoView {
     demo_section(
         "Context Menu",
         "A menu triggered by right-click.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Right Click Area",
             ContextMenu::new(menu_open)
                 .trigger(|| {
@@ -1101,9 +1091,9 @@ fn select_demo() -> impl IntoView {
     demo_section(
         "Select",
         "A dropdown select component for choosing from options.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 Select::new(selected)
                     .placeholder("Select a fruit...")
                     .items(vec![
@@ -1132,9 +1122,9 @@ fn combobox_demo() -> impl IntoView {
     demo_section(
         "Combobox",
         "A searchable select component with filtering.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 Combobox::new(selected, search)
                     .placeholder("Select a framework...")
                     .items(vec![
@@ -1163,10 +1153,10 @@ fn input_otp_demo() -> impl IntoView {
     demo_section(
         "Input OTP",
         "One-time password input with individual character slots.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "6-Digit OTP",
-                v_stack((
+                Stack::vertical((
                     InputOTP::new(otp_value, 6),
                     Label::derived(move || format!("Value: {}", otp_value.get())).style(|s| {
                         s.font_size(12.0)
@@ -1177,7 +1167,7 @@ fn input_otp_demo() -> impl IntoView {
             ),
             subsection(
                 "4-Digit PIN",
-                v_stack((
+                Stack::vertical((
                     PinInput::new(pin_value, 4),
                     Label::derived(move || format!("PIN: {}", pin_value.get())).style(|s| {
                         s.font_size(12.0)
@@ -1199,10 +1189,10 @@ fn date_picker_demo() -> impl IntoView {
     demo_section(
         "Date Picker",
         "A date selection component with calendar popup.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Single Date",
-                v_stack((
+                Stack::vertical((
                     DatePicker::new(selected_date),
                     Label::derived(move || {
                         if let Some(date) = selected_date.get() {
@@ -1220,7 +1210,7 @@ fn date_picker_demo() -> impl IntoView {
             ),
             subsection(
                 "Date Range",
-                v_stack((
+                Stack::vertical((
                     DateRangePicker::new(start_date, end_date),
                     Label::derived(move || {
                         let start = start_date.get();
@@ -1254,10 +1244,10 @@ fn label_demo() -> impl IntoView {
     demo_section(
         "Label",
         "Accessible form labels and field components.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Form Label",
-                v_stack((
+                Stack::vertical((
                     FormLabel::new("Email"),
                     Input::new()
                         .placeholder("Enter your email")
@@ -1287,11 +1277,11 @@ fn collapsible_demo() -> impl IntoView {
     demo_section(
         "Collapsible",
         "A component that can be expanded or collapsed.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             Collapsible::new(is_open)
                 .trigger(move || {
-                    h_stack((
+                    Stack::horizontal((
                         Label::derived(|| "Can I use this in my project?"),
                         Label::derived(move || if is_open.get() { "▼" } else { "▶" })
                             .style(|s| s.font_size(12.0)),
@@ -1306,7 +1296,7 @@ fn collapsible_demo() -> impl IntoView {
                     })
                 })
                 .content(|| {
-                    v_stack((
+                    Stack::vertical((
                         Label::derived(|| "Yes. Free to use for personal and commercial projects."),
                         Label::derived(|| "No attribution required."),
                     ))
@@ -1333,7 +1323,7 @@ fn alert_dialog_demo() -> impl IntoView {
     demo_section(
         "Alert Dialog",
         "A modal dialog for important confirmations.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Destructive Action",
                 AlertDialog::new(dialog_open)
@@ -1358,15 +1348,15 @@ fn drawer_demo() -> impl IntoView {
     demo_section(
         "Drawer",
         "A slide-out panel from the edge of the screen.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "Bottom Drawer",
-                v_stack((
+                Stack::vertical((
                     Button::new("Open Bottom Drawer").on_click_stop(move |_| drawer_open.set(true)),
                     Drawer::new(drawer_open)
                         .side(DrawerSide::Bottom)
-                        .content(v_stack((
-                            DrawerHeader::new(v_stack((
+                        .content(Stack::vertical((
+                            DrawerHeader::new(Stack::vertical((
                                 DrawerTitle::new("Edit profile"),
                                 DrawerDescription::new("Make changes to your profile here."),
                             ))),
@@ -1380,14 +1370,14 @@ fn drawer_demo() -> impl IntoView {
             ),
             subsection(
                 "Right Drawer",
-                v_stack((
+                Stack::vertical((
                     Button::new("Open Right Drawer")
                         .outline()
                         .on_click_stop(move |_| drawer_right.set(true)),
                     Drawer::new(drawer_right)
                         .side(DrawerSide::Right)
-                        .content(v_stack((
-                            DrawerHeader::new(v_stack((
+                        .content(Stack::vertical((
+                            DrawerHeader::new(Stack::vertical((
                                 DrawerTitle::new("Settings"),
                                 DrawerDescription::new("Configure your preferences."),
                             ))),
@@ -1409,7 +1399,7 @@ fn aspect_ratio_demo() -> impl IntoView {
     demo_section(
         "Aspect Ratio",
         "A component that maintains a specific aspect ratio.",
-        v_stack((
+        Stack::vertical((
             subsection(
                 "16:9 Ratio",
                 AspectRatio::video()
@@ -1451,10 +1441,10 @@ fn scroll_area_demo() -> impl IntoView {
     demo_section(
         "Scroll Area",
         "A scrollable container for overflow content.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Vertical Scroll",
             ScrollArea::new(
-                v_stack((
+                Stack::vertical((
                     Label::derived(|| "Item 1"),
                     Label::derived(|| "Item 2"),
                     Label::derived(|| "Item 3"),
@@ -1483,7 +1473,7 @@ fn resizable_demo() -> impl IntoView {
     demo_section(
         "Resizable",
         "Resizable panels with draggable handles.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Horizontal Layout",
             ResizablePanelGroup::horizontal((
                 ResizablePanel::new(
@@ -1525,7 +1515,7 @@ fn menubar_demo() -> impl IntoView {
     demo_section(
         "Menubar",
         "A horizontal menu bar for application commands.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             Menubar::new((
                 MenubarMenu::new("File").content((
@@ -1559,7 +1549,7 @@ fn navigation_menu_demo() -> impl IntoView {
     demo_section(
         "Navigation Menu",
         "A collection of links for site navigation.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             NavigationMenu::new((
                 NavigationMenuItem::new("Getting Started").content((
@@ -1584,9 +1574,9 @@ fn pagination_demo() -> impl IntoView {
     demo_section(
         "Pagination",
         "Page navigation controls for paged content.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 Pagination::new(current_page, 10),
                 Label::derived(move || format!("Current page: {}", current_page.get())).style(
                     |s| {
@@ -1608,17 +1598,17 @@ fn command_demo() -> impl IntoView {
     demo_section(
         "Command",
         "A command palette for quick actions and search.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
             Command::new(search)
                 .placeholder("Type a command or search...")
-                .content(v_stack((
-                    CommandGroup::new("Suggestions").items(v_stack((
+                .content(Stack::vertical((
+                    CommandGroup::new("Suggestions").items(Stack::vertical((
                         CommandItem::new("calendar", "Calendar"),
                         CommandItem::new("search", "Search Emoji"),
                         CommandItem::new("calculator", "Calculator"),
                     ))),
-                    CommandGroup::new("Settings").items(v_stack((
+                    CommandGroup::new("Settings").items(Stack::vertical((
                         CommandItem::new("profile", "Profile"),
                         CommandItem::new("billing", "Billing"),
                         CommandItem::new("settings", "Settings"),
@@ -1636,9 +1626,9 @@ fn calendar_demo() -> impl IntoView {
     demo_section(
         "Calendar",
         "A date selection calendar component.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
+            Stack::vertical((
                 Calendar::new(selected_date),
                 Label::derived(move || {
                     if let Some(date) = selected_date.get() {
@@ -1665,10 +1655,10 @@ fn carousel_demo() -> impl IntoView {
     demo_section(
         "Carousel",
         "A slideshow component for cycling through content.",
-        v_stack((subsection(
+        Stack::vertical((subsection(
             "Basic",
-            v_stack((
-                Carousel::new(current_index, 3).items(v_stack((
+            Stack::vertical((
+                Carousel::new(current_index, 3).items(Stack::vertical((
                     floem::views::Container::new(Label::derived(|| "Slide 1")).style(|s| {
                         s.width(300.0)
                             .height(200.0)
@@ -1714,7 +1704,7 @@ fn demo_section<V: IntoView + 'static>(
     description: &'static str,
     content: V,
 ) -> impl IntoView {
-    v_stack((
+    Stack::vertical((
         // Title
         Label::derived(move || title).style(|s| s.font_size(24.0).font_weight(Weight::BOLD).mb_2()),
         // Description
@@ -1730,7 +1720,7 @@ fn demo_section<V: IntoView + 'static>(
 }
 
 fn subsection<V: IntoView + 'static>(title: &'static str, content: V) -> impl IntoView {
-    v_stack((
+    Stack::vertical((
         Label::derived(move || title)
             .style(|s| s.font_size(14.0).font_weight(Weight::MEDIUM).mb_3()),
         content,
@@ -1738,7 +1728,7 @@ fn subsection<V: IntoView + 'static>(title: &'static str, content: V) -> impl In
 }
 
 fn form_field<V: IntoView + 'static>(label_text: &'static str, input: V) -> impl IntoView {
-    h_stack((
+    Stack::horizontal((
         Label::derived(move || label_text)
             .style(|s| s.font_size(14.0).font_weight(Weight::MEDIUM).w_24()),
         input,

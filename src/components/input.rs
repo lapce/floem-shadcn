@@ -31,6 +31,7 @@ use crate::text::TextInput;
 use crate::theme::ShadcnThemeExt;
 
 /// A styled input builder
+#[allow(clippy::type_complexity)]
 pub struct Input {
     id: ViewId,
     initial_text: String,

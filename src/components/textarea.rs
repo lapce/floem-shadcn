@@ -26,6 +26,7 @@ use crate::text::TextArea as TextAreaView;
 use crate::theme::ShadcnThemeExt;
 
 /// A styled textarea (multi-line input) builder
+#[allow(clippy::type_complexity)]
 pub struct Textarea {
     id: ViewId,
     initial_value: String,

@@ -380,6 +380,7 @@ impl<V: IntoView + 'static> IntoView for CommandGroup<V> {
 /// Individual command item
 pub struct CommandItem {
     id: ViewId,
+    #[allow(dead_code)]
     value: String,
     text: String,
     disabled: bool,

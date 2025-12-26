@@ -33,6 +33,7 @@ use crate::theme::ShadcnThemeExt;
 /// Radio group container that manages selected state
 pub struct RadioGroup<V> {
     id: ViewId,
+    #[allow(dead_code)]
     selected: RwSignal<String>,
     child: V,
 }

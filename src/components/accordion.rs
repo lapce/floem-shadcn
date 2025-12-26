@@ -32,6 +32,7 @@ use crate::theme::ShadcnThemeExt;
 /// Accordion container that manages which item is expanded
 pub struct Accordion<V> {
     id: ViewId,
+    #[allow(dead_code)]
     expanded: RwSignal<Option<String>>,
     child: V,
 }

@@ -57,8 +57,10 @@ pub struct TextArea {
     /// Whether currently in resize drag mode
     is_resizing: RwSignal<bool>,
     /// Position where resize drag started
+    #[allow(dead_code)]
     resize_start_pos: RwSignal<Point>,
     /// Size when resize drag started
+    #[allow(dead_code)]
     resize_start_size: RwSignal<Size>,
     /// Minimum size for resize
     min_size: RwSignal<Size>,

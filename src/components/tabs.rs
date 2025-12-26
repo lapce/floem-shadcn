@@ -36,6 +36,7 @@ use crate::theme::ShadcnThemeExt;
 /// Tabs container that manages active tab state
 pub struct Tabs<V> {
     id: ViewId,
+    #[allow(dead_code)]
     active: RwSignal<String>,
     child: V,
 }

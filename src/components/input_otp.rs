@@ -119,7 +119,6 @@ fn create_otp_slot(value: RwSignal<String>, index: usize, mask: bool) -> impl In
     .style(move |s| {
         s.with_shadcn_theme(move |s, t| {
             let val = value.get();
-            let is_filled = index < val.len();
             let is_current = index == val.len();
             let base = s
                 .width(40.0)
@@ -136,8 +135,6 @@ fn create_otp_slot(value: RwSignal<String>, index: usize, mask: bool) -> impl In
                 .justify_center();
             if is_current {
                 base.border_color(t.primary)
-            } else if is_filled {
-                base
             } else {
                 base
             }
@@ -257,7 +254,6 @@ impl IntoView for InputOTPSlot {
             .style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     let val = value.get();
-                    let is_filled = index < val.len();
                     let is_current = index == val.len();
                     let base = s
                         .width(40.0)
@@ -274,8 +270,6 @@ impl IntoView for InputOTPSlot {
                         .justify_center();
                     if is_current {
                         base.border_color(t.primary)
-                    } else if is_filled {
-                        base
                     } else {
                         base
                     }

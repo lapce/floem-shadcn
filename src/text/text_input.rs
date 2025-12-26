@@ -28,6 +28,7 @@ use super::{
 };
 
 /// A single-line text input view
+#[allow(clippy::type_complexity)]
 pub struct TextInput {
     id: ViewId,
     doc: RwSignal<Document>,
@@ -56,6 +57,7 @@ impl TextInput {
     }
 
     /// Creates a new text input with the given initial text and a specific ViewId
+    #[allow(clippy::type_complexity)]
     pub fn with_text_and_id(text: impl Into<String>, id: ViewId) -> Self {
         let padding = RwSignal::new((0.0, 0.0, 0.0, 0.0));
         let scroll_offset = RwSignal::new(0.0);

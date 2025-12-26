@@ -12,7 +12,6 @@ use lapce_xi_rope::{
     tree::{Leaf, Node, NodeInfo, TreeBuilder, UnitAffinity, UnitConverter},
 };
 
-const MIN_LEAF: usize = 511;
 const MAX_LEAF: usize = 1024;
 
 pub struct TextLayoutLines {
@@ -181,6 +180,7 @@ pub struct TextLayoutLineLeaf {
 }
 
 impl TextLayoutLineLeaf {
+    #[allow(clippy::too_many_arguments)]
     fn push_layout_line(
         &mut self,
         line: &LayoutLine,

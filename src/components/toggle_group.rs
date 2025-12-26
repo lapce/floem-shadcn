@@ -59,6 +59,7 @@ pub enum ToggleGroupSize {
 /// Toggle group with single selection
 pub struct ToggleGroup<V> {
     id: ViewId,
+    #[allow(dead_code)]
     selected: RwSignal<Option<String>>,
     child: V,
     variant: ToggleGroupVariant,
@@ -141,6 +142,7 @@ impl<V: IntoView + 'static> IntoView for ToggleGroup<V> {
 /// Toggle group with multiple selection
 pub struct ToggleGroupMultiple<V> {
     id: ViewId,
+    #[allow(dead_code)]
     selected: RwSignal<Vec<String>>,
     child: V,
     variant: ToggleGroupVariant,

@@ -32,6 +32,7 @@ use super::TextLayoutLines;
 /// - Movement commands (left, right, up, down with visual line support)
 /// - Mouse click handling (single, double, triple click)
 #[derive(Clone)]
+#[allow(clippy::type_complexity)]
 pub struct Document {
     buffer: RwSignal<Buffer>,
     text_layouts: Rc<RefCell<TextLayoutLines>>,

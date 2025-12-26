@@ -354,6 +354,7 @@ impl<V: IntoView + 'static> IntoView for NavigationMenuContent<V> {
 pub struct NavigationMenuLink {
     id: ViewId,
     label: String,
+    #[allow(dead_code)]
     href: String,
     description: Option<String>,
     on_click: Option<Box<dyn Fn() + 'static>>,
