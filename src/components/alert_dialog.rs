@@ -21,10 +21,11 @@
 //! ```
 
 use floem::prelude::*;
+use floem::views::{Decorators, Overlay};
 use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::Decorators;
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -144,36 +145,12 @@ impl IntoView for AlertDialog {
                 is_open.set(true);
             });
 
-        // Dialog overlay
-        let overlay = floem::views::Empty::new()
-            .style(move |s| {
-                let open = is_open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top(-1000.0)
-                    .inset_left(-1000.0)
-                    .width(3000.0)
-                    .height(3000.0)
-                    .background(floem::peniko::Color::BLACK.with_alpha(0.5))
-                    .z_index(999);
-
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-            .on_click_stop(move |_| {
-                // Don't close on overlay click for alert dialogs
-            });
-
         // Title
         let title_view = floem::views::Label::new(title).style(|s| {
             s.with_shadcn_theme(move |s, t| {
-                s.font_size(18.0)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                s.text_lg()
+                    .font_semibold()
                     .color(t.foreground)
-                    .margin_bottom(8.0)
             })
         });
 
@@ -182,9 +159,7 @@ impl IntoView for AlertDialog {
             floem::views::Label::new(description)
                 .style(|s| {
                     s.with_shadcn_theme(move |s, t| {
-                        s.font_size(14.0)
-                            .color(t.muted_foreground)
-                            .margin_bottom(16.0)
+                        s.text_sm().color(t.muted_foreground).margin_top(8.0)
                     })
                 })
                 .into_any()
@@ -252,39 +227,51 @@ impl IntoView for AlertDialog {
         let footer =
             floem::views::h_stack((cancel_btn, action_btn)).style(|s| s.gap(8.0).justify_end());
 
-        // Dialog content
-        let dialog_content =
-            floem::views::v_stack((title_view, desc_view, footer)).style(move |s| {
-                s.with_shadcn_theme(move |s, t| {
-                    let open = is_open.get();
+        // Dialog content in Overlay - escapes parent clipping
+        let dialog_overlay = Overlay::new(
+            floem::views::stack((
+                // Backdrop - semi-transparent, doesn't close on click for alert dialogs
+                floem::views::Empty::new()
+                    .style(move |s| {
+                        s.absolute()
+                            .inset_0()
+                            .background(peniko::Color::from_rgba8(0, 0, 0, 128))
+                    })
+                    .on_click_stop(move |_| {
+                        // Don't close on backdrop click for alert dialogs
+                    }),
+                // Content wrapper - centered modal
+                floem::views::v_stack((title_view, desc_view, footer))
+                    .style(move |s| {
+                        s.absolute()
+                            .left_1_2()
+                            .top_1_2()
+                            .translate_x_neg_1_2()
+                            .translate_y_neg_1_2()
+                            .z_index(10)
+                            .max_w_lg()
+                            .rounded_lg()
+                            .p_6()
+                            .gap_4()
+                            .shadow_lg()
+                    })
+                    .style(move |s| {
+                        s.with_shadcn_theme(move |s, t| {
+                            s.background(t.background).border_1().border_color(t.border)
+                        })
+                    }),
+            ))
+            .style(move |s| {
+                let open = is_open.get();
+                s.fixed()
+                    .inset_0()
+                    .width_full()
+                    .height_full()
+                    .apply_if(!open, |s| s.hide())
+            }),
+        );
 
-                    let base = s
-                        .position(floem::style::Position::Absolute)
-                        .inset_top(200.0)
-                        .inset_left_pct(50.0)
-                        .margin_left(-200.0)
-                        .width(400.0)
-                        .padding(24.0)
-                        .background(t.background)
-                        .border(1.0)
-                        .border_color(t.border)
-                        .border_radius(t.radius)
-                        .box_shadow_blur(16.0)
-                        .box_shadow_color(t.foreground.with_alpha(0.15))
-                        .z_index(1000);
-
-                    if open {
-                        base
-                    } else {
-                        base.display(floem::style::Display::None)
-                    }
-                })
-            });
-
-        Box::new(
-            floem::views::Container::new(floem::views::stack((trigger, overlay, dialog_content)))
-                .style(|s| s.position(floem::style::Position::Relative)),
-        )
+        Box::new(floem::views::stack((trigger, dialog_overlay)))
     }
 }
 
@@ -367,55 +354,51 @@ impl<V: IntoView + 'static> IntoView for AlertDialogContent<V> {
 
     fn into_view(self) -> Self::V {
         let is_open = self.is_open;
+        let child = self.child;
 
-        // Overlay
-        let overlay = floem::views::Empty::new().style(move |s| {
-            let open = is_open.get();
-            let base = s
-                .position(floem::style::Position::Absolute)
-                .inset_top(-1000.0)
-                .inset_left(-1000.0)
-                .width(3000.0)
-                .height(3000.0)
-                .background(floem::peniko::Color::BLACK.with_alpha(0.5))
-                .z_index(999);
-
-            if open {
-                base
-            } else {
-                base.display(floem::style::Display::None)
-            }
-        });
-
-        // Content
-        let content = floem::views::Container::new(self.child).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
+        // Alert dialog content in Overlay - escapes parent clipping
+        Box::new(Overlay::new(
+            floem::views::stack((
+                // Backdrop - semi-transparent, doesn't close on click for alert dialogs
+                floem::views::Empty::new()
+                    .style(move |s| {
+                        s.absolute()
+                            .inset_0()
+                            .background(peniko::Color::from_rgba8(0, 0, 0, 128))
+                    })
+                    .on_click_stop(move |_| {
+                        // Don't close on backdrop click for alert dialogs
+                    }),
+                // Content wrapper - centered modal
+                floem::views::Container::new(child)
+                    .style(move |s| {
+                        s.absolute()
+                            .left_1_2()
+                            .top_1_2()
+                            .translate_x_neg_1_2()
+                            .translate_y_neg_1_2()
+                            .z_index(10)
+                            .max_w_lg()
+                            .rounded_lg()
+                            .p_6()
+                            .gap_4()
+                            .shadow_lg()
+                    })
+                    .style(move |s| {
+                        s.with_shadcn_theme(move |s, t| {
+                            s.background(t.background).border_1().border_color(t.border)
+                        })
+                    }),
+            ))
+            .style(move |s| {
                 let open = is_open.get();
-
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top(200.0)
-                    .inset_left_pct(50.0)
-                    .margin_left(-200.0)
-                    .width(400.0)
-                    .padding(24.0)
-                    .background(t.background)
-                    .border(1.0)
-                    .border_color(t.border)
-                    .border_radius(t.radius)
-                    .box_shadow_blur(16.0)
-                    .box_shadow_color(t.foreground.with_alpha(0.15))
-                    .z_index(1000);
-
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-        });
-
-        Box::new(floem::views::stack((overlay, content)))
+                s.fixed()
+                    .inset_0()
+                    .width_full()
+                    .height_full()
+                    .apply_if(!open, |s| s.hide())
+            }),
+        ))
     }
 }
 

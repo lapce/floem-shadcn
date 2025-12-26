@@ -352,9 +352,7 @@ impl IntoView for DialogContent {
         } else {
             // No dialog context - just render the content (for use outside Dialog)
             Box::new(
-                floem::views::Stack::with_id(id, children)
-                    .vertical()
-                    .style(|s| s.w_full()),
+                floem::views::Stack::vertical_from_iter(children).style(|s| s.w_full()),
             )
         }
     }

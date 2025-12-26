@@ -127,6 +127,11 @@ impl IntoView for Combobox {
         let empty_text = self.empty_text;
         let is_open = RwSignal::new(false);
 
+        // Track trigger position (window coords via on_move) and size (via on_resize)
+        // for positioning the Overlay dropdown below the trigger.
+        let trigger_origin = RwSignal::new(floem::kurbo::Point::ZERO);
+        let trigger_size = RwSignal::new(floem::kurbo::Size::ZERO);
+
         // Clone items for different closures
         let items_for_trigger = items.clone();
         let items_for_empty = items.clone();
@@ -183,6 +188,13 @@ impl IntoView for Combobox {
                     .cursor(CursorStyle::Pointer)
                     .hover(|s| s.border_color(t.ring))
             })
+        })
+        // Track trigger position (window coords) and size for dropdown placement
+        .on_move(move |origin| {
+            trigger_origin.set(origin);
+        })
+        .on_resize(move |rect| {
+            trigger_size.set(rect.size());
         })
         .on_click_stop(move |_| {
             is_open.update(|v| *v = !*v);
@@ -257,58 +269,51 @@ impl IntoView for Combobox {
                 .p_1() // p-1 = 4px
         });
 
-        // shadcn/ui ComboboxContent/Popup (v4):
-        // bg-popover text-popover-foreground rounded-md shadow-md ring-1 ring-foreground/10
-        let dropdown = floem::views::v_stack((search_input, items_container)).style(move |s| {
-            s.with_shadcn_theme(move |s, t| {
-                let open = is_open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top_pct(100.0)
-                    .inset_left(0.0)
-                    .inset_right(0.0)
-                    .margin_top(4.0) // sideOffset = 6 in shadcn
-                    .background(t.popover) // bg-popover
-                    .color(t.popover_foreground) // text-popover-foreground
-                    .border_1() // ring-1
-                    .border_color(t.border)
-                    .rounded_md() // rounded-md
-                    .shadow_lg() // shadow-md
-                    .z_index(100);
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-        });
-
-        // Backdrop to close when clicking outside
-        let backdrop = floem::views::Empty::new()
+        // Dropdown in Overlay - escapes parent clipping and z-index constraints
+        let dropdown_overlay = floem::views::Overlay::new(
+            floem::views::stack((
+                // Backdrop - closes dropdown when clicking outside
+                floem::views::Empty::new()
+                    .style(move |s| {
+                        s.absolute().inset_0()
+                        // Transparent backdrop - just for click handling
+                    })
+                    .on_click_stop(move |_| {
+                        is_open.set(false);
+                        search.set(String::new());
+                    }),
+                // Dropdown content - positioned relative to trigger using window coordinates
+                floem::views::v_stack((search_input, items_container))
+                    .style(move |s| {
+                        s.with_shadcn_theme(move |s, t| {
+                            let origin = trigger_origin.get();
+                            let size = trigger_size.get();
+                            // Position below the trigger using window coordinates
+                            s.absolute()
+                                .inset_left(origin.x)
+                                .inset_top(origin.y + size.height + 4.0) // 4px gap below trigger
+                                .min_width(size.width.max(200.0))
+                                .background(t.popover)
+                                .color(t.popover_foreground)
+                                .border_1()
+                                .border_color(t.border)
+                                .rounded_md()
+                                .shadow_lg()
+                                .z_index(100)
+                        })
+                    }),
+            ))
             .style(move |s| {
                 let open = is_open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top(-1000.0)
-                    .inset_left(-1000.0)
-                    .width(3000.0)
-                    .height(3000.0)
-                    .z_index(99);
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-            .on_click_stop(move |_| {
-                is_open.set(false);
-                search.set(String::new());
-            });
+                s.fixed()
+                    .inset_0()
+                    .width_full()
+                    .height_full()
+                    .apply_if(!open, |s| s.hide())
+            }),
+        );
 
-        Box::new(
-            floem::views::Container::new(floem::views::stack((trigger, backdrop, dropdown)))
-                .style(|s| s.position(floem::style::Position::Relative)),
-        )
+        Box::new(floem::views::stack((trigger, dropdown_overlay)))
     }
 }
 

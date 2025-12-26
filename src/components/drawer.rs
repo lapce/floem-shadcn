@@ -16,10 +16,10 @@
 //! ```
 
 use floem::prelude::*;
+use floem::views::{Decorators, Overlay};
 use floem::{HasViewId, ViewId};
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::views::Decorators;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -91,30 +91,7 @@ impl<V: IntoView + 'static> IntoView for Drawer<V> {
         let is_open = self.is_open;
         let side = self.side;
 
-        // Overlay
-        let overlay = floem::views::Empty::new()
-            .style(move |s| {
-                let open = is_open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset_top(-1000.0)
-                    .inset_left(-1000.0)
-                    .width(3000.0)
-                    .height(3000.0)
-                    .background(floem::peniko::Color::BLACK.with_alpha(0.5))
-                    .z_index(999);
-
-                if open {
-                    base
-                } else {
-                    base.display(floem::style::Display::None)
-                }
-            })
-            .on_click_stop(move |_| {
-                is_open.set(false);
-            });
-
-        // Drawer handle (for bottom drawer)
+        // Drawer handle (for top/bottom drawer)
         let handle = floem::views::Empty::new().style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 if side == DrawerSide::Bottom || side == DrawerSide::Top {
@@ -140,15 +117,14 @@ impl<V: IntoView + 'static> IntoView for Drawer<V> {
         // Drawer panel
         let drawer_panel = floem::views::v_stack((handle, content_view)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
-                let open = is_open.get();
                 let base = s
-                    .position(floem::style::Position::Absolute)
+                    .absolute()
                     .background(t.background)
                     .border(1.0)
                     .border_color(t.border)
-                    .z_index(1000)
+                    .z_index(10)
                     .items_center();
-                let positioned = match side {
+                match side {
                     DrawerSide::Bottom => base
                         .inset_bottom(0.0)
                         .inset_left(0.0)
@@ -181,16 +157,36 @@ impl<V: IntoView + 'static> IntoView for Drawer<V> {
                         .max_width_pct(90.0f64)
                         .border_radius(t.radius)
                         .border_right(0.0),
-                };
-                if open {
-                    positioned
-                } else {
-                    positioned.display(floem::style::Display::None)
                 }
             })
         });
 
-        Box::new(floem::views::stack((overlay, drawer_panel)))
+        // Backdrop
+        let backdrop = floem::views::Empty::new()
+            .style(move |s| {
+                s.absolute()
+                    .inset_0()
+                    .background(floem::peniko::Color::from_rgba8(0, 0, 0, 128))
+            })
+            .on_click_stop(move |_| {
+                is_open.set(false);
+            });
+
+        // Use Overlay with fixed positioning
+        let drawer_overlay = Overlay::new(
+            floem::views::stack((backdrop, drawer_panel))
+                .style(|s| s.width_full().height_full()),
+        )
+        .style(move |s| {
+            let open = is_open.get();
+            s.fixed()
+                .inset_0()
+                .width_full()
+                .height_full()
+                .apply_if(!open, |s| s.hide())
+        });
+
+        Box::new(drawer_overlay)
     }
 }
 
