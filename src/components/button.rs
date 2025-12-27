@@ -165,6 +165,11 @@ fn build_button_style(s: Style, size: ButtonSize, variant: ButtonVariant) -> Sty
         .flex()
         .items_center()
         .justify_center()
+        // Prevent button from stretching:
+        // - self_center: prevents cross-axis stretching (e.g., width in vertical Stack)
+        // - flex_grow(0): prevents main-axis stretching (e.g., width in horizontal Stack with wrap)
+        .self_center()
+        .flex_grow(0.0)
         .cursor_pointer()
         .font_medium()
         .transition(
