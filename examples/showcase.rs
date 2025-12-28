@@ -385,11 +385,11 @@ fn tabs_demo() -> impl IntoView {
         Stack::vertical((Tabs::new(
             active_tab,
             Stack::vertical((
-                TabsList::new(Stack::horizontal((
+                TabsList::new((
                     Tab::new("account", "Account").active(active_tab),
                     Tab::new("password", "Password").active(active_tab),
                     Tab::new("settings", "Settings").active(active_tab),
-                ))),
+                )),
                 TabsContent::new(
                     "account",
                     Card::new((CardHeader::new()
