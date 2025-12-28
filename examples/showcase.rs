@@ -384,7 +384,7 @@ fn tabs_demo() -> impl IntoView {
         "A tabs component for switching between content panels.",
         Stack::vertical((Tabs::new(
             active_tab,
-            Stack::vertical((
+            (
                 TabsList::new((
                     Tab::new("account", "Account").active(active_tab),
                     Tab::new("password", "Password").active(active_tab),
@@ -402,19 +402,17 @@ fn tabs_demo() -> impl IntoView {
                     "password",
                     Card::new((CardHeader::new()
                         .title("Password")
-                        .description("Change your password here."),))
-                    .style(|s| s.w_full()),
+                        .description("Change your password here."),)),
                 )
                 .active(active_tab),
                 TabsContent::new(
                     "settings",
                     Card::new((CardHeader::new()
                         .title("Settings")
-                        .description("Configure your preferences."),))
-                    .style(|s| s.w_full()),
+                        .description("Configure your preferences."),)),
                 )
                 .active(active_tab),
-            )),
+            ),
         )
         .style(|s| s.max_w_md()),))
         .style(|s| s.gap_8()),

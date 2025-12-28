@@ -42,7 +42,7 @@ pub struct Tabs<V> {
     child: V,
 }
 
-impl<V: IntoView + 'static> Tabs<V> {
+impl<V: floem::view::IntoViewIter + 'static> Tabs<V> {
     /// Create a new tabs container with the given active signal and content
     pub fn new(active: RwSignal<String>, child: V) -> Self {
         Self {
@@ -53,13 +53,13 @@ impl<V: IntoView + 'static> Tabs<V> {
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for Tabs<V> {
+impl<V: floem::view::IntoViewIter + 'static> HasViewId for Tabs<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for Tabs<V> {
+impl<V: floem::view::IntoViewIter + 'static> IntoView for Tabs<V> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -69,7 +69,7 @@ impl<V: IntoView + 'static> IntoView for Tabs<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
+            floem::views::Stack::with_id(self.id, self.child).style(|s| {
                 s.flex_direction(floem::style::FlexDirection::Column)
                     .gap_2()
             }),
@@ -284,8 +284,7 @@ impl<V: IntoView + 'static> IntoView for TabsContent<V> {
             floem::views::Container::with_id(self.view_id, self.child).style(move |s| {
                 let is_active = active_signal.map(|sig| sig.get() == id).unwrap_or(true); // Show by default if no signal
 
-                s.width_full()
-                    .apply_if(!is_active, |s| s.display(floem::style::Display::None))
+                s.apply_if(!is_active, |s| s.display(floem::style::Display::None))
             }),
         )
     }
