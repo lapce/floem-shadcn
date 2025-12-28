@@ -31,6 +31,12 @@
 //! ```
 
 use floem::prelude::*;
+use floem::taffy::{
+    geometry::MinMax,
+    prelude::TaffyAuto,
+    style::{MaxTrackSizingFunction, MinTrackSizingFunction},
+    GridAutoFlow,
+};
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 
@@ -46,7 +52,7 @@ pub struct Table<V> {
     child: V,
 }
 
-impl<V: IntoView + 'static> Table<V> {
+impl<V: floem::view::IntoViewIter + 'static> Table<V> {
     /// Create a new table
     pub fn new(child: V) -> Self {
         Self {
@@ -56,13 +62,13 @@ impl<V: IntoView + 'static> Table<V> {
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for Table<V> {
+impl<V: floem::view::IntoViewIter + 'static> HasViewId for Table<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for Table<V> {
+impl<V: floem::view::IntoViewIter + 'static> IntoView for Table<V> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -72,12 +78,15 @@ impl<V: IntoView + 'static> IntoView for Table<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
+            floem::views::Stack::with_id(self.id, self.child).style(|s| {
                 s.with_shadcn_theme(move |s, t| {
                     s.width_full()
+                        .grid() // Use Grid for table layout
+                        .grid_auto_flow(GridAutoFlow::Row) // Rows stack vertically
                         .border(1.0)
                         .border_color(t.border)
                         .border_radius(t.radius)
+                        .font_size(14.0) // text-sm
                 })
             }),
         )
@@ -126,8 +135,9 @@ impl<V: IntoView + 'static> IntoView for TableHeader<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child)
-                .style(|s| s.with_shadcn_theme(move |s, t| s.width_full().background(t.muted))),
+            floem::views::Container::with_id(self.id, self.child).style(|s| {
+                s.width_full().grid() // Grid container for row
+            }),
         )
     }
 }
@@ -142,7 +152,7 @@ pub struct TableBody<V> {
     child: V,
 }
 
-impl<V: IntoView + 'static> TableBody<V> {
+impl<V: floem::view::IntoViewIter + 'static> TableBody<V> {
     /// Create a new table body
     pub fn new(child: V) -> Self {
         Self {
@@ -152,13 +162,13 @@ impl<V: IntoView + 'static> TableBody<V> {
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for TableBody<V> {
+impl<V: floem::view::IntoViewIter + 'static> HasViewId for TableBody<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for TableBody<V> {
+impl<V: floem::view::IntoViewIter + 'static> IntoView for TableBody<V> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -168,10 +178,8 @@ impl<V: IntoView + 'static> IntoView for TableBody<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.width_full()
-                    .display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Column)
+            floem::views::Stack::with_id(self.id, self.child).style(|s| {
+                s.width_full().grid() // Grid container for rows
             }),
         )
     }
@@ -187,7 +195,7 @@ pub struct TableFooter<V> {
     child: V,
 }
 
-impl<V: IntoView + 'static> TableFooter<V> {
+impl<V: floem::view::IntoViewIter + 'static> TableFooter<V> {
     /// Create a new table footer
     pub fn new(child: V) -> Self {
         Self {
@@ -197,13 +205,13 @@ impl<V: IntoView + 'static> TableFooter<V> {
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for TableFooter<V> {
+impl<V: floem::view::IntoViewIter + 'static> HasViewId for TableFooter<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for TableFooter<V> {
+impl<V: floem::view::IntoViewIter + 'static> IntoView for TableFooter<V> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -213,12 +221,14 @@ impl<V: IntoView + 'static> IntoView for TableFooter<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
+            floem::views::Stack::with_id(self.id, self.child).style(|s| {
                 s.with_shadcn_theme(move |s, t| {
                     s.width_full()
-                        .background(t.muted)
+                        .grid() // Grid container for rows
+                        .background(t.muted.with_alpha(0.5)) // bg-muted/50
                         .border_top(1.0)
                         .border_color(t.border)
+                        .font_weight(floem::text::Weight::MEDIUM)
                 })
             }),
         )
@@ -235,7 +245,7 @@ pub struct TableRow<V> {
     child: V,
 }
 
-impl<V: IntoView + 'static> TableRow<V> {
+impl<V: floem::view::IntoViewIter + 'static> TableRow<V> {
     /// Create a new table row
     pub fn new(child: V) -> Self {
         Self {
@@ -245,13 +255,13 @@ impl<V: IntoView + 'static> TableRow<V> {
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for TableRow<V> {
+impl<V: floem::view::IntoViewIter + 'static> HasViewId for TableRow<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for TableRow<V> {
+impl<V: floem::view::IntoViewIter + 'static> IntoView for TableRow<V> {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -261,14 +271,22 @@ impl<V: IntoView + 'static> IntoView for TableRow<V> {
 
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
+            floem::views::Stack::with_id(self.id, self.child).style(|s| {
                 s.with_shadcn_theme(move |s, t| {
                     s.width_full()
-                        .display(floem::style::Display::Flex)
-                        .flex_direction(floem::style::FlexDirection::Row)
+                        .grid() // Use Grid for cells
+                        .grid_auto_flow(GridAutoFlow::Column) // Cells flow horizontally
+                        .grid_auto_columns(vec![MinMax {
+                            min: MinTrackSizingFunction::AUTO,
+                            max: MaxTrackSizingFunction::fr(1.0), // Equal column widths
+                        }]) // Each cell gets equal width using 1fr
                         .border_bottom(1.0)
                         .border_color(t.border)
-                        .hover(|s| s.background(t.muted.with_alpha(0.5)))
+                        .hover(|s| s.background(t.muted.with_alpha(0.5))) // hover:bg-muted/50
+                        .transition(
+                            floem::style::Background,
+                            floem::style::Transition::linear(std::time::Duration::from_millis(150)),
+                        )
                 })
             }),
         )
@@ -318,13 +336,14 @@ impl IntoView for TableHead {
         Box::new(floem::views::Label::with_id(self.id, text).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
-                    .padding(12.0)
-                    .font_size(14.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
-                    .color(t.muted_foreground)
-                    .flex_grow(1.0);
+                    .height(40.0) // h-10
+                    .padding_horiz(8.0) // px-2
+                    .font_size(14.0) // text-sm
+                    .font_weight(floem::text::Weight::MEDIUM) // font-medium
+                    .color(t.foreground) // text-foreground
+                    .items_center(); // align-middle vertically
                 if let Some(w) = width {
-                    base.width(w).flex_grow(0.0)
+                    base.width(w)
                 } else {
                     base
                 }
@@ -382,13 +401,14 @@ impl<V: IntoView + 'static> IntoView for TableHeadCustom<V> {
             floem::views::Container::with_id(self.id, self.child).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     let base = s
-                        .padding(12.0)
-                        .font_size(14.0)
-                        .font_weight(floem::text::Weight::MEDIUM)
-                        .color(t.muted_foreground)
-                        .flex_grow(1.0);
+                        .height(40.0) // h-10
+                        .padding_horiz(8.0) // px-2
+                        .font_size(14.0) // text-sm
+                        .font_weight(floem::text::Weight::MEDIUM) // font-medium
+                        .color(t.foreground) // text-foreground
+                        .items_center(); // align-middle vertically
                     if let Some(w) = width {
-                        base.width(w).flex_grow(0.0)
+                        base.width(w)
                     } else {
                         base
                     }
@@ -447,12 +467,12 @@ impl IntoView for TableCell {
         Box::new(floem::views::Label::with_id(self.id, text).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
-                    .padding(12.0)
-                    .font_size(14.0)
-                    .color(t.foreground)
-                    .flex_grow(1.0);
+                    .padding(8.0) // p-2
+                    .font_size(14.0) // text-sm
+                    .color(t.foreground) // text-foreground
+                    .items_center(); // align-middle
                 if let Some(w) = width {
-                    base.width(w).flex_grow(0.0)
+                    base.width(w)
                 } else {
                     base
                 }
@@ -510,12 +530,12 @@ impl<V: IntoView + 'static> IntoView for TableCellCustom<V> {
             floem::views::Container::with_id(self.id, self.child).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     let base = s
-                        .padding(12.0)
-                        .font_size(14.0)
-                        .color(t.foreground)
-                        .flex_grow(1.0);
+                        .padding(8.0) // p-2
+                        .font_size(14.0) // text-sm
+                        .color(t.foreground) // text-foreground
+                        .items_center(); // align-middle
                     if let Some(w) = width {
-                        base.width(w).flex_grow(0.0)
+                        base.width(w)
                     } else {
                         base
                     }
@@ -564,10 +584,9 @@ impl IntoView for TableCaption {
 
         Box::new(floem::views::Label::with_id(self.id, text).style(|s| {
             s.with_shadcn_theme(move |s, t| {
-                s.padding(12.0)
-                    .font_size(14.0)
-                    .color(t.muted_foreground)
-                    .justify_center()
+                s.margin_top(16.0) // mt-4
+                    .font_size(14.0) // text-sm
+                    .color(t.muted_foreground) // text-muted-foreground
                     .width_full()
             })
         }))
