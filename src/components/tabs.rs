@@ -26,6 +26,7 @@ use floem::style::CursorStyle;
 use floem::text::Weight;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -117,10 +118,13 @@ impl<V: IntoView + 'static> IntoView for TabsList<V> {
                 s.with_shadcn_theme(|s, t| {
                     s.display(floem::style::Display::Flex)
                         .flex_direction(floem::style::FlexDirection::Row)
+                        .items_center() // items-center
+                        .justify_center() // justify-center
                         .background(t.muted)
-                        .border_radius(6.0)
-                        .padding(4.0)
-                        .gap(4.0)
+                        .border_radius(8.0) // rounded-lg
+                        .h_9() // h-9 = 36px
+                        .padding(3.0) // p-[3px]
+                        .gap(3.0) // Small gap between tabs
                 })
             }),
         )
@@ -172,11 +176,16 @@ impl Tab {
                         .map(|sig| sig.get() == id.clone())
                         .unwrap_or(false);
                     let base = s
-                        .padding_left(12.0)
-                        .padding_right(12.0)
-                        .padding_top(6.0)
-                        .padding_bottom(6.0)
-                        .border_radius(4.0)
+                        .display(floem::style::Display::Flex) // inline-flex
+                        .flex_grow(1.0) // flex-1
+                        .height(29.0) // h-[calc(100%-1px)] ≈ 36px - 6px padding - 1px = 29px
+                        .px_2() // px-2 = 8px
+                        .py_1() // py-1 = 4px
+                        .items_center() // Center content vertically
+                        .justify_center() // Center content horizontally
+                        .border_radius(6.0) // rounded-md
+                        .border(1.0) // border
+                        .border_color(peniko::Color::TRANSPARENT) // border-transparent
                         .font_size(14.0)
                         .font_weight(Weight::MEDIUM)
                         .cursor(CursorStyle::Pointer)
@@ -185,7 +194,9 @@ impl Tab {
                             floem::style::Transition::linear(millis(100)),
                         );
                     if is_active {
-                        base.background(t.background).color(t.foreground)
+                        base.background(t.background)
+                            .color(t.foreground)
+                            .shadow_sm() // shadow-sm for active state
                     } else {
                         base.background(peniko::Color::TRANSPARENT)
                             .color(t.muted_foreground)

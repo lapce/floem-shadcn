@@ -199,6 +199,7 @@ impl IntoView for Combobox {
         });
 
         // Search input in dropdown using custom TextInput
+        // shadcn/ui: h-8 (32px), px-3 (12px), text-sm
         let search_input = TextInput::new()
             .placeholder("Search...")
             .value(move || search.get())
@@ -209,7 +210,8 @@ impl IntoView for Combobox {
                 s.with_shadcn_theme(move |s, t| {
                     // Input inside dropdown - no outer border, just bottom border
                     s.width_full()
-                        .padding(8.0)
+                        .h_8() // h-8 = 32px
+                        .px_3() // px-3 = 12px
                         .text_sm() // text-sm = 14px
                         .border(0.0)
                         .border_bottom(1.0)
@@ -288,7 +290,7 @@ impl IntoView for Combobox {
                         // Position below the trigger using window coordinates
                         s.absolute()
                             .inset_left(origin.x)
-                            .inset_top(origin.y + size.height + 4.0) // 4px gap below trigger
+                            .inset_top(origin.y + size.height + 6.0) // 6px gap (sideOffset=6)
                             .min_width(size.width.max(200.0))
                             .background(t.popover)
                             .color(t.popover_foreground)
@@ -330,13 +332,12 @@ fn create_combobox_item(
     // py-1.5 pr-8 pl-2 text-sm rounded-sm
     // data-highlighted:bg-accent data-highlighted:text-accent-foreground
     // CheckIcon size-4 at absolute right-2
-    floem::views::Stack::horizontal((
-        // Check icon (visible when selected)
-        floem::views::Label::new("✓").style(move |s| {
-            let items = items_for_label.clone();
-            s.with_shadcn_theme(move |s, t| {
+    floem::views::Container::new(
+        floem::views::Stack::horizontal((
+            // Label
+            floem::views::Label::derived(move || {
                 let search_val = search.get();
-                let filtered: Vec<_> = items
+                let filtered: Vec<_> = items_for_style
                     .iter()
                     .filter(|item| {
                         item.label
@@ -344,36 +345,42 @@ fn create_combobox_item(
                             .contains(&search_val.to_lowercase())
                     })
                     .collect();
-                let item_opt = filtered.get(index);
-                let is_selected = item_opt
-                    .map(|i| Some(i.value.clone()) == selected.get())
-                    .unwrap_or(false);
-                s.size_4() // size-4 = 16px
-                    .text_sm()
-                    .color(t.foreground)
-                    .items_center()
-                    .justify_center()
-                    .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
+                filtered
+                    .get(index)
+                    .map(|i| i.label.clone())
+                    .unwrap_or_default()
             })
-        }),
-        // Label
-        floem::views::Label::derived(move || {
-            let search_val = search.get();
-            let filtered: Vec<_> = items_for_style
-                .iter()
-                .filter(|item| {
-                    item.label
-                        .to_lowercase()
-                        .contains(&search_val.to_lowercase())
+            .style(|s| s.text_sm().flex_grow(1.0)),
+            // Check icon (visible when selected) - absolute positioned right-2
+            floem::views::Label::new("✓").style(move |s| {
+                let items = items_for_label.clone();
+                s.with_shadcn_theme(move |s, t| {
+                    let search_val = search.get();
+                    let filtered: Vec<_> = items
+                        .iter()
+                        .filter(|item| {
+                            item.label
+                                .to_lowercase()
+                                .contains(&search_val.to_lowercase())
+                        })
+                        .collect();
+                    let item_opt = filtered.get(index);
+                    let is_selected = item_opt
+                        .map(|i| Some(i.value.clone()) == selected.get())
+                        .unwrap_or(false);
+                    // Positioned at the end via flex, size-4 = 16px
+                    s.size_4()
+                        .text_sm()
+                        .color(t.foreground)
+                        .items_center()
+                        .justify_center()
+                        .flex_shrink(0.0)
+                        .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
                 })
-                .collect();
-            filtered
-                .get(index)
-                .map(|i| i.label.clone())
-                .unwrap_or_default()
-        })
-        .style(|s| s.text_sm()),
-    ))
+            }),
+        ))
+        .style(|s| s.width_full().items_center().gap_2()),
+    )
     .style(move |s| {
         let items = items_for_click.clone();
         s.with_shadcn_theme(move |s, t| {
@@ -393,14 +400,13 @@ fn create_combobox_item(
                 .unwrap_or(false);
             let is_disabled = item_opt.map(|i| i.disabled).unwrap_or(false);
 
-            // py-1.5 = 6px, pl-2 = 8px, pr-8 = 32px (space for check)
+            // py-1.5 = 6px, pl-2 = 8px, pr-2 = 8px (check icon is at end via flex)
             let base = s
                 .width_full()
                 .padding_top(6.0) // py-1.5 = 6px
                 .padding_bottom(6.0)
                 .padding_left(8.0) // pl-2 = 8px
-                .padding_right(32.0) // pr-8 = 32px
-                .gap_2() // gap-2 = 8px
+                .padding_right(8.0) // pr-2 = 8px
                 .items_center()
                 .rounded_sm() // rounded-sm = 3px
                 .cursor(if is_disabled {
@@ -415,8 +421,8 @@ fn create_combobox_item(
                 // Selected/highlighted state
                 base.background(t.accent).color(t.accent_foreground)
             } else if is_disabled {
-                // Disabled state
-                base.color(t.muted_foreground)
+                // Disabled state - opacity-50
+                base.color(t.muted_foreground).opacity_50()
             } else {
                 // Normal state with hover
                 base.color(t.foreground)
@@ -560,7 +566,7 @@ impl<V: IntoView + 'static> IntoView for ComboboxContent<V> {
                         .inset_top_pct(100.0)
                         .inset_left(0.0)
                         .inset_right(0.0)
-                        .margin_top(4.0)
+                        .margin_top(6.0) // sideOffset=6
                         .p_1() // p-1 = 4px
                         .background(t.popover) // bg-popover
                         .color(t.popover_foreground) // text-popover-foreground
@@ -838,25 +844,29 @@ impl IntoView for ComboboxItem {
         // data-highlighted:bg-accent data-highlighted:text-accent-foreground
         // CheckIcon size-4 at absolute right-2
         Box::new(
-            floem::views::Stack::horizontal((
-                // Check icon
-                floem::views::Label::new("✓").style(move |s| {
-                    let val = value.clone();
-                    s.with_shadcn_theme(move |s, t| {
-                        let is_selected = selected
-                            .map(|sig| sig.get() == Some(val.clone()))
-                            .unwrap_or(false);
-                        s.size_4() // size-4 = 16px
-                            .text_sm()
-                            .color(t.foreground)
-                            .items_center()
-                            .justify_center()
-                            .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
-                    })
-                }),
-                // Label text
-                floem::views::Label::new(label).style(|s| s.text_sm()),
-            ))
+            floem::views::Container::new(
+                floem::views::Stack::horizontal((
+                    // Label text
+                    floem::views::Label::new(label).style(|s| s.text_sm().flex_grow(1.0)),
+                    // Check icon (at end via flex)
+                    floem::views::Label::new("✓").style(move |s| {
+                        let val = value.clone();
+                        s.with_shadcn_theme(move |s, t| {
+                            let is_selected = selected
+                                .map(|sig| sig.get() == Some(val.clone()))
+                                .unwrap_or(false);
+                            s.size_4() // size-4 = 16px
+                                .text_sm()
+                                .color(t.foreground)
+                                .items_center()
+                                .justify_center()
+                                .flex_shrink(0.0)
+                                .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
+                        })
+                    }),
+                ))
+                .style(|s| s.width_full().items_center().gap_2()),
+            )
             .style(move |s| {
                 let val = value_for_style.clone();
                 s.with_shadcn_theme(move |s, t| {
@@ -864,13 +874,13 @@ impl IntoView for ComboboxItem {
                         .map(|sig| sig.get() == Some(val.clone()))
                         .unwrap_or(false);
 
+                    // py-1.5 = 6px, pl-2 = 8px, pr-2 = 8px (check at end via flex)
                     let base = s
                         .width_full()
                         .padding_top(6.0) // py-1.5 = 6px
                         .padding_bottom(6.0)
                         .padding_left(8.0) // pl-2 = 8px
-                        .padding_right(32.0) // pr-8 = 32px
-                        .gap_2() // gap-2 = 8px
+                        .padding_right(8.0) // pr-2 = 8px
                         .items_center()
                         .rounded_sm() // rounded-sm
                         .cursor(if disabled {
@@ -882,7 +892,8 @@ impl IntoView for ComboboxItem {
                     if is_selected {
                         base.background(t.accent).color(t.accent_foreground)
                     } else if disabled {
-                        base.color(t.muted_foreground)
+                        // Disabled state - opacity-50
+                        base.color(t.muted_foreground).opacity_50()
                     } else {
                         base.color(t.foreground)
                             .hover(|s| s.background(t.accent).color(t.accent_foreground))

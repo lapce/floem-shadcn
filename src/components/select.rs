@@ -239,7 +239,7 @@ impl IntoView for Select {
                         // Position below the trigger using window coordinates
                         s.absolute()
                             .inset_left(origin.x)
-                            .inset_top(origin.y + size.height + 4.0) // 4px gap below trigger
+                            .inset_top(origin.y + size.height + 6.0) // 6px gap (sideOffset=6)
                             .min_width(size.width.max(120.0))
                             .p_1() // p-1 = 4px (viewport padding)
                             .background(t.popover)
@@ -247,7 +247,7 @@ impl IntoView for Select {
                             .border_1()
                             .border_color(t.border)
                             .rounded_md()
-                            .shadow_lg()
+                            .shadow_md() // shadow-md
                             .z_index(100)
                     })
                 }),
@@ -282,32 +282,36 @@ fn create_select_item(
     // py-1.5 pr-8 pl-2 text-sm rounded-sm
     // focus:bg-accent focus:text-accent-foreground
     // CheckIcon size-4 at absolute right-2
-    floem::views::Stack::horizontal((
-        // Check icon (visible when selected)
-        floem::views::Label::new("✓").style(move |s| {
-            let items = items_for_label.clone();
-            s.with_shadcn_theme(move |s, t| {
-                let item_opt = items.get(index);
-                let is_selected = item_opt
-                    .map(|i| Some(i.value.clone()) == selected.get())
-                    .unwrap_or(false);
-                s.size_4() // size-4 = 16px
-                    .text_sm()
-                    .color(t.foreground)
-                    .items_center()
-                    .justify_center()
-                    .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
+    floem::views::Container::new(
+        floem::views::Stack::horizontal((
+            // Label
+            floem::views::Label::derived(move || {
+                items_for_style
+                    .get(index)
+                    .map(|i| i.label.clone())
+                    .unwrap_or_default()
             })
-        }),
-        // Label
-        floem::views::Label::derived(move || {
-            items_for_style
-                .get(index)
-                .map(|i| i.label.clone())
-                .unwrap_or_default()
-        })
-        .style(|s| s.text_sm()),
-    ))
+            .style(|s| s.text_sm().flex_grow(1.0)),
+            // Check icon (at end via flex)
+            floem::views::Label::new("✓").style(move |s| {
+                let items = items_for_label.clone();
+                s.with_shadcn_theme(move |s, t| {
+                    let item_opt = items.get(index);
+                    let is_selected = item_opt
+                        .map(|i| Some(i.value.clone()) == selected.get())
+                        .unwrap_or(false);
+                    s.size_4() // size-4 = 16px
+                        .text_sm()
+                        .color(t.foreground)
+                        .items_center()
+                        .justify_center()
+                        .flex_shrink(0.0)
+                        .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
+                })
+            }),
+        ))
+        .style(|s| s.width_full().items_center().gap_2()),
+    )
     .style(move |s| {
         let items = items_for_click.clone();
         s.with_shadcn_theme(move |s, t| {
@@ -318,14 +322,13 @@ fn create_select_item(
                 .unwrap_or(false);
             let is_disabled = item_opt.map(|i| i.disabled).unwrap_or(false);
 
-            // py-1.5 = 6px, pl-2 = 8px, pr-8 = 32px (space for check)
+            // py-1.5 = 6px, pl-2 = 8px, pr-2 = 8px (check at end via flex)
             let base = s
                 .width_full()
                 .padding_top(6.0) // py-1.5 = 6px
                 .padding_bottom(6.0)
                 .padding_left(8.0) // pl-2 = 8px
-                .padding_right(32.0) // pr-8 = 32px
-                .gap_2() // gap-2 = 8px
+                .padding_right(8.0) // pr-2 = 8px
                 .items_center()
                 .rounded_sm() // rounded-sm = 3px
                 .cursor(if is_disabled {
@@ -340,8 +343,8 @@ fn create_select_item(
                 // Selected state
                 base.background(t.accent).color(t.accent_foreground)
             } else if is_disabled {
-                // Disabled state
-                base.color(t.muted_foreground)
+                // Disabled state - opacity-50
+                base.color(t.muted_foreground).opacity_50()
             } else {
                 // Normal state with hover
                 base.color(t.foreground)
@@ -476,14 +479,14 @@ impl<V: IntoView + 'static> IntoView for SelectContent<V> {
                         .inset_top_pct(100.0)
                         .inset_left(0.0)
                         .inset_right(0.0)
-                        .margin_top(4.0)
+                        .margin_top(6.0) // sideOffset=6
                         .p_1() // p-1 = 4px
                         .background(t.popover) // bg-popover
                         .color(t.popover_foreground) // text-popover-foreground
                         .border_1() // border
                         .border_color(t.border)
                         .rounded_md() // rounded-md
-                        .shadow_lg() // shadow-md
+                        .shadow_md() // shadow-md
                         .z_index(100)
                         .flex_direction(floem::style::FlexDirection::Column);
                     if open {
@@ -572,25 +575,29 @@ impl IntoView for SelectItem {
         // focus:bg-accent focus:text-accent-foreground
         // CheckIcon size-4 at absolute right-2
         Box::new(
-            floem::views::Stack::horizontal((
-                // Check icon
-                floem::views::Label::new("✓").style(move |s| {
-                    let val = value.clone();
-                    s.with_shadcn_theme(move |s, t| {
-                        let is_selected = selected
-                            .map(|sig| sig.get() == Some(val.clone()))
-                            .unwrap_or(false);
-                        s.size_4() // size-4 = 16px
-                            .text_sm()
-                            .color(t.foreground)
-                            .items_center()
-                            .justify_center()
-                            .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
-                    })
-                }),
-                // Label text
-                floem::views::Label::new(label).style(|s| s.text_sm()),
-            ))
+            floem::views::Container::new(
+                floem::views::Stack::horizontal((
+                    // Label text
+                    floem::views::Label::new(label).style(|s| s.text_sm().flex_grow(1.0)),
+                    // Check icon (at end via flex)
+                    floem::views::Label::new("✓").style(move |s| {
+                        let val = value.clone();
+                        s.with_shadcn_theme(move |s, t| {
+                            let is_selected = selected
+                                .map(|sig| sig.get() == Some(val.clone()))
+                                .unwrap_or(false);
+                            s.size_4() // size-4 = 16px
+                                .text_sm()
+                                .color(t.foreground)
+                                .items_center()
+                                .justify_center()
+                                .flex_shrink(0.0)
+                                .apply_if(!is_selected, |s| s.display(floem::style::Display::None))
+                        })
+                    }),
+                ))
+                .style(|s| s.width_full().items_center().gap_2()),
+            )
             .style(move |s| {
                 let val = value_for_style.clone();
                 s.with_shadcn_theme(move |s, t| {
@@ -598,12 +605,13 @@ impl IntoView for SelectItem {
                         .map(|sig| sig.get() == Some(val.clone()))
                         .unwrap_or(false);
 
+                    // py-1.5 = 6px, pl-2 = 8px, pr-2 = 8px (check at end via flex)
                     let base = s
                         .width_full()
                         .padding_top(6.0) // py-1.5 = 6px
                         .padding_bottom(6.0)
                         .padding_left(8.0) // pl-2 = 8px
-                        .padding_right(32.0) // pr-8 = 32px
+                        .padding_right(8.0) // pr-2 = 8px
                         .gap_2() // gap-2 = 8px
                         .items_center()
                         .rounded_sm() // rounded-sm
@@ -616,7 +624,8 @@ impl IntoView for SelectItem {
                     if is_selected {
                         base.background(t.accent).color(t.accent_foreground)
                     } else if disabled {
-                        base.color(t.muted_foreground)
+                        // Disabled state - opacity-50
+                        base.color(t.muted_foreground).opacity_50()
                     } else {
                         base.color(t.foreground)
                             .hover(|s| s.background(t.accent).color(t.accent_foreground))
