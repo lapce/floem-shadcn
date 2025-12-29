@@ -8,39 +8,53 @@
 //!
 //! ```rust
 //! use floem::reactive::RwSignal;
+//! use floem::view::ParentView;
 //! use floem_shadcn::components::sidebar::*;
 //!
 //! let active = RwSignal::new("buttons");
 //!
 //! let sidebar = Sidebar::new()
-//!     .header(SidebarHeader::new(label(|| "My App")))
-//!     .content(SidebarContent::new(
-//!         SidebarGroup::new((
-//!             SidebarGroupLabel::new("Components"),
-//!             SidebarGroupContent::new(
-//!                 SidebarMenu::new((
-//!                     SidebarMenuItem::new(
-//!                         SidebarMenuButton::new("Buttons")
-//!                             .is_active(move || active.get() == "buttons")
-//!                             .on_click_stop(move |_| active.set("buttons"))
-//!                     ),
-//!                     SidebarMenuItem::new(
-//!                         SidebarMenuButton::new("Cards")
-//!                             .is_active(move || active.get() == "cards")
-//!                             .on_click_stop(move |_| active.set("cards"))
-//!                     ),
-//!                 )),
-//!             ),
-//!         )),
-//!     ))
-//!     .footer(SidebarFooter::new(label(|| "v1.0.0")));
+//!     .header(
+//!         SidebarHeader::new()
+//!             .child(label(|| "My App"))
+//!     )
+//!     .content(
+//!         SidebarContent::new().child(
+//!             SidebarGroup::new()
+//!                 .child(SidebarGroupLabel::new("Components"))
+//!                 .child(
+//!                     SidebarGroupContent::new().child(
+//!                         SidebarMenu::new()
+//!                             .child(
+//!                                 SidebarMenuItem::new().child(
+//!                                     SidebarMenuButton::new("Buttons")
+//!                                         .is_active(move || active.get() == "buttons")
+//!                                         .on_click_stop(move |_| active.set("buttons"))
+//!                                 )
+//!                             )
+//!                             .child(
+//!                                 SidebarMenuItem::new().child(
+//!                                     SidebarMenuButton::new("Cards")
+//!                                         .is_active(move || active.get() == "cards")
+//!                                         .on_click_stop(move |_| active.set("cards"))
+//!                                 )
+//!                             )
+//!                     )
+//!                 )
+//!         )
+//!     )
+//!     .footer(
+//!         SidebarFooter::new()
+//!             .child(label(|| "v1.0.0"))
+//!     );
 //! ```
 
 use std::rc::Rc;
 
+use floem::prelude::*;
 use floem::style::CursorStyle;
 use floem::text::Weight;
-use floem::{AnyView, prelude::*};
+use floem::view::ParentView;
 use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
@@ -54,9 +68,9 @@ use crate::theme::ShadcnThemeExt;
 /// # Example
 /// ```rust
 /// Sidebar::new()
-///     .header(SidebarHeader::new(label(|| "My App")))
-///     .content(SidebarContent::new(/* menu items */))
-///     .footer(SidebarFooter::new(label(|| "v1.0")))
+///     .header(SidebarHeader::new().child(label(|| "My App")))
+///     .content(SidebarContent::new().child(/* menu items */))
+///     .footer(SidebarFooter::new().child(label(|| "v1.0")))
 /// ```
 pub struct Sidebar {
     id: ViewId,
@@ -153,29 +167,31 @@ impl IntoView for Sidebar {
 // ============================================================================
 
 /// Sidebar header component (for logo/title at top)
-pub struct SidebarHeader<V> {
+pub struct SidebarHeader {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarHeader<V> {
+impl SidebarHeader {
     /// Create a new sidebar header
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarHeader<V> {
+impl Default for SidebarHeader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarHeader {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarHeader<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarHeader {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -183,48 +199,49 @@ impl<V: IntoView + 'static> IntoView for SidebarHeader<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.with_shadcn_theme(|s, t| {
-                    s.width_full()
-                        .padding(16.0)
-                        .border_bottom(1.0)
-                        .border_color(t.border)
-                })
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.with_shadcn_theme(|s, t| {
+                s.width_full()
+                    .padding(16.0)
+                    .border_bottom(1.0)
+                    .border_color(t.border)
+            })
+        })
     }
 }
+
+impl ParentView for SidebarHeader {}
 
 // ============================================================================
 // SidebarContent - Main scrollable content area
 // ============================================================================
 
 /// Sidebar content area (scrollable).
-/// The child should be a vertically laid out view (e.g., using v_stack).
-pub struct SidebarContent<V> {
+pub struct SidebarContent {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarContent<V> {
+impl SidebarContent {
     /// Create a new sidebar content area
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarContent<V> {
+impl Default for SidebarContent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarContent {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarContent<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarContent {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -232,51 +249,50 @@ impl<V: IntoView + 'static> IntoView for SidebarContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Scroll::new(floem::views::Container::new(self.child).style(|s| {
-                s.flex_direction(floem::style::FlexDirection::Column)
-                    .padding(8.0)
-                    .gap(8.0)
-                    .width_full()
-            }))
-            .style(|s| {
-                s.flex_grow(1.0)
-                    .flex_basis(0.0)
-                    .min_height(0.0) // Required for scroll in flex column
-                    .width_full()
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.flex_grow(1.0)
+                .flex_basis(0.0)
+                .min_height(0.0)
+                .width_full()
+                .flex_direction(floem::style::FlexDirection::Column)
+                .padding(8.0)
+                .gap(8.0)
+        })
     }
 }
+
+impl ParentView for SidebarContent {}
 
 // ============================================================================
 // SidebarFooter - Footer section at bottom
 // ============================================================================
 
 /// Sidebar footer component
-pub struct SidebarFooter<V> {
+pub struct SidebarFooter {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarFooter<V> {
+impl SidebarFooter {
     /// Create a new sidebar footer
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarFooter<V> {
+impl Default for SidebarFooter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarFooter {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarFooter<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarFooter {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -284,60 +300,65 @@ impl<V: IntoView + 'static> IntoView for SidebarFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.with_shadcn_theme(|s, t| {
-                    s.width_full()
-                        .padding(16.0)
-                        .border_top(1.0)
-                        .border_color(t.border)
-                })
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.with_shadcn_theme(|s, t| {
+                s.width_full()
+                    .padding(16.0)
+                    .border_top(1.0)
+                    .border_color(t.border)
+            })
+        })
     }
 }
+
+impl ParentView for SidebarFooter {}
 
 // ============================================================================
 // SidebarGroup - Groups related menu items
 // ============================================================================
 
 /// Sidebar group container.
-/// The child should be a vertically laid out view.
-pub struct SidebarGroup<V> {
+pub struct SidebarGroup {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarGroup<V> {
+impl SidebarGroup {
     /// Create a new sidebar group
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarGroup<V> {
+impl Default for SidebarGroup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarGroup {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarGroup<V> {
-    type V = AnyView;
-    type Intermediate = AnyView;
+impl IntoView for SidebarGroup {
+    type V = floem::views::Stem;
+    type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
-        Container::with_id(self.id, self.child)
-            .style(|s| {
-                s.flex_direction(floem::style::FlexDirection::Column)
-                    .width_full()
-                    .gap(4.0)
-            })
-            .into_any()
+        self
+    }
+
+    fn into_view(self) -> Self::V {
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.flex_direction(floem::style::FlexDirection::Column)
+                .width_full()
+                .gap(4.0)
+        })
     }
 }
+
+impl ParentView for SidebarGroup {}
 
 // ============================================================================
 // SidebarGroupLabel - Label for a group
@@ -396,29 +417,31 @@ impl IntoView for SidebarGroupLabel {
 // ============================================================================
 
 /// Sidebar group content container
-pub struct SidebarGroupContent<V> {
+pub struct SidebarGroupContent {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarGroupContent<V> {
+impl SidebarGroupContent {
     /// Create a new group content container
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarGroupContent<V> {
+impl Default for SidebarGroupContent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarGroupContent {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarGroupContent<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarGroupContent {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -426,43 +449,45 @@ impl<V: IntoView + 'static> IntoView for SidebarGroupContent<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.flex_direction(floem::style::FlexDirection::Column)
-                    .width_full()
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.flex_direction(floem::style::FlexDirection::Column)
+                .width_full()
+        })
     }
 }
+
+impl ParentView for SidebarGroupContent {}
 
 // ============================================================================
 // SidebarGroupAction - Optional action button in group header
 // ============================================================================
 
 /// Sidebar group action button (appears next to group label)
-pub struct SidebarGroupAction<V> {
+pub struct SidebarGroupAction {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarGroupAction<V> {
+impl SidebarGroupAction {
     /// Create a new group action
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarGroupAction<V> {
+impl Default for SidebarGroupAction {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarGroupAction {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarGroupAction<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarGroupAction {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -470,48 +495,49 @@ impl<V: IntoView + 'static> IntoView for SidebarGroupAction<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.with_shadcn_theme(|s, t| {
-                    s.padding(4.0)
-                        .border_radius(t.radius_sm)
-                        .cursor(CursorStyle::Pointer)
-                        .hover(|s| s.background(t.accent))
-                })
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.with_shadcn_theme(|s, t| {
+                s.padding(4.0)
+                    .border_radius(t.radius_sm)
+                    .cursor(CursorStyle::Pointer)
+                    .hover(|s| s.background(t.accent))
+            })
+        })
     }
 }
+
+impl ParentView for SidebarGroupAction {}
 
 // ============================================================================
 // SidebarMenu - Menu container
 // ============================================================================
 
 /// Sidebar menu container.
-/// The child should be a vertically laid out view of SidebarMenuItem elements.
-pub struct SidebarMenu<V> {
+pub struct SidebarMenu {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarMenu<V> {
+impl SidebarMenu {
     /// Create a new sidebar menu
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarMenu<V> {
+impl Default for SidebarMenu {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarMenu {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarMenu<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarMenu {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -519,44 +545,46 @@ impl<V: IntoView + 'static> IntoView for SidebarMenu<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.flex_direction(floem::style::FlexDirection::Column)
-                    .width_full()
-                    .gap(2.0)
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.flex_direction(floem::style::FlexDirection::Column)
+                .width_full()
+                .gap(2.0)
+        })
     }
 }
+
+impl ParentView for SidebarMenu {}
 
 // ============================================================================
 // SidebarMenuItem - Menu item wrapper
 // ============================================================================
 
 /// Sidebar menu item wrapper
-pub struct SidebarMenuItem<V> {
+pub struct SidebarMenuItem {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> SidebarMenuItem<V> {
+impl SidebarMenuItem {
     /// Create a new menu item
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for SidebarMenuItem<V> {
+impl Default for SidebarMenuItem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasViewId for SidebarMenuItem {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: IntoView + 'static> IntoView for SidebarMenuItem<V> {
-    type V = Box<dyn View>;
+impl IntoView for SidebarMenuItem {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -564,9 +592,11 @@ impl<V: IntoView + 'static> IntoView for SidebarMenuItem<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| s.width_full()))
+        floem::views::Stem::with_id(self.id).style(|s| s.width_full())
     }
 }
+
+impl ParentView for SidebarMenuItem {}
 
 // ============================================================================
 // SidebarMenuButton - Clickable menu button
