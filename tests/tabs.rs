@@ -6,7 +6,7 @@
 //! 3. Tab heights match the shadcn/ui specifications
 
 use floem::prelude::*;
-use floem_shadcn::components::tabs::{Tab, TabsList, Tabs, TabsContent};
+use floem_shadcn::components::tabs::{Tab, Tabs, TabsContent, TabsList};
 use floem_test::prelude::*;
 
 #[test]
@@ -41,7 +41,9 @@ fn test_tabs_flex_grow_equal_distribution() {
     let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
     harness.rebuild();
 
-    let tabs_list_layout = tabs_list_id.get_layout().expect("TabsList layout should exist");
+    let tabs_list_layout = tabs_list_id
+        .get_layout()
+        .expect("TabsList layout should exist");
     let layout1 = tab1_id.get_layout().expect("Tab 1 layout should exist");
     let layout2 = tab2_id.get_layout().expect("Tab 2 layout should exist");
     let layout3 = tab3_id.get_layout().expect("Tab 3 layout should exist");
@@ -108,7 +110,9 @@ fn test_tabs_height() {
     let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
     harness.rebuild();
 
-    let list_layout = tabs_list_id.get_layout().expect("TabsList layout should exist");
+    let list_layout = tabs_list_id
+        .get_layout()
+        .expect("TabsList layout should exist");
     let tab_layout = tab1_id.get_layout().expect("Tab layout should exist");
 
     println!("TabsList height: {}", list_layout.size.height);
@@ -231,7 +235,9 @@ fn test_four_tabs_equal_distribution() {
     let mut harness = HeadlessHarness::new_with_size(container, 500.0, 200.0);
     harness.rebuild();
 
-    let tabs_list_layout = tabs_list_id.get_layout().expect("TabsList layout should exist");
+    let tabs_list_layout = tabs_list_id
+        .get_layout()
+        .expect("TabsList layout should exist");
     let layout1 = tab1_id.get_layout().expect("Tab 1 layout should exist");
     let layout2 = tab2_id.get_layout().expect("Tab 2 layout should exist");
     let layout3 = tab3_id.get_layout().expect("Tab 3 layout should exist");
@@ -239,11 +245,9 @@ fn test_four_tabs_equal_distribution() {
 
     // Debug output
     println!("TabsList width: {}", tabs_list_layout.size.width);
-    println!("Tab widths: {}, {}, {}, {}",
-        layout1.size.width,
-        layout2.size.width,
-        layout3.size.width,
-        layout4.size.width
+    println!(
+        "Tab widths: {}, {}, {}, {}",
+        layout1.size.width, layout2.size.width, layout3.size.width, layout4.size.width
     );
 
     // Verify TabsList actually takes the full container width
@@ -258,7 +262,8 @@ fn test_four_tabs_equal_distribution() {
     let padding = 6.0; // 3px left + 3px right
     let gaps = 9.0; // 3px gap * 3 gaps (between 4 tabs)
     let available_width = tabs_list_layout.size.width - padding - gaps;
-    let total_tab_width = layout1.size.width + layout2.size.width + layout3.size.width + layout4.size.width;
+    let total_tab_width =
+        layout1.size.width + layout2.size.width + layout3.size.width + layout4.size.width;
 
     assert!(
         (total_tab_width - available_width).abs() < 1.0,

@@ -819,39 +819,48 @@ fn breadcrumb_demo() -> impl IntoView {
 }
 
 fn table_demo() -> impl IntoView {
+    use floem::view::ParentView;
+
     demo_section(
         "Table",
         "A responsive table component for displaying data.",
         Stack::vertical((subsection(
             "Basic Table",
-            Table::new((
-                TableHeader::new(TableRow::new((
-                    TableHead::new("Name"),
-                    TableHead::new("Email"),
-                    TableHead::new("Role"),
-                    TableHead::new("Status"),
-                ))),
-                TableBody::new((
-                    TableRow::new((
-                        TableCell::new("John Doe"),
-                        TableCell::new("john@example.com"),
-                        TableCell::new("Admin"),
-                        TableCell::new("Active"),
-                    )),
-                    TableRow::new((
-                        TableCell::new("Jane Smith"),
-                        TableCell::new("jane@example.com"),
-                        TableCell::new("Editor"),
-                        TableCell::new("Active"),
-                    )),
-                    TableRow::new((
-                        TableCell::new("Bob Wilson"),
-                        TableCell::new("bob@example.com"),
-                        TableCell::new("Viewer"),
-                        TableCell::new("Pending"),
-                    )),
-                )),
-            )),
+            Table::new()
+                .child(
+                    TableHeader::new().child(
+                        TableRow::new()
+                            .child(TableHead::new("Name"))
+                            .child(TableHead::new("Email"))
+                            .child(TableHead::new("Role"))
+                            .child(TableHead::new("Status")),
+                    ),
+                )
+                .child(
+                    TableBody::new()
+                        .child(
+                            TableRow::new()
+                                .child(TableCell::new("John Doe"))
+                                .child(TableCell::new("john@example.com"))
+                                .child(TableCell::new("Admin"))
+                                .child(TableCell::new("Active")),
+                        )
+                        .child(
+                            TableRow::new()
+                                .child(TableCell::new("Jane Smith"))
+                                .child(TableCell::new("jane@example.com"))
+                                .child(TableCell::new("Editor"))
+                                .child(TableCell::new("Active")),
+                        )
+                        .child(
+                            TableRow::new()
+                                .child(TableCell::new("Bob Wilson"))
+                                .child(TableCell::new("bob@example.com"))
+                                .child(TableCell::new("Viewer"))
+                                .child(TableCell::new("Pending")),
+                        ),
+                )
+                .into_view(),
         ),))
         .style(|s| s.gap_8().max_w_2xl()),
     )

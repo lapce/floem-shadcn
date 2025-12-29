@@ -6,37 +6,42 @@
 //!
 //! ```rust
 //! use floem_shadcn::components::table::*;
+//! use floem::view::ParentView;
 //!
-//! Table::new((
-//!     TableHeader::new(
-//!         TableRow::new((
-//!             TableHead::new("Name"),
-//!             TableHead::new("Email"),
-//!             TableHead::new("Status"),
-//!         ))
-//!     ),
-//!     TableBody::new((
-//!         TableRow::new((
-//!             TableCell::new("John Doe"),
-//!             TableCell::new("john@example.com"),
-//!             TableCell::new("Active"),
-//!         )),
-//!         TableRow::new((
-//!             TableCell::new("Jane Smith"),
-//!             TableCell::new("jane@example.com"),
-//!             TableCell::new("Pending"),
-//!         )),
-//!     )),
-//! ));
+//! Table::new()
+//!     .child(
+//!         TableHeader::new().child(
+//!             TableRow::new()
+//!                 .child(TableHead::new("Name"))
+//!                 .child(TableHead::new("Email"))
+//!                 .child(TableHead::new("Status"))
+//!         )
+//!     )
+//!     .child(
+//!         TableBody::new()
+//!             .child(
+//!                 TableRow::new()
+//!                     .child(TableCell::new("John Doe"))
+//!                     .child(TableCell::new("john@example.com"))
+//!                     .child(TableCell::new("Active"))
+//!             )
+//!             .child(
+//!                 TableRow::new()
+//!                     .child(TableCell::new("Jane Smith"))
+//!                     .child(TableCell::new("jane@example.com"))
+//!                     .child(TableCell::new("Pending"))
+//!             )
+//!     )
+//!     .into_view();
 //! ```
 
 use floem::prelude::*;
 use floem::taffy::{
-    geometry::MinMax,
-    prelude::TaffyAuto,
-    style::{MaxTrackSizingFunction, MinTrackSizingFunction},
     GridAutoFlow,
+    geometry::MinMax,
+    style::{MaxTrackSizingFunction, MinTrackSizingFunction},
 };
+use floem::view::ParentView;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 
@@ -47,29 +52,25 @@ use crate::theme::ShadcnThemeExt;
 // ============================================================================
 
 /// Table container
-pub struct Table<V> {
+pub struct Table {
     id: ViewId,
-    child: V,
 }
 
-impl<V: floem::view::IntoViewIter + 'static> Table<V> {
+impl Table {
     /// Create a new table
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> HasViewId for Table<V> {
+impl HasViewId for Table {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> IntoView for Table<V> {
-    type V = Box<dyn View>;
+impl IntoView for Table {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -77,56 +78,46 @@ impl<V: floem::view::IntoViewIter + 'static> IntoView for Table<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Stack::with_id(self.id, self.child).style(|s| {
-                s.with_shadcn_theme(move |s, t| {
-                    s.width_full()
-                        .grid() // Use Grid for table layout
-                        .grid_auto_flow(GridAutoFlow::Row) // Rows stack vertically
-                        .border(1.0)
-                        .border_color(t.border)
-                        .border_radius(t.radius)
-                        .font_size(14.0) // text-sm
-                })
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.with_shadcn_theme(|s, t| {
+                s.width_full()
+                    .grid()
+                    .grid_auto_flow(GridAutoFlow::Row)
+                    .font_size(14.0)
+                    .border(1.0)
+                    .border_color(t.border)
+                    .border_radius(t.radius)
+            })
+        })
     }
 }
+
+impl ParentView for Table {}
 
 // ============================================================================
 // TableHeader
 // ============================================================================
 
 /// Table header section (thead)
-pub struct TableHeader<V> {
+pub struct TableHeader {
     id: ViewId,
-    child: V,
 }
 
-impl<V: IntoView + 'static> TableHeader<V> {
+impl TableHeader {
     /// Create a new table header
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: IntoView + 'static> HasViewId for TableHeader<V> {
+impl HasViewId for TableHeader {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl HasViewId for TableHead {
-    fn view_id(&self) -> ViewId {
-        self.id
-    }
-}
-
-impl<V: IntoView + 'static> IntoView for TableHeader<V> {
-    type V = Box<dyn View>;
+impl IntoView for TableHeader {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -134,42 +125,36 @@ impl<V: IntoView + 'static> IntoView for TableHeader<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.width_full().grid() // Grid container for row
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| s.width_full().grid())
     }
 }
+
+impl ParentView for TableHeader {}
 
 // ============================================================================
 // TableBody
 // ============================================================================
 
 /// Table body section (tbody)
-pub struct TableBody<V> {
+pub struct TableBody {
     id: ViewId,
-    child: V,
 }
 
-impl<V: floem::view::IntoViewIter + 'static> TableBody<V> {
+impl TableBody {
     /// Create a new table body
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> HasViewId for TableBody<V> {
+impl HasViewId for TableBody {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> IntoView for TableBody<V> {
-    type V = Box<dyn View>;
+impl IntoView for TableBody {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -177,42 +162,36 @@ impl<V: floem::view::IntoViewIter + 'static> IntoView for TableBody<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Stack::with_id(self.id, self.child).style(|s| {
-                s.width_full().grid() // Grid container for rows
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| s.width_full().grid())
     }
 }
+
+impl ParentView for TableBody {}
 
 // ============================================================================
 // TableFooter
 // ============================================================================
 
 /// Table footer section (tfoot)
-pub struct TableFooter<V> {
+pub struct TableFooter {
     id: ViewId,
-    child: V,
 }
 
-impl<V: floem::view::IntoViewIter + 'static> TableFooter<V> {
+impl TableFooter {
     /// Create a new table footer
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> HasViewId for TableFooter<V> {
+impl HasViewId for TableFooter {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> IntoView for TableFooter<V> {
-    type V = Box<dyn View>;
+impl IntoView for TableFooter {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -220,49 +199,45 @@ impl<V: floem::view::IntoViewIter + 'static> IntoView for TableFooter<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Stack::with_id(self.id, self.child).style(|s| {
-                s.with_shadcn_theme(move |s, t| {
-                    s.width_full()
-                        .grid() // Grid container for rows
-                        .background(t.muted.with_alpha(0.5)) // bg-muted/50
-                        .border_top(1.0)
-                        .border_color(t.border)
-                        .font_weight(floem::text::Weight::MEDIUM)
-                })
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.with_shadcn_theme(|s, t| {
+                s.width_full()
+                    .grid()
+                    .font_weight(floem::text::Weight::MEDIUM)
+                    .background(t.muted.with_alpha(0.5))
+                    .border_top(1.0)
+                    .border_color(t.border)
+            })
+        })
     }
 }
+
+impl ParentView for TableFooter {}
 
 // ============================================================================
 // TableRow
 // ============================================================================
 
 /// Table row (tr)
-pub struct TableRow<V> {
+pub struct TableRow {
     id: ViewId,
-    child: V,
 }
 
-impl<V: floem::view::IntoViewIter + 'static> TableRow<V> {
+impl TableRow {
     /// Create a new table row
-    pub fn new(child: V) -> Self {
-        Self {
-            id: ViewId::new(),
-            child,
-        }
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> HasViewId for TableRow<V> {
+impl HasViewId for TableRow {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
 
-impl<V: floem::view::IntoViewIter + 'static> IntoView for TableRow<V> {
-    type V = Box<dyn View>;
+impl IntoView for TableRow {
+    type V = floem::views::Stem;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -270,28 +245,28 @@ impl<V: floem::view::IntoViewIter + 'static> IntoView for TableRow<V> {
     }
 
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Stack::with_id(self.id, self.child).style(|s| {
-                s.with_shadcn_theme(move |s, t| {
-                    s.width_full()
-                        .grid() // Use Grid for cells
-                        .grid_auto_flow(GridAutoFlow::Column) // Cells flow horizontally
-                        .grid_auto_columns(vec![MinMax {
-                            min: MinTrackSizingFunction::AUTO,
-                            max: MaxTrackSizingFunction::fr(1.0), // Equal column widths
-                        }]) // Each cell gets equal width using 1fr
-                        .border_bottom(1.0)
-                        .border_color(t.border)
-                        .hover(|s| s.background(t.muted.with_alpha(0.5))) // hover:bg-muted/50
-                        .transition(
-                            floem::style::Background,
-                            floem::style::Transition::linear(std::time::Duration::from_millis(150)),
-                        )
-                })
-            }),
-        )
+        floem::views::Stem::with_id(self.id).style(|s| {
+            s.with_shadcn_theme(|s, t| {
+                s.width_full()
+                    .grid() // Use Grid for cells
+                    .grid_auto_flow(GridAutoFlow::Column) // Cells flow horizontally
+                    .grid_auto_columns(vec![MinMax {
+                        min: MinTrackSizingFunction::length(0.0), // No minimum - use fr for distribution
+                        max: MaxTrackSizingFunction::fr(1.0),     // Equal column widths
+                    }]) // Each cell gets equal width using 1fr
+                    .border_bottom(1.0)
+                    .border_color(t.border)
+                    .hover(|s| s.background(t.muted.with_alpha(0.5))) // hover:bg-muted/50
+                    .transition(
+                        floem::style::Background,
+                        floem::style::Transition::linear(std::time::Duration::from_millis(150)),
+                    )
+            })
+        })
     }
 }
+
+impl ParentView for TableRow {}
 
 // ============================================================================
 // TableHead
@@ -318,6 +293,12 @@ impl TableHead {
     pub fn width(mut self, width: f64) -> Self {
         self.width = Some(width);
         self
+    }
+}
+
+impl HasViewId for TableHead {
+    fn view_id(&self) -> ViewId {
+        self.id
     }
 }
 

@@ -27,7 +27,10 @@ fn test_button_default_height() {
 
     let layout = id.get_layout().expect("Button layout should exist");
 
-    eprintln!("Default button size: {}x{}", layout.size.width, layout.size.height);
+    eprintln!(
+        "Default button size: {}x{}",
+        layout.size.width, layout.size.height
+    );
 
     // Default button should have h_10 = 40px height
     assert!(
@@ -49,7 +52,10 @@ fn test_button_sm_height() {
 
     let layout = id.get_layout().expect("Button layout should exist");
 
-    eprintln!("Small button size: {}x{}", layout.size.width, layout.size.height);
+    eprintln!(
+        "Small button size: {}x{}",
+        layout.size.width, layout.size.height
+    );
 
     // Small button should have h_9 = 36px height
     assert!(
@@ -71,7 +77,10 @@ fn test_button_lg_height() {
 
     let layout = id.get_layout().expect("Button layout should exist");
 
-    eprintln!("Large button size: {}x{}", layout.size.width, layout.size.height);
+    eprintln!(
+        "Large button size: {}x{}",
+        layout.size.width, layout.size.height
+    );
 
     // Large button should have h_11 = 44px height
     assert!(
@@ -93,7 +102,10 @@ fn test_button_icon_size() {
 
     let layout = id.get_layout().expect("Button layout should exist");
 
-    eprintln!("Icon button size: {}x{}", layout.size.width, layout.size.height);
+    eprintln!(
+        "Icon button size: {}x{}",
+        layout.size.width, layout.size.height
+    );
 
     // Icon button should be square: 40x40 (h_10, w_10)
     assert!(
@@ -196,8 +208,7 @@ fn test_buttons_in_horizontal_stack_with_gap() {
     let btn2 = Button::new("Second");
     let btn2_id = btn2.view_id();
 
-    let container = Stack::horizontal((btn1, btn2))
-        .style(|s| s.gap(8.0).size(400.0, 200.0)); // gap_2 = 8px
+    let container = Stack::horizontal((btn1, btn2)).style(|s| s.gap(8.0).size(400.0, 200.0)); // gap_2 = 8px
 
     let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
     harness.rebuild();
@@ -205,24 +216,31 @@ fn test_buttons_in_horizontal_stack_with_gap() {
     let layout1 = btn1_id.get_layout().expect("Button 1 layout should exist");
     let layout2 = btn2_id.get_layout().expect("Button 2 layout should exist");
 
-    eprintln!("Button 1 position: ({}, {}), size: {}x{}",
-        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height);
-    eprintln!("Button 2 position: ({}, {}), size: {}x{}",
-        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height);
+    eprintln!(
+        "Button 1 position: ({}, {}), size: {}x{}",
+        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height
+    );
+    eprintln!(
+        "Button 2 position: ({}, {}), size: {}x{}",
+        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height
+    );
 
     // Second button should be positioned after first button + gap
     let expected_x = layout1.size.width + 8.0;
     assert!(
         (layout2.location.x - expected_x).abs() < 0.1,
         "Second button x should be {} (first width {} + 8 gap), got {}",
-        expected_x, layout1.size.width, layout2.location.x
+        expected_x,
+        layout1.size.width,
+        layout2.location.x
     );
 
     // Both buttons should have same y position (aligned at top)
     assert!(
         (layout1.location.y - layout2.location.y).abs() < 0.1,
         "Buttons should have same y position, got {} and {}",
-        layout1.location.y, layout2.location.y
+        layout1.location.y,
+        layout2.location.y
     );
 }
 
@@ -233,19 +251,27 @@ fn test_buttons_centered_in_horizontal_stack() {
     let btn2 = Button::new("Large").lg();
     let btn2_id = btn2.view_id();
 
-    let container = Stack::horizontal((btn1, btn2))
-        .style(|s| s.gap(8.0).items_center().size(400.0, 200.0));
+    let container =
+        Stack::horizontal((btn1, btn2)).style(|s| s.gap(8.0).items_center().size(400.0, 200.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
     harness.rebuild();
 
-    let layout1 = btn1_id.get_layout().expect("Small button layout should exist");
-    let layout2 = btn2_id.get_layout().expect("Large button layout should exist");
+    let layout1 = btn1_id
+        .get_layout()
+        .expect("Small button layout should exist");
+    let layout2 = btn2_id
+        .get_layout()
+        .expect("Large button layout should exist");
 
-    eprintln!("Small button: pos ({}, {}), size {}x{}",
-        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height);
-    eprintln!("Large button: pos ({}, {}), size {}x{}",
-        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height);
+    eprintln!(
+        "Small button: pos ({}, {}), size {}x{}",
+        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height
+    );
+    eprintln!(
+        "Large button: pos ({}, {}), size {}x{}",
+        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height
+    );
 
     // With items_center, both buttons should be centered vertically
     // Small (36px) and Large (44px) should have different y positions to center them
@@ -255,7 +281,8 @@ fn test_buttons_centered_in_horizontal_stack() {
     assert!(
         (center_y1 - center_y2).abs() < 0.1,
         "Buttons should be vertically centered at same point, got centers at {} and {}",
-        center_y1, center_y2
+        center_y1,
+        center_y2
     );
 }
 
@@ -273,31 +300,47 @@ fn test_button_sizes_are_ordered_horizontal() {
     let lg = Button::new("Click").lg();
     let lg_id = lg.view_id();
 
-    let container = Stack::horizontal((sm, default, lg))
-        .style(|s| s.gap(8.0).size(600.0, 100.0));
+    let container = Stack::horizontal((sm, default, lg)).style(|s| s.gap(8.0).size(600.0, 100.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 600.0, 100.0);
     harness.rebuild();
 
-    let sm_layout = sm_id.get_layout().expect("Small button layout should exist");
-    let default_layout = default_id.get_layout().expect("Default button layout should exist");
-    let lg_layout = lg_id.get_layout().expect("Large button layout should exist");
+    let sm_layout = sm_id
+        .get_layout()
+        .expect("Small button layout should exist");
+    let default_layout = default_id
+        .get_layout()
+        .expect("Default button layout should exist");
+    let lg_layout = lg_id
+        .get_layout()
+        .expect("Large button layout should exist");
 
     eprintln!("Size comparison (horizontal stack):");
-    eprintln!("  Small: {}x{}", sm_layout.size.width, sm_layout.size.height);
-    eprintln!("  Default: {}x{}", default_layout.size.width, default_layout.size.height);
-    eprintln!("  Large: {}x{}", lg_layout.size.width, lg_layout.size.height);
+    eprintln!(
+        "  Small: {}x{}",
+        sm_layout.size.width, sm_layout.size.height
+    );
+    eprintln!(
+        "  Default: {}x{}",
+        default_layout.size.width, default_layout.size.height
+    );
+    eprintln!(
+        "  Large: {}x{}",
+        lg_layout.size.width, lg_layout.size.height
+    );
 
     // Heights should be ordered: sm < default < lg
     assert!(
         sm_layout.size.height < default_layout.size.height,
         "Small height ({}) should be less than default height ({})",
-        sm_layout.size.height, default_layout.size.height
+        sm_layout.size.height,
+        default_layout.size.height
     );
     assert!(
         default_layout.size.height < lg_layout.size.height,
         "Default height ({}) should be less than large height ({})",
-        default_layout.size.height, lg_layout.size.height
+        default_layout.size.height,
+        lg_layout.size.height
     );
 
     // Widths should also follow the pattern due to different padding
@@ -305,12 +348,14 @@ fn test_button_sizes_are_ordered_horizontal() {
     assert!(
         sm_layout.size.width < default_layout.size.width,
         "Small width ({}) should be less than default width ({})",
-        sm_layout.size.width, default_layout.size.width
+        sm_layout.size.width,
+        default_layout.size.width
     );
     assert!(
         default_layout.size.width < lg_layout.size.width,
         "Default width ({}) should be less than large width ({})",
-        default_layout.size.width, lg_layout.size.width
+        default_layout.size.width,
+        lg_layout.size.width
     );
 }
 
@@ -322,15 +367,17 @@ fn test_button_does_not_stretch_in_vertical_stack() {
     let id = button.view_id();
 
     // In a vertical stack with 400px width, button should NOT stretch
-    let container = Stack::vertical((button,))
-        .style(|s| s.size(400.0, 200.0));
+    let container = Stack::vertical((button,)).style(|s| s.size(400.0, 200.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
     harness.rebuild();
 
     let layout = id.get_layout().expect("Button layout should exist");
 
-    eprintln!("Button in vertical stack: {}x{}", layout.size.width, layout.size.height);
+    eprintln!(
+        "Button in vertical stack: {}x{}",
+        layout.size.width, layout.size.height
+    );
 
     // Button should maintain intrinsic width based on content + padding (~100px for "Short")
     // NOT stretch to fill container width (400px)
@@ -364,8 +411,7 @@ fn test_showcase_demo_section_layout() {
         .style(|s| s.gap(8.0).flex_wrap(floem::style::FlexWrap::Wrap));
 
     // Outer vertical stack (simulating demo_section)
-    let container = Stack::vertical((button_row,))
-        .style(|s| s.gap(16.0).size(600.0, 400.0));
+    let container = Stack::vertical((button_row,)).style(|s| s.gap(16.0).size(600.0, 400.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 600.0, 400.0);
     harness.rebuild();
@@ -374,10 +420,14 @@ fn test_showcase_demo_section_layout() {
     let layout2 = btn2_id.get_layout().expect("Button 2 layout should exist");
 
     eprintln!("Showcase-style demo section layout:");
-    eprintln!("  Button 1: pos ({}, {}), size {}x{}",
-        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height);
-    eprintln!("  Button 2: pos ({}, {}), size {}x{}",
-        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height);
+    eprintln!(
+        "  Button 1: pos ({}, {}), size {}x{}",
+        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height
+    );
+    eprintln!(
+        "  Button 2: pos ({}, {}), size {}x{}",
+        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height
+    );
 
     // Check if buttons maintain proper height
     assert!(
@@ -394,7 +444,10 @@ fn test_showcase_demo_section_layout() {
     // In a properly laid out showcase, buttons should have their intrinsic width
     // not stretch to fill the container
     let total_btn_width = layout1.size.width + layout2.size.width + 8.0; // plus gap
-    eprintln!("Total button row width: {} (container: 600)", total_btn_width);
+    eprintln!(
+        "Total button row width: {} (container: 600)",
+        total_btn_width
+    );
 
     // If buttons are stretching, their widths would be close to 600/2 = 300 each
     // If they're correct, they should be around 100-150px each
@@ -429,15 +482,13 @@ fn test_exact_showcase_structure() {
     let demo_section = Stack::vertical((
         floem::views::Label::new("Buttons")
             .style(|s| s.font_size(24.0).font_weight(Weight::BOLD).mb_2()),
-        floem::views::Label::new("Description")
-            .style(|s| s.font_size(14.0).mb_6()),
+        floem::views::Label::new("Description").style(|s| s.font_size(14.0).mb_6()),
         Stack::vertical((subsection,)).style(|s| s.gap_8()),
     ))
     .style(|s| s.w_full());
 
     // Container
-    let container = Stack::new((demo_section,))
-        .style(|s| s.size(800.0, 600.0));
+    let container = Stack::new((demo_section,)).style(|s| s.size(800.0, 600.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 800.0, 600.0);
     harness.rebuild();
@@ -446,10 +497,14 @@ fn test_exact_showcase_structure() {
     let layout2 = btn2_id.get_layout().expect("Button 2 layout should exist");
 
     eprintln!("Exact showcase structure:");
-    eprintln!("  Button 1: pos ({}, {}), size {}x{}",
-        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height);
-    eprintln!("  Button 2: pos ({}, {}), size {}x{}",
-        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height);
+    eprintln!(
+        "  Button 1: pos ({}, {}), size {}x{}",
+        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height
+    );
+    eprintln!(
+        "  Button 2: pos ({}, {}), size {}x{}",
+        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height
+    );
 
     // Buttons should NOT stretch to fill container
     assert!(
@@ -487,19 +542,17 @@ fn test_showcase_with_scroll() {
     let demo_section = Stack::vertical((
         floem::views::Label::new("Buttons")
             .style(|s| s.font_size(24.0).font_weight(Weight::BOLD).mb_2()),
-        floem::views::Label::new("Description")
-            .style(|s| s.font_size(14.0).mb_6()),
+        floem::views::Label::new("Description").style(|s| s.font_size(14.0).mb_6()),
         Stack::vertical((subsection,)).style(|s| s.gap_8()),
     ))
     .style(|s| s.w_full());
 
     // Wrap in Scroll like the actual showcase
-    let scroll_content = floem::views::Scroll::new(demo_section)
-        .style(|s| s.flex_grow(1.0).h_full().p_8());
+    let scroll_content =
+        floem::views::Scroll::new(demo_section).style(|s| s.flex_grow(1.0).h_full().p_8());
 
     // Container (simulating the horizontal layout with sidebar)
-    let container = Stack::horizontal((scroll_content,))
-        .style(|s| s.size(800.0, 600.0));
+    let container = Stack::horizontal((scroll_content,)).style(|s| s.size(800.0, 600.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 800.0, 600.0);
     harness.rebuild();
@@ -508,10 +561,14 @@ fn test_showcase_with_scroll() {
     let layout2 = btn2_id.get_layout().expect("Button 2 layout should exist");
 
     eprintln!("Showcase with Scroll:");
-    eprintln!("  Button 1: pos ({}, {}), size {}x{}",
-        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height);
-    eprintln!("  Button 2: pos ({}, {}), size {}x{}",
-        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height);
+    eprintln!(
+        "  Button 1: pos ({}, {}), size {}x{}",
+        layout1.location.x, layout1.location.y, layout1.size.width, layout1.size.height
+    );
+    eprintln!(
+        "  Button 2: pos ({}, {}), size {}x{}",
+        layout2.location.x, layout2.location.y, layout2.size.width, layout2.size.height
+    );
 
     // Buttons should NOT stretch to fill container
     assert!(
@@ -537,11 +594,9 @@ fn test_button_height_in_nested_layout() {
     let lg_id = lg.view_id();
 
     // Nested layout similar to showcase
-    let inner = Stack::horizontal((sm, default, lg))
-        .style(|s| s.gap(8.0).items_center());
+    let inner = Stack::horizontal((sm, default, lg)).style(|s| s.gap(8.0).items_center());
 
-    let outer = Stack::vertical((inner,))
-        .style(|s| s.gap(32.0).size(600.0, 400.0));
+    let outer = Stack::vertical((inner,)).style(|s| s.gap(32.0).size(600.0, 400.0));
 
     let mut harness = HeadlessHarness::new_with_size(outer, 600.0, 400.0);
     harness.rebuild();
@@ -592,15 +647,8 @@ fn test_all_variants_have_same_dimensions() {
     let link = Button::new("Click").link();
     let link_id = link.view_id();
 
-    let container = Stack::vertical((
-        default_btn,
-        secondary,
-        destructive,
-        outline,
-        ghost,
-        link,
-    ))
-    .style(|s| s.gap(8.0).size(400.0, 600.0));
+    let container = Stack::vertical((default_btn, secondary, destructive, outline, ghost, link))
+        .style(|s| s.gap(8.0).size(400.0, 600.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 400.0, 600.0);
     harness.rebuild();
@@ -613,12 +661,30 @@ fn test_all_variants_have_same_dimensions() {
     let link_layout = link_id.get_layout().expect("Layout should exist");
 
     eprintln!("Variant sizes:");
-    eprintln!("  Default: {}x{}", default_layout.size.width, default_layout.size.height);
-    eprintln!("  Secondary: {}x{}", secondary_layout.size.width, secondary_layout.size.height);
-    eprintln!("  Destructive: {}x{}", destructive_layout.size.width, destructive_layout.size.height);
-    eprintln!("  Outline: {}x{}", outline_layout.size.width, outline_layout.size.height);
-    eprintln!("  Ghost: {}x{}", ghost_layout.size.width, ghost_layout.size.height);
-    eprintln!("  Link: {}x{}", link_layout.size.width, link_layout.size.height);
+    eprintln!(
+        "  Default: {}x{}",
+        default_layout.size.width, default_layout.size.height
+    );
+    eprintln!(
+        "  Secondary: {}x{}",
+        secondary_layout.size.width, secondary_layout.size.height
+    );
+    eprintln!(
+        "  Destructive: {}x{}",
+        destructive_layout.size.width, destructive_layout.size.height
+    );
+    eprintln!(
+        "  Outline: {}x{}",
+        outline_layout.size.width, outline_layout.size.height
+    );
+    eprintln!(
+        "  Ghost: {}x{}",
+        ghost_layout.size.width, ghost_layout.size.height
+    );
+    eprintln!(
+        "  Link: {}x{}",
+        link_layout.size.width, link_layout.size.height
+    );
 
     // All variants should have the same height
     let expected_height = 40.0; // h_10
@@ -633,7 +699,9 @@ fn test_all_variants_have_same_dimensions() {
         assert!(
             (layout.size.height - expected_height).abs() < 0.1,
             "{} variant height should be {}, got {}",
-            name, expected_height, layout.size.height
+            name,
+            expected_height,
+            layout.size.height
         );
     }
 
@@ -649,7 +717,9 @@ fn test_all_variants_have_same_dimensions() {
         assert!(
             (layout.size.width - expected_width).abs() < 0.1,
             "{} variant width should be {}, got {}",
-            name, expected_width, layout.size.width
+            name,
+            expected_width,
+            layout.size.width
         );
     }
 }
@@ -676,17 +746,32 @@ fn test_showcase_variants_layout() {
     let btn6_id = btn6.view_id();
 
     // 800px wide to ensure all buttons fit on one row
-    let container = Stack::horizontal((btn1, btn2, btn3, btn4, btn5, btn6))
-        .style(|s| s.gap(8.0).flex_wrap(floem::style::FlexWrap::Wrap).size(800.0, 200.0));
+    let container = Stack::horizontal((btn1, btn2, btn3, btn4, btn5, btn6)).style(|s| {
+        s.gap(8.0)
+            .flex_wrap(floem::style::FlexWrap::Wrap)
+            .size(800.0, 200.0)
+    });
 
     let mut harness = HeadlessHarness::new_with_size(container, 800.0, 200.0);
     harness.rebuild();
 
     let layouts = [
-        ("Default", btn1_id.get_layout().expect("Layout should exist")),
-        ("Secondary", btn2_id.get_layout().expect("Layout should exist")),
-        ("Destructive", btn3_id.get_layout().expect("Layout should exist")),
-        ("Outline", btn4_id.get_layout().expect("Layout should exist")),
+        (
+            "Default",
+            btn1_id.get_layout().expect("Layout should exist"),
+        ),
+        (
+            "Secondary",
+            btn2_id.get_layout().expect("Layout should exist"),
+        ),
+        (
+            "Destructive",
+            btn3_id.get_layout().expect("Layout should exist"),
+        ),
+        (
+            "Outline",
+            btn4_id.get_layout().expect("Layout should exist"),
+        ),
         ("Ghost", btn5_id.get_layout().expect("Layout should exist")),
         ("Link", btn6_id.get_layout().expect("Layout should exist")),
     ];
@@ -694,8 +779,10 @@ fn test_showcase_variants_layout() {
     eprintln!("Showcase variants layout:");
     let mut total_width = 0.0;
     for (name, layout) in &layouts {
-        eprintln!("  {}: pos ({}, {}), size {}x{}",
-            name, layout.location.x, layout.location.y, layout.size.width, layout.size.height);
+        eprintln!(
+            "  {}: pos ({}, {}), size {}x{}",
+            name, layout.location.x, layout.location.y, layout.size.width, layout.size.height
+        );
         total_width += layout.size.width;
     }
     total_width += 5.0 * 8.0; // 5 gaps between 6 buttons
@@ -707,7 +794,9 @@ fn test_showcase_variants_layout() {
         assert!(
             (layout.location.y - first_y).abs() < 0.1,
             "{} should be on same row as first button (y={}), got y={}",
-            name, first_y, layout.location.y
+            name,
+            first_y,
+            layout.location.y
         );
     }
 
@@ -717,7 +806,9 @@ fn test_showcase_variants_layout() {
         assert!(
             (layout.location.x - expected_x).abs() < 1.0, // Allow small tolerance
             "{} should be at x={}, got x={}",
-            name, expected_x, layout.location.x
+            name,
+            expected_x,
+            layout.location.x
         );
         expected_x += layout.size.width + 8.0; // width + gap
 
@@ -725,7 +816,8 @@ fn test_showcase_variants_layout() {
         assert!(
             (layout.size.height - 40.0).abs() < 0.1,
             "{} should have height 40, got {}",
-            name, layout.size.height
+            name,
+            layout.size.height
         );
     }
 }
@@ -747,16 +839,27 @@ fn test_showcase_sizes_layout() {
     harness.rebuild();
 
     let sm_layout = sm_id.get_layout().expect("Small layout should exist");
-    let default_layout = default_id.get_layout().expect("Default layout should exist");
+    let default_layout = default_id
+        .get_layout()
+        .expect("Default layout should exist");
     let lg_layout = lg_id.get_layout().expect("Large layout should exist");
 
     eprintln!("Showcase sizes layout:");
-    eprintln!("  Small: pos ({}, {}), size {}x{}",
-        sm_layout.location.x, sm_layout.location.y, sm_layout.size.width, sm_layout.size.height);
-    eprintln!("  Default: pos ({}, {}), size {}x{}",
-        default_layout.location.x, default_layout.location.y, default_layout.size.width, default_layout.size.height);
-    eprintln!("  Large: pos ({}, {}), size {}x{}",
-        lg_layout.location.x, lg_layout.location.y, lg_layout.size.width, lg_layout.size.height);
+    eprintln!(
+        "  Small: pos ({}, {}), size {}x{}",
+        sm_layout.location.x, sm_layout.location.y, sm_layout.size.width, sm_layout.size.height
+    );
+    eprintln!(
+        "  Default: pos ({}, {}), size {}x{}",
+        default_layout.location.x,
+        default_layout.location.y,
+        default_layout.size.width,
+        default_layout.size.height
+    );
+    eprintln!(
+        "  Large: pos ({}, {}), size {}x{}",
+        lg_layout.location.x, lg_layout.location.y, lg_layout.size.width, lg_layout.size.height
+    );
 
     // Verify heights
     assert!(
@@ -783,11 +886,13 @@ fn test_showcase_sizes_layout() {
     assert!(
         (center_sm - center_default).abs() < 0.1,
         "Small and Default should be centered at same y, got {} and {}",
-        center_sm, center_default
+        center_sm,
+        center_default
     );
     assert!(
         (center_default - center_lg).abs() < 0.1,
         "Default and Large should be centered at same y, got {} and {}",
-        center_default, center_lg
+        center_default,
+        center_lg
     );
 }

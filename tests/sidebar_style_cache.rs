@@ -34,12 +34,10 @@ use floem_test::prelude::*;
 fn test_sidebar_menu_button_style_updates_on_click() {
     let active = RwSignal::new("none");
 
-    let btn1 = SidebarMenuButton::new("First")
-        .is_active(move || active.get() == "first");
+    let btn1 = SidebarMenuButton::new("First").is_active(move || active.get() == "first");
     let btn1_id = btn1.view_id();
 
-    let btn2 = SidebarMenuButton::new("Second")
-        .is_active(move || active.get() == "second");
+    let btn2 = SidebarMenuButton::new("Second").is_active(move || active.get() == "second");
     let btn2_id = btn2.view_id();
 
     let menu = SidebarMenu::new((
@@ -70,7 +68,11 @@ fn test_sidebar_menu_button_style_updates_on_click() {
     harness.click(btn1_center_x as f64, btn1_center_y as f64);
 
     // The signal should have changed
-    assert_eq!(active.get(), "first", "Signal should update to 'first' after click");
+    assert_eq!(
+        active.get(),
+        "first",
+        "Signal should update to 'first' after click"
+    );
 
     // Rebuild to process the state change
     harness.rebuild();
@@ -114,12 +116,10 @@ fn test_sidebar_menu_button_style_updates_on_click() {
 fn test_sidebar_style_cache_multiple_clicks() {
     let active = RwSignal::new("none");
 
-    let btn1 = SidebarMenuButton::new("First")
-        .is_active(move || active.get() == "first");
+    let btn1 = SidebarMenuButton::new("First").is_active(move || active.get() == "first");
     let btn1_id = btn1.view_id();
 
-    let btn2 = SidebarMenuButton::new("Second")
-        .is_active(move || active.get() == "second");
+    let btn2 = SidebarMenuButton::new("Second").is_active(move || active.get() == "second");
     let btn2_id = btn2.view_id();
 
     let menu = SidebarMenu::new((
@@ -144,12 +144,22 @@ fn test_sidebar_style_cache_multiple_clicks() {
     let btn2_center_x = btn2_rect.center().x;
     let btn2_center_y = btn2_rect.center().y;
 
-    eprintln!("Button 1 rect: {:?}, center: ({}, {})", btn1_rect, btn1_center_x, btn1_center_y);
-    eprintln!("Button 2 rect: {:?}, center: ({}, {})", btn2_rect, btn2_center_x, btn2_center_y);
+    eprintln!(
+        "Button 1 rect: {:?}, center: ({}, {})",
+        btn1_rect, btn1_center_x, btn1_center_y
+    );
+    eprintln!(
+        "Button 2 rect: {:?}, center: ({}, {})",
+        btn2_rect, btn2_center_x, btn2_center_y
+    );
 
     // First, click button 1 to make it active
     harness.click(btn1_center_x as f64, btn1_center_y as f64);
-    assert_eq!(active.get(), "first", "Button 1 click should set active to 'first'");
+    assert_eq!(
+        active.get(),
+        "first",
+        "Button 1 click should set active to 'first'"
+    );
     harness.rebuild();
 
     // Move pointer away first to reset hover state
@@ -165,7 +175,11 @@ fn test_sidebar_style_cache_multiple_clicks() {
 
     // Now click button 2 to switch
     harness.click(btn2_center_x as f64, btn2_center_y as f64);
-    assert_eq!(active.get(), "second", "Button 2 click should set active to 'second'");
+    assert_eq!(
+        active.get(),
+        "second",
+        "Button 2 click should set active to 'second'"
+    );
     harness.rebuild();
 
     // Check styles immediately after click (before pointer move)
@@ -176,8 +190,14 @@ fn test_sidebar_style_cache_multiple_clicks() {
 
     eprintln!("\n=== After clicking Button 2 (before pointer move) ===");
     eprintln!("Active: {}", active.get());
-    eprintln!("Button 1 font-weight: {:?} (should be normal now)", btn1_weight_before);
-    eprintln!("Button 2 font-weight: {:?} (should be bold/medium now)", btn2_weight_before);
+    eprintln!(
+        "Button 1 font-weight: {:?} (should be normal now)",
+        btn1_weight_before
+    );
+    eprintln!(
+        "Button 2 font-weight: {:?} (should be bold/medium now)",
+        btn2_weight_before
+    );
 
     // Now move pointer away to trigger hover state change
     harness.pointer_move(0.0, 0.0);
@@ -216,15 +236,12 @@ fn test_sidebar_style_cache_multiple_clicks() {
 fn test_minimal_style_cache_bug() {
     let is_active = RwSignal::new(false);
 
-    let btn = SidebarMenuButton::new("Toggle")
-        .is_active(move || is_active.get());
+    let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((
-        SidebarMenuItem::new(btn.on_click_stop(move |_| {
-            is_active.set(!is_active.get());
-        })),
-    ))
+    let container = Stack::new((SidebarMenuItem::new(btn.on_click_stop(move |_| {
+        is_active.set(!is_active.get());
+    })),))
     .style(|s| s.size(300.0, 100.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 300.0, 100.0);
@@ -237,7 +254,11 @@ fn test_minimal_style_cache_bug() {
     // Check initial style
     let initial_style = harness.get_computed_style(btn_id);
     let initial_weight = initial_style.get(FontWeight);
-    eprintln!("Initial: is_active = {}, font-weight = {:?}", is_active.get(), initial_weight);
+    eprintln!(
+        "Initial: is_active = {}, font-weight = {:?}",
+        is_active.get(),
+        initial_weight
+    );
     assert!(!is_active.get());
 
     // Click to activate
@@ -250,7 +271,10 @@ fn test_minimal_style_cache_bug() {
     // Check style immediately after click
     let style_after_click = harness.get_computed_style(btn_id);
     let weight_after_click = style_after_click.get(FontWeight);
-    eprintln!("Font weight after click (before pointer move): {:?}", weight_after_click);
+    eprintln!(
+        "Font weight after click (before pointer move): {:?}",
+        weight_after_click
+    );
 
     // Moving pointer away triggers the fix
     harness.pointer_move(0.0, 0.0);
@@ -280,15 +304,12 @@ fn test_minimal_style_cache_bug() {
 fn test_request_paint_on_reactive_style_change() {
     let is_active = RwSignal::new(false);
 
-    let btn = SidebarMenuButton::new("Toggle")
-        .is_active(move || is_active.get());
+    let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((
-        SidebarMenuItem::new(btn.on_click_stop(move |_| {
-            is_active.set(!is_active.get());
-        })),
-    ))
+    let container = Stack::new((SidebarMenuItem::new(btn.on_click_stop(move |_| {
+        is_active.set(!is_active.get());
+    })),))
     .style(|s| s.size(300.0, 100.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 300.0, 100.0);
@@ -300,14 +321,25 @@ fn test_request_paint_on_reactive_style_change() {
 
     // Clear any pending paint requests from initial setup
     harness.clear_paint_request();
-    assert!(!harness.paint_requested(), "Paint should not be requested before click");
+    assert!(
+        !harness.paint_requested(),
+        "Paint should not be requested before click"
+    );
 
-    eprintln!("Before click: is_active = {}, paint_requested = {}", is_active.get(), harness.paint_requested());
+    eprintln!(
+        "Before click: is_active = {}, paint_requested = {}",
+        is_active.get(),
+        harness.paint_requested()
+    );
 
     // Click to activate - this SHOULD schedule a repaint (but doesn't due to bug)
     harness.click(center_x as f64, center_y as f64);
 
-    eprintln!("After click (before rebuild): is_active = {}, paint_requested = {}", is_active.get(), harness.paint_requested());
+    eprintln!(
+        "After click (before rebuild): is_active = {}, paint_requested = {}",
+        is_active.get(),
+        harness.paint_requested()
+    );
 
     // Check if paint was requested BEFORE rebuild
     let paint_requested_after_click = harness.paint_requested();
@@ -318,13 +350,19 @@ fn test_request_paint_on_reactive_style_change() {
 
     harness.rebuild();
 
-    eprintln!("After rebuild: paint_requested = {}", harness.paint_requested());
+    eprintln!(
+        "After rebuild: paint_requested = {}",
+        harness.paint_requested()
+    );
 
     // Verify the style DID change (reactive system works)
     let style = harness.get_computed_style(btn_id);
     let font_weight = style.get(FontWeight);
     eprintln!("Font weight after rebuild: {:?}", font_weight);
-    assert!(font_weight.is_some(), "Style should have font-weight after activation");
+    assert!(
+        font_weight.is_some(),
+        "Style should have font-weight after activation"
+    );
 
     // KNOWN BUG: paint is not requested when reactive signal in style closure changes
     // This assertion documents the bug - when fixed, change to assert!(paint_requested_after_click)
@@ -347,26 +385,35 @@ fn test_request_paint_on_reactive_style_change() {
 fn test_request_paint_on_direct_signal_change() {
     let is_active = RwSignal::new(false);
 
-    let btn = SidebarMenuButton::new("Toggle")
-        .is_active(move || is_active.get());
+    let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((SidebarMenuItem::new(btn),))
-        .style(|s| s.size(300.0, 100.0));
+    let container = Stack::new((SidebarMenuItem::new(btn),)).style(|s| s.size(300.0, 100.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 300.0, 100.0);
     harness.rebuild();
 
     // Clear any pending paint requests from initial setup
     harness.clear_paint_request();
-    assert!(!harness.paint_requested(), "Paint should not be requested initially");
+    assert!(
+        !harness.paint_requested(),
+        "Paint should not be requested initially"
+    );
 
-    eprintln!("Before signal change: is_active = {}, paint_requested = {}", is_active.get(), harness.paint_requested());
+    eprintln!(
+        "Before signal change: is_active = {}, paint_requested = {}",
+        is_active.get(),
+        harness.paint_requested()
+    );
 
     // Directly change the signal (simulating what happens in a click handler)
     is_active.set(true);
 
-    eprintln!("After signal change (before rebuild): is_active = {}, paint_requested = {}", is_active.get(), harness.paint_requested());
+    eprintln!(
+        "After signal change (before rebuild): is_active = {}, paint_requested = {}",
+        is_active.get(),
+        harness.paint_requested()
+    );
 
     // Check if paint was requested after signal change
     let paint_requested_after_signal = harness.paint_requested();
@@ -381,12 +428,18 @@ fn test_request_paint_on_direct_signal_change() {
 
     harness.rebuild();
 
-    eprintln!("After rebuild: paint_requested = {}", harness.paint_requested());
+    eprintln!(
+        "After rebuild: paint_requested = {}",
+        harness.paint_requested()
+    );
 
     // Get the computed style to verify it changed
     let style = harness.get_computed_style(btn_id);
     let font_weight = style.get(FontWeight);
-    eprintln!("Font weight after signal change + rebuild: {:?}", font_weight);
+    eprintln!(
+        "Font weight after signal change + rebuild: {:?}",
+        font_weight
+    );
 
     // The bug might be that changing a signal used in a style closure
     // doesn't trigger request_paint or mark the view as style-dirty
@@ -405,20 +458,18 @@ fn test_reactive_font_weight_in_container() {
     let is_bold = RwSignal::new(false);
 
     let label_text = "Click me";
-    let container = floem::views::Container::new(
-        floem::views::Label::new(label_text),
-    )
-    .style(move |s| {
-        let bold = is_bold.get();
-        if bold {
-            s.font_weight(Weight::BOLD)
-        } else {
-            s.font_weight(Weight::NORMAL)
-        }
-    })
-    .on_click_stop(move |_| {
-        is_bold.set(!is_bold.get());
-    });
+    let container = floem::views::Container::new(floem::views::Label::new(label_text))
+        .style(move |s| {
+            let bold = is_bold.get();
+            if bold {
+                s.font_weight(Weight::BOLD)
+            } else {
+                s.font_weight(Weight::NORMAL)
+            }
+        })
+        .on_click_stop(move |_| {
+            is_bold.set(!is_bold.get());
+        });
 
     let id = container.view_id();
 
@@ -434,7 +485,11 @@ fn test_reactive_font_weight_in_container() {
     // Check initial style
     let initial_style = harness.get_computed_style(id);
     let initial_weight = initial_style.get(FontWeight);
-    eprintln!("Initial: is_bold = {}, font-weight = {:?}", is_bold.get(), initial_weight);
+    eprintln!(
+        "Initial: is_bold = {}, font-weight = {:?}",
+        is_bold.get(),
+        initial_weight
+    );
 
     // Click to toggle bold
     harness.click(center_x as f64, center_y as f64);
