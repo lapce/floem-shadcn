@@ -51,8 +51,8 @@ pub mod prelude {
     pub use crate::components::checkbox::Checkbox;
     pub use crate::components::collapsible::{Collapsible, CollapsibleContent, CollapsibleTrigger};
     pub use crate::components::combobox::{
-        Combobox, ComboboxContent, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem,
-        ComboboxItemData, ComboboxSeparator, ComboboxTrigger,
+        Combobox, ComboboxContent, ComboboxContext, ComboboxEmpty, ComboboxGroup, ComboboxInput,
+        ComboboxItem, ComboboxLabel, ComboboxList, ComboboxSeparator, ComboboxTrigger,
     };
     pub use crate::components::command::{
         Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandItemCustom,
