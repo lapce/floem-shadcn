@@ -93,19 +93,20 @@ impl<V: IntoView + 'static> IntoView for Sheet<V> {
         let content_wrapper = floem::views::Container::new(self.content);
 
         // Use Overlay with fixed positioning
-        let sheet_overlay = Overlay::new(
-            floem::views::Stack::new((backdrop, content_wrapper))
-                .style(|s| s.width_full().height_full()),
-        )
-        .style(move |s| {
-            let is_open = open.get();
-            s.fixed()
-                .inset_0()
-                .width_full()
-                .height_full()
-                .z_index(50)
-                .apply_if(!is_open, |s| s.hide())
-        });
+        let sheet_overlay = Overlay::new()
+            .child(
+                floem::views::Stack::new((backdrop, content_wrapper))
+                    .style(|s| s.width_full().height_full()),
+            )
+            .style(move |s| {
+                let is_open = open.get();
+                s.fixed()
+                    .inset_0()
+                    .width_full()
+                    .height_full()
+                    .z_index(50)
+                    .apply_if(!is_open, |s| s.hide())
+            });
 
         Box::new(sheet_overlay)
     }

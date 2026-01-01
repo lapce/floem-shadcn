@@ -23,103 +23,124 @@ fn app_view() -> impl IntoView {
     Stack::horizontal((
         // Sidebar navigation using full Sidebar APIs
         Sidebar::new()
-            .header(SidebarHeader::new(
-                Stack::vertical((
-                    Label::derived(|| "floem-shadcn")
-                        .style(|s| s.font_size(18.0).font_weight(Weight::BOLD)),
-                    Button::new("Toggle Theme")
-                        .outline()
-                        .sm()
-                        .on_click_stop(move |_| {
-                            theme_mode.update(|m| {
-                                *m = match m {
-                                    ThemeMode::Light => ThemeMode::Dark,
-                                    ThemeMode::Dark => ThemeMode::Light,
-                                }
-                            });
-                        }),
-                ))
-                .style(|s| s.gap_3()),
-            ))
-            .content(SidebarContent::new(Stack::vertical((
-                // Group 1: Form Inputs
-                SidebarGroup::new(Stack::vertical((
-                    SidebarGroupLabel::new("Form Inputs"),
-                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
-                        sidebar_button("Buttons", active_section),
-                        sidebar_button("Badges", active_section),
-                        sidebar_button("Cards", active_section),
-                        sidebar_button("Inputs", active_section),
-                        sidebar_button("Textarea", active_section),
-                        sidebar_button("Checkbox", active_section),
-                        sidebar_button("Switch", active_section),
-                        sidebar_button("Radio Group", active_section),
-                        sidebar_button("Slider", active_section),
-                        sidebar_button("Select", active_section),
-                        sidebar_button("Combobox", active_section),
-                        sidebar_button("Input OTP", active_section),
-                        sidebar_button("Date Picker", active_section),
-                        sidebar_button("Label", active_section),
-                    )))),
-                ))),
-                SidebarSeparator::new(),
-                // Group 2: Layout & Feedback
-                SidebarGroup::new(Stack::vertical((
-                    SidebarGroupLabel::new("Layout & Feedback"),
-                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
-                        sidebar_button("Tabs", active_section),
-                        sidebar_button("Accordion", active_section),
-                        sidebar_button("Collapsible", active_section),
-                        sidebar_button("Dialog", active_section),
-                        sidebar_button("Alert Dialog", active_section),
-                        sidebar_button("Drawer", active_section),
-                        sidebar_button("Alert", active_section),
-                        sidebar_button("Avatar", active_section),
-                        sidebar_button("Progress", active_section),
-                        sidebar_button("Separator", active_section),
-                        sidebar_button("Skeleton", active_section),
-                        sidebar_button("Tooltip", active_section),
-                        sidebar_button("Aspect Ratio", active_section),
-                        sidebar_button("Scroll Area", active_section),
-                        sidebar_button("Resizable", active_section),
-                    )))),
-                ))),
-                SidebarSeparator::new(),
-                // Group 3: Overlays & Navigation
-                SidebarGroup::new(Stack::vertical((
-                    SidebarGroupLabel::new("Overlays & Navigation"),
-                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
-                        sidebar_button("Popover", active_section),
-                        sidebar_button("Sheet", active_section),
-                        sidebar_button("Dropdown Menu", active_section),
-                        sidebar_button("Menubar", active_section),
-                        sidebar_button("Navigation Menu", active_section),
-                        sidebar_button("Breadcrumb", active_section),
-                        sidebar_button("Pagination", active_section),
-                        sidebar_button("Command", active_section),
-                    )))),
-                ))),
-                SidebarSeparator::new(),
-                // Group 4: Data & Misc
-                SidebarGroup::new(Stack::vertical((
-                    SidebarGroupLabel::new("Data & Misc"),
-                    SidebarGroupContent::new(SidebarMenu::new(Stack::vertical((
-                        sidebar_button("Table", active_section),
-                        sidebar_button("Calendar", active_section),
-                        sidebar_button("Carousel", active_section),
-                        sidebar_button("Toast", active_section),
-                        sidebar_button("Toggle", active_section),
-                        sidebar_button("Toggle Group", active_section),
-                        sidebar_button("Hover Card", active_section),
-                        sidebar_button("Context Menu", active_section),
-                        sidebar_button("Sidebar", active_section),
-                    )))),
-                ))),
-            ))))
-            .footer(SidebarFooter::new(Label::derived(|| "v0.1.0").style(|s| {
-                s.font_size(12.0)
-                    .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-            }))),
+            .header(
+                SidebarHeader::new().child(
+                    Stack::vertical((
+                        Label::derived(|| "floem-shadcn")
+                            .style(|s| s.font_size(18.0).font_weight(Weight::BOLD)),
+                        Button::new("Toggle Theme")
+                            .outline()
+                            .sm()
+                            .on_click_stop(move |_| {
+                                theme_mode.update(|m| {
+                                    *m = match m {
+                                        ThemeMode::Light => ThemeMode::Dark,
+                                        ThemeMode::Dark => ThemeMode::Light,
+                                    }
+                                });
+                            }),
+                    ))
+                    .style(|s| s.gap_3()),
+                ),
+            )
+            .content(
+                SidebarContent::new()
+                    // Group 1: Form Inputs
+                    .child(
+                        SidebarGroup::new()
+                            .child(SidebarGroupLabel::new("Form Inputs"))
+                            .child(
+                                SidebarGroupContent::new().child(
+                                    SidebarMenu::new()
+                                        .child(sidebar_button("Buttons", active_section))
+                                        .child(sidebar_button("Badges", active_section))
+                                        .child(sidebar_button("Cards", active_section))
+                                        .child(sidebar_button("Inputs", active_section))
+                                        .child(sidebar_button("Textarea", active_section))
+                                        .child(sidebar_button("Checkbox", active_section))
+                                        .child(sidebar_button("Switch", active_section))
+                                        .child(sidebar_button("Radio Group", active_section))
+                                        .child(sidebar_button("Slider", active_section))
+                                        .child(sidebar_button("Select", active_section))
+                                        .child(sidebar_button("Combobox", active_section))
+                                        .child(sidebar_button("Input OTP", active_section))
+                                        .child(sidebar_button("Date Picker", active_section))
+                                        .child(sidebar_button("Label", active_section)),
+                                ),
+                            ),
+                    )
+                    .child(SidebarSeparator::new())
+                    // Group 2: Layout & Feedback
+                    .child(
+                        SidebarGroup::new()
+                            .child(SidebarGroupLabel::new("Layout & Feedback"))
+                            .child(
+                                SidebarGroupContent::new().child(
+                                    SidebarMenu::new()
+                                        .child(sidebar_button("Tabs", active_section))
+                                        .child(sidebar_button("Accordion", active_section))
+                                        .child(sidebar_button("Collapsible", active_section))
+                                        .child(sidebar_button("Dialog", active_section))
+                                        .child(sidebar_button("Alert Dialog", active_section))
+                                        .child(sidebar_button("Drawer", active_section))
+                                        .child(sidebar_button("Alert", active_section))
+                                        .child(sidebar_button("Avatar", active_section))
+                                        .child(sidebar_button("Progress", active_section))
+                                        .child(sidebar_button("Separator", active_section))
+                                        .child(sidebar_button("Skeleton", active_section))
+                                        .child(sidebar_button("Tooltip", active_section))
+                                        .child(sidebar_button("Aspect Ratio", active_section))
+                                        .child(sidebar_button("Scroll Area", active_section))
+                                        .child(sidebar_button("Resizable", active_section)),
+                                ),
+                            ),
+                    )
+                    .child(SidebarSeparator::new())
+                    // Group 3: Overlays & Navigation
+                    .child(
+                        SidebarGroup::new()
+                            .child(SidebarGroupLabel::new("Overlays & Navigation"))
+                            .child(
+                                SidebarGroupContent::new().child(
+                                    SidebarMenu::new()
+                                        .child(sidebar_button("Popover", active_section))
+                                        .child(sidebar_button("Sheet", active_section))
+                                        .child(sidebar_button("Dropdown Menu", active_section))
+                                        .child(sidebar_button("Menubar", active_section))
+                                        .child(sidebar_button("Navigation Menu", active_section))
+                                        .child(sidebar_button("Breadcrumb", active_section))
+                                        .child(sidebar_button("Pagination", active_section))
+                                        .child(sidebar_button("Command", active_section)),
+                                ),
+                            ),
+                    )
+                    .child(SidebarSeparator::new())
+                    // Group 4: Data & Misc
+                    .child(
+                        SidebarGroup::new()
+                            .child(SidebarGroupLabel::new("Data & Misc"))
+                            .child(
+                                SidebarGroupContent::new().child(
+                                    SidebarMenu::new()
+                                        .child(sidebar_button("Table", active_section))
+                                        .child(sidebar_button("Calendar", active_section))
+                                        .child(sidebar_button("Carousel", active_section))
+                                        .child(sidebar_button("Toast", active_section))
+                                        .child(sidebar_button("Toggle", active_section))
+                                        .child(sidebar_button("Toggle Group", active_section))
+                                        .child(sidebar_button("Hover Card", active_section))
+                                        .child(sidebar_button("Context Menu", active_section))
+                                        .child(sidebar_button("Sidebar", active_section)),
+                                ),
+                            ),
+                    ),
+            )
+            .footer(
+                SidebarFooter::new().child(Label::derived(|| "v0.1.0").style(|s| {
+                    s.font_size(12.0)
+                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
+                })),
+            ),
         // Main content area
         floem::views::Scroll::new(floem::views::dyn_container(
             move || active_section.get(),
@@ -1126,6 +1147,14 @@ fn combobox_demo() -> impl IntoView {
     let selected = RwSignal::new(None::<String>);
     let search = RwSignal::new(String::new());
 
+    let items = vec![
+        ("next", "Next.js"),
+        ("sveltekit", "SvelteKit"),
+        ("nuxt", "Nuxt.js"),
+        ("remix", "Remix"),
+        ("astro", "Astro"),
+    ];
+
     demo_section(
         "Combobox",
         "A searchable select component with filtering.",
@@ -1133,14 +1162,23 @@ fn combobox_demo() -> impl IntoView {
             "Basic",
             Stack::vertical((
                 Combobox::new(selected, search)
-                    .placeholder("Select a framework...")
-                    .items(vec![
-                        ComboboxItemData::new("next", "Next.js"),
-                        ComboboxItemData::new("sveltekit", "SvelteKit"),
-                        ComboboxItemData::new("nuxt", "Nuxt.js"),
-                        ComboboxItemData::new("remix", "Remix"),
-                        ComboboxItemData::new("astro", "Astro"),
-                    ]),
+                    .child(
+                        ComboboxTrigger::new("Select a framework...")
+                            .items(items.clone()),
+                    )
+                    .child(
+                        ComboboxContent::new()
+                            .child(ComboboxInput::new())
+                            .child(
+                                ComboboxList::new()
+                                    .child(ComboboxItem::new("next", "Next.js"))
+                                    .child(ComboboxItem::new("sveltekit", "SvelteKit"))
+                                    .child(ComboboxItem::new("nuxt", "Nuxt.js"))
+                                    .child(ComboboxItem::new("remix", "Remix"))
+                                    .child(ComboboxItem::new("astro", "Astro")),
+                            )
+                            .child(ComboboxEmpty::new("No framework found.")),
+                    ),
                 Label::derived(move || format!("Selected: {:?}", selected.get())).style(|s| {
                     s.font_size(12.0)
                         .margin_top(8.0)
@@ -1748,7 +1786,7 @@ fn sidebar_button(label: &'static str, active_section: RwSignal<String>) -> impl
     let id = label.to_lowercase().replace(' ', "_");
     let id_for_active = id.clone();
     let id_for_click = id.clone();
-    SidebarMenuItem::new(
+    SidebarMenuItem::new().child(
         SidebarMenuButton::new(label)
             .is_active(move || active_section.get() == id_for_active)
             .on_click_stop(move |_| active_section.set(id_for_click.clone())),

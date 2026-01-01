@@ -306,9 +306,8 @@ impl IntoView for DialogContent {
             let open = ctx.open;
 
             // Like shadcn/ui, DialogContent includes the portal and overlay
-            Box::new(Overlay::with_id(
-                id,
-                floem::views::Stack::new((
+            Box::new(Overlay::with_id(id)
+                .child(floem::views::Stack::new((
                     // Backdrop - semi-transparent overlay that closes dialog when clicked
                     floem::views::Empty::new()
                         .style(move |s| {
@@ -347,8 +346,7 @@ impl IntoView for DialogContent {
                         .width_full()
                         .height_full()
                         .apply_if(!is_open, |s| s.hide())
-                }),
-            ))
+                })))
         } else {
             // No dialog context - just render the content (for use outside Dialog)
             Box::new(floem::views::Stack::vertical_from_iter(children).style(|s| s.w_full()))

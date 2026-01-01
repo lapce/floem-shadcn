@@ -220,47 +220,48 @@ impl IntoView for Select {
         .style(|s| s.width_full().max_height(300.0));
 
         // Dropdown in Overlay - escapes parent clipping and z-index constraints
-        let dropdown_overlay = Overlay::new(
-            floem::views::Stack::new((
-                // Backdrop - closes dropdown when clicking outside
-                floem::views::Empty::new()
-                    .style(move |s| {
-                        s.absolute().inset_0()
-                        // Transparent backdrop - just for click handling
-                    })
-                    .on_click_stop(move |_| {
-                        is_open.set(false);
+        let dropdown_overlay = Overlay::new()
+            .child(
+                floem::views::Stack::new((
+                    // Backdrop - closes dropdown when clicking outside
+                    floem::views::Empty::new()
+                        .style(move |s| {
+                            s.absolute().inset_0()
+                            // Transparent backdrop - just for click handling
+                        })
+                        .on_click_stop(move |_| {
+                            is_open.set(false);
+                        }),
+                    // Dropdown content - positioned relative to trigger using window coordinates
+                    floem::views::Container::new(items_container).style(move |s| {
+                        s.with_shadcn_theme(move |s, t| {
+                            let origin = trigger_origin.get();
+                            let size = trigger_size.get();
+                            // Position below the trigger using window coordinates
+                            s.absolute()
+                                .inset_left(origin.x)
+                                .inset_top(origin.y + size.height + 6.0) // 6px gap (sideOffset=6)
+                                .min_width(size.width.max(120.0))
+                                .p_1() // p-1 = 4px (viewport padding)
+                                .background(t.popover)
+                                .color(t.popover_foreground)
+                                .border_1()
+                                .border_color(t.border)
+                                .rounded_md()
+                                .shadow_md() // shadow-md
+                                .z_index(100)
+                        })
                     }),
-                // Dropdown content - positioned relative to trigger using window coordinates
-                floem::views::Container::new(items_container).style(move |s| {
-                    s.with_shadcn_theme(move |s, t| {
-                        let origin = trigger_origin.get();
-                        let size = trigger_size.get();
-                        // Position below the trigger using window coordinates
-                        s.absolute()
-                            .inset_left(origin.x)
-                            .inset_top(origin.y + size.height + 6.0) // 6px gap (sideOffset=6)
-                            .min_width(size.width.max(120.0))
-                            .p_1() // p-1 = 4px (viewport padding)
-                            .background(t.popover)
-                            .color(t.popover_foreground)
-                            .border_1()
-                            .border_color(t.border)
-                            .rounded_md()
-                            .shadow_md() // shadow-md
-                            .z_index(100)
-                    })
+                ))
+                .style(move |s| {
+                    let open = is_open.get();
+                    s.fixed()
+                        .inset_0()
+                        .width_full()
+                        .height_full()
+                        .apply_if(!open, |s| s.hide())
                 }),
-            ))
-            .style(move |s| {
-                let open = is_open.get();
-                s.fixed()
-                    .inset_0()
-                    .width_full()
-                    .height_full()
-                    .apply_if(!open, |s| s.hide())
-            }),
-        );
+            );
 
         Box::new(floem::views::Stack::new((trigger, dropdown_overlay)))
     }

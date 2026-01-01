@@ -14,14 +14,17 @@
 //!
 //! Combobox::new(selected, search)
 //!     .child(ComboboxTrigger::new("Select framework..."))
-//!     .child(ComboboxContent::new((
-//!         ComboboxInput::new(),
-//!         ComboboxList::new()
-//!             .child(ComboboxItem::new("next", "Next.js"))
-//!             .child(ComboboxItem::new("sveltekit", "SvelteKit"))
-//!             .child(ComboboxItem::new("nuxt", "Nuxt.js")),
-//!         ComboboxEmpty::new("No results found."),
-//!     )));
+//!     .child(
+//!         ComboboxContent::new()
+//!             .child(ComboboxInput::new())
+//!             .child(
+//!                 ComboboxList::new()
+//!                     .child(ComboboxItem::new("next", "Next.js"))
+//!                     .child(ComboboxItem::new("sveltekit", "SvelteKit"))
+//!                     .child(ComboboxItem::new("nuxt", "Nuxt.js")),
+//!             )
+//!             .child(ComboboxEmpty::new("No results found.")),
+//!     );
 //! ```
 
 use floem::prelude::*;
@@ -48,6 +51,10 @@ pub struct ComboboxContext {
     pub selected: RwSignal<Option<String>>,
     pub search: RwSignal<String>,
     pub is_open: RwSignal<bool>,
+    /// Trigger position (window coordinates) - set by ComboboxTrigger
+    pub trigger_origin: RwSignal<floem::kurbo::Point>,
+    /// Trigger size - set by ComboboxTrigger
+    pub trigger_size: RwSignal<floem::kurbo::Size>,
 }
 
 // ============================================================================
@@ -75,16 +82,21 @@ impl Combobox {
     /// ```rust
     /// Combobox::new(selected, search)
     ///     .child(ComboboxTrigger::new("Select..."))
-    ///     .child(ComboboxContent::new((
-    ///         ComboboxInput::new(),
-    ///         ComboboxList::new()
-    ///             .child(ComboboxItem::new("a", "Option A"))
-    ///             .child(ComboboxItem::new("b", "Option B")),
-    ///         ComboboxEmpty::new("No results"),
-    ///     )))
+    ///     .child(
+    ///         ComboboxContent::new()
+    ///             .content(ComboboxInput::new())
+    ///             .content(
+    ///                 ComboboxList::new()
+    ///                     .item(ComboboxItem::new("a", "Option A"))
+    ///                     .item(ComboboxItem::new("b", "Option B")),
+    ///             )
+    ///             .content(ComboboxEmpty::new("No results")),
+    ///     )
     /// ```
     pub fn new(selected: RwSignal<Option<String>>, search: RwSignal<String>) -> Self {
         let is_open = RwSignal::new(false);
+        let trigger_origin = RwSignal::new(floem::kurbo::Point::ZERO);
+        let trigger_size = RwSignal::new(floem::kurbo::Size::ZERO);
         let scope = Scope::current().create_child();
 
         // Provide the combobox context in the child scope
@@ -92,6 +104,8 @@ impl Combobox {
             selected,
             search,
             is_open,
+            trigger_origin,
+            trigger_size,
         });
 
         Self {
@@ -138,11 +152,17 @@ impl IntoView for Combobox {
         let id = self.id;
 
         // Build the Stem within the combobox's scope so children have access to context
+        // Note: id.set_scope() is not needed here because ParentView::child() handles it
+        // when .child() is called, using ParentView::scope() to get the scope.
         scope.enter(move || floem::views::Stem::with_id(id))
     }
 }
 
-impl ParentView for Combobox {}
+impl ParentView for Combobox {
+    fn scope(&self) -> Option<Scope> {
+        Some(self.scope)
+    }
+}
 
 // ============================================================================
 // ComboboxTrigger
@@ -205,6 +225,8 @@ impl IntoView for ComboboxTrigger {
         if let Some(ctx) = ctx {
             let selected = ctx.selected;
             let is_open = ctx.is_open;
+            let trigger_origin = ctx.trigger_origin;
+            let trigger_size = ctx.trigger_size;
             let items_for_label = items.clone();
 
             Box::new(
@@ -257,6 +279,12 @@ impl IntoView for ComboboxTrigger {
                 })
                 .on_click_stop(move |_| {
                     is_open.update(|v| *v = !*v);
+                })
+                .on_move(move |origin| {
+                    trigger_origin.set(origin);
+                })
+                .on_resize(move |rect| {
+                    trigger_size.set(rect.size());
                 }),
             )
         } else {
@@ -285,19 +313,22 @@ impl IntoView for ComboboxTrigger {
 
 /// Dropdown content container with overlay positioning
 ///
-/// Contains the search input, list, and empty state.
+/// Creates an overlay with backdrop for click-outside-to-close behavior.
+/// Use `.child()` to add children. Context is automatically available.
 pub struct ComboboxContent {
     id: ViewId,
-    children: Vec<Box<dyn View>>,
 }
 
 impl ComboboxContent {
-    /// Create new content with children
-    pub fn new(children: impl floem::view::IntoViewIter) -> Self {
-        Self {
-            id: ViewId::new(),
-            children: children.into_view_iter().collect(),
-        }
+    /// Create new content container
+    pub fn new() -> Self {
+        Self { id: ViewId::new() }
+    }
+}
+
+impl Default for ComboboxContent {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -316,21 +347,20 @@ impl IntoView for ComboboxContent {
     }
 
     fn into_view(self) -> Self::V {
-        let id = self.id;
-        let children = self.children;
         let ctx = Context::get::<ComboboxContext>();
+        let id = self.id;
+
+        // Create a Stem that children will be added to via .child()
+        let content_stem = floem::views::Stem::with_id(id).style(|s| s.flex_col().width_full());
 
         if let Some(ctx) = ctx {
             let is_open = ctx.is_open;
             let search = ctx.search;
-
-            // Track trigger position for overlay positioning
-            let trigger_origin = RwSignal::new(floem::kurbo::Point::ZERO);
-            let trigger_size = RwSignal::new(floem::kurbo::Size::ZERO);
+            let trigger_origin = ctx.trigger_origin;
+            let trigger_size = ctx.trigger_size;
 
             Box::new(
-                floem::views::Overlay::with_id(
-                    id,
+                floem::views::Overlay::new().child(
                     floem::views::Stack::new((
                         // Backdrop - closes dropdown when clicking outside
                         floem::views::Empty::new()
@@ -340,7 +370,7 @@ impl IntoView for ComboboxContent {
                                 search.set(String::new());
                             }),
                         // Dropdown content
-                        floem::views::Stack::vertical_from_iter(children).style(move |s| {
+                        floem::views::Container::new(content_stem).style(move |s| {
                             s.with_shadcn_theme(move |s, t| {
                                 let origin = trigger_origin.get();
                                 let size = trigger_size.get();
@@ -348,6 +378,7 @@ impl IntoView for ComboboxContent {
                                     .inset_left(origin.x)
                                     .inset_top(origin.y + size.height + 6.0)
                                     .min_width(size.width.max(200.0))
+                                    .flex_col()
                                     .background(t.popover)
                                     .color(t.popover_foreground)
                                     .border_1()
@@ -366,20 +397,16 @@ impl IntoView for ComboboxContent {
                             .height_full()
                             .apply_if(!open, |s| s.hide())
                     }),
-                )
-                .on_move(move |origin| {
-                    trigger_origin.set(origin);
-                })
-                .on_resize(move |rect| {
-                    trigger_size.set(rect.size());
-                }),
+                ),
             )
         } else {
-            // No context - just render content
-            Box::new(floem::views::Stack::vertical_from_iter(children))
+            // No context - just render the content
+            Box::new(content_stem)
         }
     }
 }
+
+impl ParentView for ComboboxContent {}
 
 // ============================================================================
 // ComboboxInput
@@ -479,7 +506,7 @@ impl IntoView for ComboboxInput {
 
 /// Scrollable list container for combobox items
 ///
-/// Implements ParentView so items can be added with `.child()`.
+/// Use `.child()` to add items. Context is automatically available to children.
 pub struct ComboboxList {
     id: ViewId,
     max_height: f64,
@@ -514,7 +541,7 @@ impl HasViewId for ComboboxList {
 }
 
 impl IntoView for ComboboxList {
-    type V = floem::views::Stem;
+    type V = floem::views::Scroll;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -524,7 +551,13 @@ impl IntoView for ComboboxList {
     fn into_view(self) -> Self::V {
         let max_height = self.max_height;
 
-        floem::views::Stem::with_id(self.id).style(move |s| s.flex_col().width_full().p_1())
+        // Create a Stem that children will be added to via .child()
+        let items_container = floem::views::Stem::with_id(self.id)
+            .style(|s| s.flex_col().width_full().p_1());
+
+        // Wrap in Scroll for actual scrolling
+        floem::views::Scroll::new(items_container)
+            .style(move |s| s.max_height(max_height).width_full())
     }
 }
 

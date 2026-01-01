@@ -224,8 +224,8 @@ impl IntoView for AlertDialog {
             .style(|s| s.gap(8.0).justify_end());
 
         // Dialog content in Overlay - escapes parent clipping
-        let dialog_overlay = Overlay::new(
-            floem::views::Stack::new((
+        let dialog_overlay = Overlay::new()
+            .child(floem::views::Stack::new((
                 // Backdrop - semi-transparent, doesn't close on click for alert dialogs
                 floem::views::Empty::new()
                     .style(move |s| {
@@ -264,8 +264,7 @@ impl IntoView for AlertDialog {
                     .width_full()
                     .height_full()
                     .apply_if(!open, |s| s.hide())
-            }),
-        );
+            }));
 
         Box::new(floem::views::Stack::new((trigger, dialog_overlay)))
     }
@@ -361,8 +360,8 @@ impl<V: IntoView + 'static> IntoView for AlertDialogContent<V> {
         let child = self.child;
 
         // Alert dialog content in Overlay - escapes parent clipping
-        Box::new(Overlay::new(
-            floem::views::Stack::new((
+        Box::new(Overlay::new()
+            .child(floem::views::Stack::new((
                 // Backdrop - semi-transparent, doesn't close on click for alert dialogs
                 floem::views::Empty::new()
                     .style(move |s| {
@@ -401,8 +400,7 @@ impl<V: IntoView + 'static> IntoView for AlertDialogContent<V> {
                     .width_full()
                     .height_full()
                     .apply_if(!open, |s| s.hide())
-            }),
-        ))
+            })))
     }
 }
 

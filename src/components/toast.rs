@@ -168,15 +168,19 @@ impl IntoView for ToastContainer {
         });
 
         // Use Overlay with fixed positioning
-        Box::new(Overlay::new(toast_list).style(move |s| {
-            let has_toasts = !toasts.get().is_empty();
-            s.fixed()
-                .inset_0()
-                .width_full()
-                .height_full()
-                .pointer_events_none()
-                .apply_if(!has_toasts, |s| s.hide())
-        }))
+        Box::new(
+            Overlay::new()
+                .child(toast_list)
+                .style(move |s| {
+                    let has_toasts = !toasts.get().is_empty();
+                    s.fixed()
+                        .inset_0()
+                        .width_full()
+                        .height_full()
+                        .pointer_events_none()
+                        .apply_if(!has_toasts, |s| s.hide())
+                }),
+        )
     }
 }
 

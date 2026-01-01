@@ -40,10 +40,9 @@ fn test_sidebar_menu_button_style_updates_on_click() {
     let btn2 = SidebarMenuButton::new("Second").is_active(move || active.get() == "second");
     let btn2_id = btn2.view_id();
 
-    let menu = SidebarMenu::new((
-        SidebarMenuItem::new(btn1.on_click_stop(move |_| active.set("first"))),
-        SidebarMenuItem::new(btn2.on_click_stop(move |_| active.set("second"))),
-    ));
+    let menu = SidebarMenu::new()
+        .child(SidebarMenuItem::new().child(btn1.on_click_stop(move |_| active.set("first"))))
+        .child(SidebarMenuItem::new().child(btn2.on_click_stop(move |_| active.set("second"))));
 
     let container = Stack::new((menu,)).style(|s| s.size(300.0, 400.0));
 
@@ -122,10 +121,9 @@ fn test_sidebar_style_cache_multiple_clicks() {
     let btn2 = SidebarMenuButton::new("Second").is_active(move || active.get() == "second");
     let btn2_id = btn2.view_id();
 
-    let menu = SidebarMenu::new((
-        SidebarMenuItem::new(btn1.on_click_stop(move |_| active.set("first"))),
-        SidebarMenuItem::new(btn2.on_click_stop(move |_| active.set("second"))),
-    ));
+    let menu = SidebarMenu::new()
+        .child(SidebarMenuItem::new().child(btn1.on_click_stop(move |_| active.set("first"))))
+        .child(SidebarMenuItem::new().child(btn2.on_click_stop(move |_| active.set("second"))));
 
     let container = Stack::new((menu,)).style(|s| s.size(300.0, 400.0));
 
@@ -239,7 +237,7 @@ fn test_minimal_style_cache_bug() {
     let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((SidebarMenuItem::new(btn.on_click_stop(move |_| {
+    let container = Stack::new((SidebarMenuItem::new().child(btn.on_click_stop(move |_| {
         is_active.set(!is_active.get());
     })),))
     .style(|s| s.size(300.0, 100.0));
@@ -307,7 +305,7 @@ fn test_request_paint_on_reactive_style_change() {
     let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((SidebarMenuItem::new(btn.on_click_stop(move |_| {
+    let container = Stack::new((SidebarMenuItem::new().child(btn.on_click_stop(move |_| {
         is_active.set(!is_active.get());
     })),))
     .style(|s| s.size(300.0, 100.0));
@@ -388,7 +386,7 @@ fn test_request_paint_on_direct_signal_change() {
     let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((SidebarMenuItem::new(btn),)).style(|s| s.size(300.0, 100.0));
+    let container = Stack::new((SidebarMenuItem::new().child(btn),)).style(|s| s.size(300.0, 100.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 300.0, 100.0);
     harness.rebuild();

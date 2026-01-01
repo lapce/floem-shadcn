@@ -176,18 +176,19 @@ impl<V: IntoView + 'static> IntoView for Drawer<V> {
             });
 
         // Use Overlay with fixed positioning
-        let drawer_overlay = Overlay::new(
-            floem::views::Stack::new((backdrop, drawer_panel))
-                .style(|s| s.width_full().height_full()),
-        )
-        .style(move |s| {
-            let open = is_open.get();
-            s.fixed()
-                .inset_0()
-                .width_full()
-                .height_full()
-                .apply_if(!open, |s| s.hide())
-        });
+        let drawer_overlay = Overlay::new()
+            .child(
+                floem::views::Stack::new((backdrop, drawer_panel))
+                    .style(|s| s.width_full().height_full()),
+            )
+            .style(move |s| {
+                let open = is_open.get();
+                s.fixed()
+                    .inset_0()
+                    .width_full()
+                    .height_full()
+                    .apply_if(!open, |s| s.hide())
+            });
 
         Box::new(drawer_overlay)
     }

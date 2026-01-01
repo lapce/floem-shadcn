@@ -142,4 +142,7 @@ pub mod prelude {
     pub use crate::components::tooltip::TooltipExt;
     pub use crate::styled::ShadcnStyleExt;
     pub use crate::theme::{ShadcnTheme, ShadcnThemeExt, ShadcnThemeProp, ThemeMode};
+
+    // Re-export ParentView for .child() API
+    pub use floem::view::ParentView;
 }
