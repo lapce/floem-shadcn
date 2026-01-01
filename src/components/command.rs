@@ -121,17 +121,15 @@ impl IntoView for Command {
         });
 
         // Stack: input on top, content below
-        Box::new(
-            floem::views::Stack::vertical((input, content)).style(|s| {
-                s.with_shadcn_theme(move |s, t| {
-                    s.width_full()
-                        .flex_direction(floem::style::FlexDirection::Column)
-                        .background(t.popover)
-                        .color(t.popover_foreground)
-                        .border_radius(t.radius)
-                })
-            }),
-        )
+        Box::new(floem::views::Stack::vertical((input, content)).style(|s| {
+            s.with_shadcn_theme(move |s, t| {
+                s.width_full()
+                    .flex_direction(floem::style::FlexDirection::Column)
+                    .background(t.popover)
+                    .color(t.popover_foreground)
+                    .border_radius(t.radius)
+            })
+        }))
     }
 }
 
@@ -366,9 +364,8 @@ impl IntoView for CommandGroup {
         });
 
         // Items area - children are added here via ParentView
-        let items = Stem::with_id(items_id).style(|s| {
-            s.flex_direction(floem::style::FlexDirection::Column)
-        });
+        let items = Stem::with_id(items_id)
+            .style(|s| s.flex_direction(floem::style::FlexDirection::Column));
 
         // Stack: heading on top, items below
         Box::new(floem::views::Stack::vertical((heading_view, items)))

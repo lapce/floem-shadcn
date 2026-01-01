@@ -16,13 +16,8 @@ fn app_view() -> impl IntoView {
 
     Stack::vertical((
         // Status label
-        Label::derived(move || {
-            format!(
-                "Selected: {:?}",
-                selected.get()
-            )
-        })
-        .style(|s| s.padding(8.0).margin_bottom(16.0)),
+        Label::derived(move || format!("Selected: {:?}", selected.get()))
+            .style(|s| s.padding(8.0).margin_bottom(16.0)),
         // The combobox
         Combobox::new(selected.clone(), search.clone())
             .child(ComboboxTrigger::new("Select a framework...").items([

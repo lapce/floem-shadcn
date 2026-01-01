@@ -552,8 +552,8 @@ impl IntoView for ComboboxList {
         let max_height = self.max_height;
 
         // Create a Stem that children will be added to via .child()
-        let items_container = floem::views::Stem::with_id(self.id)
-            .style(|s| s.flex_col().width_full().p_1());
+        let items_container =
+            floem::views::Stem::with_id(self.id).style(|s| s.flex_col().width_full().p_1());
 
         // Wrap in Scroll for actual scrolling
         floem::views::Scroll::new(items_container)

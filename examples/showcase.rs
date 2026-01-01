@@ -1162,10 +1162,7 @@ fn combobox_demo() -> impl IntoView {
             "Basic",
             Stack::vertical((
                 Combobox::new(selected, search)
-                    .child(
-                        ComboboxTrigger::new("Select a framework...")
-                            .items(items.clone()),
-                    )
+                    .child(ComboboxTrigger::new("Select a framework...").items(items.clone()))
                     .child(
                         ComboboxContent::new()
                             .child(ComboboxInput::new())

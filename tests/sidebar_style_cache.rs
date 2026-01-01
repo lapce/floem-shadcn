@@ -386,7 +386,8 @@ fn test_request_paint_on_direct_signal_change() {
     let btn = SidebarMenuButton::new("Toggle").is_active(move || is_active.get());
     let btn_id = btn.view_id();
 
-    let container = Stack::new((SidebarMenuItem::new().child(btn),)).style(|s| s.size(300.0, 100.0));
+    let container =
+        Stack::new((SidebarMenuItem::new().child(btn),)).style(|s| s.size(300.0, 100.0));
 
     let mut harness = HeadlessHarness::new_with_size(container, 300.0, 100.0);
     harness.rebuild();

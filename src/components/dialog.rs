@@ -306,47 +306,50 @@ impl IntoView for DialogContent {
             let open = ctx.open;
 
             // Like shadcn/ui, DialogContent includes the portal and overlay
-            Box::new(Overlay::with_id(id)
-                .child(floem::views::Stack::new((
-                    // Backdrop - semi-transparent overlay that closes dialog when clicked
-                    floem::views::Empty::new()
-                        .style(move |s| {
-                            s.absolute()
-                                .inset_0()
-                                .background(peniko::Color::from_rgba8(0, 0, 0, 128))
-                        })
-                        .on_click_stop(move |_| {
-                            open.set(false);
-                        }),
-                    // Content wrapper - centered modal with vertical stack for children
-                    floem::views::Stack::vertical_from_iter(children)
-                        .style(move |s| {
-                            s.absolute()
-                                .left_1_2()
-                                .top_1_2()
-                                .translate_x_neg_1_2()
-                                .translate_y_neg_1_2()
-                                .z_index(10)
-                                .max_w_lg()
-                                .rounded_lg()
-                                .p_6()
-                                .gap_4()
-                                .shadow_lg()
-                        })
-                        .style(move |s| {
-                            s.with_shadcn_theme(move |s, t| {
-                                s.background(t.background).border_1().border_color(t.border)
+            Box::new(
+                Overlay::with_id(id).child(
+                    floem::views::Stack::new((
+                        // Backdrop - semi-transparent overlay that closes dialog when clicked
+                        floem::views::Empty::new()
+                            .style(move |s| {
+                                s.absolute()
+                                    .inset_0()
+                                    .background(peniko::Color::from_rgba8(0, 0, 0, 128))
                             })
-                        }),
-                ))
-                .style(move |s| {
-                    let is_open = open.get();
-                    s.fixed()
-                        .inset_0()
-                        .width_full()
-                        .height_full()
-                        .apply_if(!is_open, |s| s.hide())
-                })))
+                            .on_click_stop(move |_| {
+                                open.set(false);
+                            }),
+                        // Content wrapper - centered modal with vertical stack for children
+                        floem::views::Stack::vertical_from_iter(children)
+                            .style(move |s| {
+                                s.absolute()
+                                    .left_1_2()
+                                    .top_1_2()
+                                    .translate_x_neg_1_2()
+                                    .translate_y_neg_1_2()
+                                    .z_index(10)
+                                    .max_w_lg()
+                                    .rounded_lg()
+                                    .p_6()
+                                    .gap_4()
+                                    .shadow_lg()
+                            })
+                            .style(move |s| {
+                                s.with_shadcn_theme(move |s, t| {
+                                    s.background(t.background).border_1().border_color(t.border)
+                                })
+                            }),
+                    ))
+                    .style(move |s| {
+                        let is_open = open.get();
+                        s.fixed()
+                            .inset_0()
+                            .width_full()
+                            .height_full()
+                            .apply_if(!is_open, |s| s.hide())
+                    }),
+                ),
+            )
         } else {
             // No dialog context - just render the content (for use outside Dialog)
             Box::new(floem::views::Stack::vertical_from_iter(children).style(|s| s.w_full()))

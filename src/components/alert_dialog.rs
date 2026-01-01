@@ -224,8 +224,8 @@ impl IntoView for AlertDialog {
             .style(|s| s.gap(8.0).justify_end());
 
         // Dialog content in Overlay - escapes parent clipping
-        let dialog_overlay = Overlay::new()
-            .child(floem::views::Stack::new((
+        let dialog_overlay = Overlay::new().child(
+            floem::views::Stack::new((
                 // Backdrop - semi-transparent, doesn't close on click for alert dialogs
                 floem::views::Empty::new()
                     .style(move |s| {
@@ -264,7 +264,8 @@ impl IntoView for AlertDialog {
                     .width_full()
                     .height_full()
                     .apply_if(!open, |s| s.hide())
-            }));
+            }),
+        );
 
         Box::new(floem::views::Stack::new((trigger, dialog_overlay)))
     }
@@ -360,47 +361,50 @@ impl<V: IntoView + 'static> IntoView for AlertDialogContent<V> {
         let child = self.child;
 
         // Alert dialog content in Overlay - escapes parent clipping
-        Box::new(Overlay::new()
-            .child(floem::views::Stack::new((
-                // Backdrop - semi-transparent, doesn't close on click for alert dialogs
-                floem::views::Empty::new()
-                    .style(move |s| {
-                        s.absolute()
-                            .inset_0()
-                            .background(peniko::Color::from_rgba8(0, 0, 0, 128))
-                    })
-                    .on_click_stop(move |_| {
-                        // Don't close on backdrop click for alert dialogs
-                    }),
-                // Content wrapper - centered modal
-                floem::views::Container::new(child)
-                    .style(move |s| {
-                        s.absolute()
-                            .left_1_2()
-                            .top_1_2()
-                            .translate_x_neg_1_2()
-                            .translate_y_neg_1_2()
-                            .z_index(10)
-                            .max_w_lg()
-                            .rounded_lg()
-                            .p_6()
-                            .gap_4()
-                            .shadow_lg()
-                    })
-                    .style(move |s| {
-                        s.with_shadcn_theme(move |s, t| {
-                            s.background(t.background).border_1().border_color(t.border)
+        Box::new(
+            Overlay::new().child(
+                floem::views::Stack::new((
+                    // Backdrop - semi-transparent, doesn't close on click for alert dialogs
+                    floem::views::Empty::new()
+                        .style(move |s| {
+                            s.absolute()
+                                .inset_0()
+                                .background(peniko::Color::from_rgba8(0, 0, 0, 128))
                         })
-                    }),
-            ))
-            .style(move |s| {
-                let open = is_open.get();
-                s.fixed()
-                    .inset_0()
-                    .width_full()
-                    .height_full()
-                    .apply_if(!open, |s| s.hide())
-            })))
+                        .on_click_stop(move |_| {
+                            // Don't close on backdrop click for alert dialogs
+                        }),
+                    // Content wrapper - centered modal
+                    floem::views::Container::new(child)
+                        .style(move |s| {
+                            s.absolute()
+                                .left_1_2()
+                                .top_1_2()
+                                .translate_x_neg_1_2()
+                                .translate_y_neg_1_2()
+                                .z_index(10)
+                                .max_w_lg()
+                                .rounded_lg()
+                                .p_6()
+                                .gap_4()
+                                .shadow_lg()
+                        })
+                        .style(move |s| {
+                            s.with_shadcn_theme(move |s, t| {
+                                s.background(t.background).border_1().border_color(t.border)
+                            })
+                        }),
+                ))
+                .style(move |s| {
+                    let open = is_open.get();
+                    s.fixed()
+                        .inset_0()
+                        .width_full()
+                        .height_full()
+                        .apply_if(!open, |s| s.hide())
+                }),
+            ),
+        )
     }
 }
 
