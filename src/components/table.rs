@@ -125,7 +125,8 @@ impl IntoView for TableHeader {
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| s.width_full().grid())
+        floem::views::Stem::with_id(self.id)
+            .style(|s| s.width_full().grid().grid_auto_flow(GridAutoFlow::Row))
     }
 }
 
@@ -162,7 +163,8 @@ impl IntoView for TableBody {
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| s.width_full().grid())
+        floem::views::Stem::with_id(self.id)
+            .style(|s| s.width_full().grid().grid_auto_flow(GridAutoFlow::Row))
     }
 }
 

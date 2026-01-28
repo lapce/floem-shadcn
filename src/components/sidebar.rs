@@ -52,6 +52,7 @@
 use std::rc::Rc;
 
 use floem::prelude::*;
+use floem::views::Scroll;
 use floem::style::CursorStyle;
 use floem::text::Weight;
 use floem::view::ParentView;
@@ -152,6 +153,8 @@ impl IntoView for Sidebar {
             Stack::vertical((header_view, content_view, footer_view)).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
                     s.width(width)
+                        .min_width(width)
+                        .flex_shrink(0.)
                         .height_full()
                         .border_right(1.0)
                         .border_color(t.border)
@@ -241,7 +244,7 @@ impl HasViewId for SidebarContent {
 }
 
 impl IntoView for SidebarContent {
-    type V = floem::views::Stem;
+    type V = Box<dyn View>;
     type Intermediate = Self;
 
     fn into_intermediate(self) -> Self::Intermediate {
@@ -249,15 +252,21 @@ impl IntoView for SidebarContent {
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
-            s.flex_grow(1.0)
-                .flex_basis(0.0)
-                .min_height(0.0)
-                .width_full()
+        let inner = floem::views::Stem::with_id(self.id).style(|s| {
+            s.width_full()
                 .flex_direction(floem::style::FlexDirection::Column)
                 .padding(8.0)
                 .gap(8.0)
-        })
+        });
+
+        Box::new(
+            Scroll::new(inner).style(|s| {
+                s.flex_grow(1.0)
+                    .flex_basis(0.0)
+                    .min_height(0.0)
+                    .width_full()
+            }),
+        )
     }
 }
 
@@ -602,12 +611,37 @@ impl ParentView for SidebarMenuItem {}
 // SidebarMenuButton - Clickable menu button
 // ============================================================================
 
+/// Size variants for SidebarMenuButton (matches shadcn/ui)
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum SidebarMenuButtonSize {
+    /// Small size: 28px height
+    Sm,
+    /// Default size: 32px height
+    #[default]
+    Default,
+    /// Large size: 48px height
+    Lg,
+}
+
+impl SidebarMenuButtonSize {
+    /// Get the height in pixels for this size variant
+    pub fn height(&self) -> f32 {
+        match self {
+            SidebarMenuButtonSize::Sm => 28.0,
+            SidebarMenuButtonSize::Default => 32.0,
+            SidebarMenuButtonSize::Lg => 48.0,
+        }
+    }
+}
+
 /// Sidebar menu button (the actual clickable item)
 ///
 /// Active state is controlled via the `is_active` prop, following the same pattern
 /// as shadcn/ui. This gives full control to the consumer.
 ///
-/// # Example
+/// Supports both simple labels and custom children (like icons + text):
+///
+/// # Example with label
 /// ```rust
 /// let active = RwSignal::new("buttons");
 ///
@@ -615,25 +649,49 @@ impl ParentView for SidebarMenuItem {}
 ///     .is_active(move || active.get() == "buttons")
 ///     .on_click_stop(move |_| active.set("buttons"))
 /// ```
+///
+/// # Example with children
+/// ```rust
+/// SidebarMenuButton::new_empty()
+///     .child(Icon::new(IconKind::Home))
+///     .child(Label::new("Home"))
+///     .is_active(move || active.get() == "home")
+/// ```
 pub struct SidebarMenuButton {
     id: ViewId,
-    label: String,
-    is_active: Option<Box<dyn Fn() -> bool>>,
+    is_active: Rc<Option<Box<dyn Fn() -> bool>>>,
+    size: SidebarMenuButtonSize,
 }
 
 impl SidebarMenuButton {
     /// Create a new menu button with a label.
-    pub fn new(label: impl Into<String>) -> Self {
-        Self {
+    pub fn new(label: impl Into<String>) -> SidebarMenuButtonWithLabel {
+        SidebarMenuButtonWithLabel {
             id: ViewId::new(),
             label: label.into(),
             is_active: None,
+            size: SidebarMenuButtonSize::Default,
+        }
+    }
+
+    /// Create a new empty menu button that accepts children via `.child()`.
+    pub fn new_empty() -> Self {
+        Self {
+            id: ViewId::new(),
+            is_active: Rc::new(None),
+            size: SidebarMenuButtonSize::Default,
         }
     }
 
     /// Set whether this button is active (reactive closure).
     pub fn is_active(mut self, active: impl Fn() -> bool + 'static) -> Self {
-        self.is_active = Some(Box::new(active));
+        self.is_active = Rc::new(Some(Box::new(active)));
+        self
+    }
+
+    /// Set the size variant for this button.
+    pub fn size(mut self, size: SidebarMenuButtonSize) -> Self {
+        self.size = size;
         self
     }
 }
@@ -645,6 +703,79 @@ impl HasViewId for SidebarMenuButton {
 }
 
 impl IntoView for SidebarMenuButton {
+    type V = floem::views::Stem;
+    type Intermediate = Self;
+
+    fn into_intermediate(self) -> Self::Intermediate {
+        self
+    }
+
+    fn into_view(self) -> Self::V {
+        let is_active = self.is_active.clone();
+        let height = self.size.height();
+        floem::views::Stem::with_id(self.id).style(move |s| {
+            let is_active = is_active.clone();
+            s.with_shadcn_theme(move |s, t| {
+                let active = is_active.as_ref().as_ref().map(|f| f()).unwrap_or(false);
+                let base = s
+                    .width_full()
+                    .height(height)
+                    .flex_direction(floem::style::FlexDirection::Row)
+                    .items_center()
+                    .gap(8.0)
+                    .padding_left(12.0)
+                    .padding_right(12.0)
+                    .border_radius(t.radius_sm)
+                    .font_size(14.0)
+                    .cursor(CursorStyle::Pointer)
+                    .transition(
+                        floem::style::Background,
+                        floem::style::Transition::linear(millis(100)),
+                    )
+                    .hover(move |s| s.background(t.accent));
+                if active {
+                    base.background(t.accent)
+                        .color(t.accent_foreground)
+                        .font_weight(Weight::MEDIUM)
+                } else {
+                    base.background(peniko::Color::TRANSPARENT).color(t.foreground)
+                }
+            })
+        })
+    }
+}
+
+impl ParentView for SidebarMenuButton {}
+
+/// Sidebar menu button with a simple label (for backward compatibility)
+pub struct SidebarMenuButtonWithLabel {
+    id: ViewId,
+    label: String,
+    is_active: Option<Box<dyn Fn() -> bool>>,
+    size: SidebarMenuButtonSize,
+}
+
+impl SidebarMenuButtonWithLabel {
+    /// Set whether this button is active (reactive closure).
+    pub fn is_active(mut self, active: impl Fn() -> bool + 'static) -> Self {
+        self.is_active = Some(Box::new(active));
+        self
+    }
+
+    /// Set the size variant for this button.
+    pub fn size(mut self, size: SidebarMenuButtonSize) -> Self {
+        self.size = size;
+        self
+    }
+}
+
+impl HasViewId for SidebarMenuButtonWithLabel {
+    fn view_id(&self) -> ViewId {
+        self.id
+    }
+}
+
+impl IntoView for SidebarMenuButtonWithLabel {
     type V = Box<dyn View>;
     type Intermediate = Self;
 
@@ -655,6 +786,7 @@ impl IntoView for SidebarMenuButton {
     fn into_view(self) -> Self::V {
         let label = self.label.clone();
         let is_active: Rc<Option<Box<dyn Fn() -> bool>>> = Rc::new(self.is_active);
+        let height = self.size.height();
 
         Box::new(
             floem::views::Container::with_id(
@@ -667,7 +799,8 @@ impl IntoView for SidebarMenuButton {
                     let active = is_active.as_ref().as_ref().map(|f| f()).unwrap_or(false);
                     let base = s
                         .width_full()
-                        .padding(8.0)
+                        .height(height)
+                        .items_center()
                         .padding_left(12.0)
                         .padding_right(12.0)
                         .border_radius(t.radius_sm)

@@ -1644,18 +1644,21 @@ fn command_demo() -> impl IntoView {
             "Basic",
             Command::new(search)
                 .placeholder("Type a command or search...")
-                .content(Stack::vertical((
-                    CommandGroup::new("Suggestions").items(Stack::vertical((
-                        CommandItem::new("calendar", "Calendar"),
-                        CommandItem::new("search", "Search Emoji"),
-                        CommandItem::new("calculator", "Calculator"),
-                    ))),
-                    CommandGroup::new("Settings").items(Stack::vertical((
-                        CommandItem::new("profile", "Profile"),
-                        CommandItem::new("billing", "Billing"),
-                        CommandItem::new("settings", "Settings"),
-                    ))),
-                )))
+                .child(
+                    CommandList::new()
+                        .child(
+                            CommandGroup::new("Suggestions")
+                                .child(CommandItem::new("calendar", "Calendar"))
+                                .child(CommandItem::new("search", "Search Emoji"))
+                                .child(CommandItem::new("calculator", "Calculator"))
+                        )
+                        .child(
+                            CommandGroup::new("Settings")
+                                .child(CommandItem::new("profile", "Profile"))
+                                .child(CommandItem::new("billing", "Billing"))
+                                .child(CommandItem::new("settings", "Settings"))
+                        )
+                )
                 .style(|s| s.max_width(400.0)),
         ),))
         .style(|s| s.gap_8()),

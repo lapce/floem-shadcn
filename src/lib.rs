@@ -119,7 +119,7 @@ pub mod prelude {
     pub use crate::components::sidebar::{
         Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupAction,
         SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
-        SidebarMenuItem, SidebarSeparator,
+        SidebarMenuButtonWithLabel, SidebarMenuItem, SidebarSeparator,
     };
     pub use crate::components::skeleton::Skeleton;
     pub use crate::components::slider::Slider;

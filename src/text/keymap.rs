@@ -509,6 +509,30 @@ impl Keymap {
             .build()
     }
 
+
+    /// Create a keymap for chat-style input where Shift+Enter inserts newline
+    /// and plain Enter is not bound (to allow external handling for send).
+    pub fn chat_mode() -> Self {
+        let mut keymap = KeymapBuilder::new()
+            .with_common_bindings()
+            .with_multi_line_bindings()
+            .with_emacs_bindings(true)
+            .build();
+        // Remove plain Enter binding
+        keymap.keymaps.remove(&KeyPress {
+            key: Key::Named(NamedKey::Enter),
+            modifiers: Modifiers::default(),
+        });
+        // Add Shift+Enter for newline
+        keymap.keymaps.insert(
+            KeyPress {
+                key: Key::Named(NamedKey::Enter),
+                modifiers: Modifiers::SHIFT,
+            },
+            Command::Edit(EditCommand::InsertNewLine),
+        );
+        keymap
+    }
     /// Look up a command for a key press, trying with and without shift modifier.
     pub fn get(&self, key: &Key, modifiers: &Modifiers) -> Option<&Command> {
         let keypress = KeyPress {

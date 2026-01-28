@@ -87,6 +87,11 @@ impl TextArea {
 
     /// Creates a new text editor with the given initial text and a specific ViewId
     pub fn with_text_and_id(text: impl Into<String>, id: ViewId) -> Self {
+        Self::with_text_id_and_keymap(text, id, Keymap::multi_line())
+    }
+
+    /// Creates a new text editor with the given initial text, ViewId, and custom Keymap
+    pub fn with_text_id_and_keymap(text: impl Into<String>, id: ViewId, keymap: Keymap) -> Self {
         let child_height = RwSignal::new(0.0);
         let padding = RwSignal::new((0.0, 0.0, 0.0, 0.0));
         let viewport = RwSignal::new(Rect::ZERO);
@@ -155,7 +160,7 @@ impl TextArea {
         id.set_children_vec(vec![scroll_view.into_any()]);
 
         // Set up event handlers
-        let keymap = std::sync::Arc::new(Keymap::multi_line());
+        let keymap = std::sync::Arc::new(keymap);
         let keymap_clone = keymap.clone();
 
         id.add_event_listener(
@@ -313,6 +318,10 @@ impl TextArea {
                 mods.set(Modifiers::ALT, false);
 
                 if mods.is_empty() {
+                    // If it's not a character key and no command matched, let it propagate
+                    if !matches!(key, Key::Character(_)) {
+                        return EventPropagation::Continue;
+                    }
                     if let Key::Character(c) = key {
                         document.insert_text(c);
                         id.request_layout();
