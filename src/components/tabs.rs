@@ -23,18 +23,13 @@
 use floem::prelude::*;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
-use floem::text::Weight;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
-// ============================================================================
-// Tabs Container
-// ============================================================================
-
-/// Tabs container that manages active tab state
+/// Tabs container that manages active tab state.
 pub struct Tabs<V> {
     id: ViewId,
     #[allow(dead_code)]
@@ -43,7 +38,6 @@ pub struct Tabs<V> {
 }
 
 impl<V: floem::view::IntoViewIter + 'static> Tabs<V> {
-    /// Create a new tabs container with the given active signal and content
     pub fn new(active: RwSignal<String>, child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -61,34 +55,22 @@ impl<V: floem::view::IntoViewIter + 'static> HasViewId for Tabs<V> {
 
 impl<V: floem::view::IntoViewIter + 'static> IntoView for Tabs<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Stack::with_id(self.id, self.child).style(|s| {
-                s.flex_direction(floem::style::FlexDirection::Column)
-                    .gap_2()
-            }),
-        )
+        Box::new(floem::views::Stack::with_id(self.id, self.child).style(|s| s.flex_col().gap_2()))
     }
 }
 
-// ============================================================================
-// TabsList
-// ============================================================================
-
-/// Container for tab triggers
+/// Container for tab triggers (the buttons).
 pub struct TabsList<V> {
     id: ViewId,
     child: V,
 }
 
 impl<V: floem::view::IntoViewIter + 'static> TabsList<V> {
-    /// Create a new tabs list with the given tabs
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -105,36 +87,28 @@ impl<V: floem::view::IntoViewIter + 'static> HasViewId for TabsList<V> {
 
 impl<V: floem::view::IntoViewIter + 'static> IntoView for TabsList<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(
             floem::views::Stack::with_id(self.id, self.child).style(move |s| {
                 s.with_shadcn_theme(|s, t| {
-                    s.flex_row() // Flex row container
-                        .items_center() // items-center
-                        // No width set - defaults to content width (w-fit)
-                        // Users can add .style(|s| s.width_full()) to TabsList if needed
+                    s.flex_row()
+                        .items_center()
                         .background(t.muted)
-                        .border_radius(8.0) // rounded-lg
-                        .h_9() // h-9 = 36px
-                        .padding(3.0) // p-[3px]
-                        .gap(3.0) // Small gap between tabs
+                        .h_9()
+                        .rounded_lg()
+                        .padding(3.0)
+                        .gap(3.0)
                 })
             }),
         )
     }
 }
 
-// ============================================================================
-// Tab (trigger)
-// ============================================================================
-
-/// Individual tab trigger
+/// Individual tab trigger.
 pub struct Tab {
     view_id: ViewId,
     id: String,
@@ -143,7 +117,6 @@ pub struct Tab {
 }
 
 impl Tab {
-    /// Create a new tab with the given id and label
     pub fn new(id: impl Into<String>, label: impl Into<String>) -> Self {
         Self {
             view_id: ViewId::new(),
@@ -152,14 +125,11 @@ impl Tab {
             active_signal: None,
         }
     }
-
-    /// Set the active signal for this tab
     pub fn active(mut self, signal: RwSignal<String>) -> Self {
         self.active_signal = Some(signal);
         self
     }
 
-    /// Build the tab view
     pub fn build(self) -> impl IntoView {
         let id = self.id.clone();
         let label = self.label.clone();
@@ -176,20 +146,20 @@ impl Tab {
                         .map(|sig| sig.get() == id.clone())
                         .unwrap_or(false);
                     let base = s
-                        .flex_row() // Flex container for centering label
-                        .flex_grow(1.0) // flex-1 - grow to fill space
-                        .flex_basis(0.0) // Start from 0 width, grow from there
-                        .min_width(0.0) // Allow shrinking below content width
-                        .height(29.0) // h-[calc(100%-1px)] ≈ 36px - 6px padding - 1px = 29px
-                        .px_2() // px-2 = 8px
-                        .py_1() // py-1 = 4px
-                        .items_center() // Center content vertically
-                        .justify_center() // Center content horizontally
-                        .border_radius(6.0) // rounded-md
-                        .border(1.0) // border
-                        .border_color(peniko::Color::TRANSPARENT) // border-transparent
-                        .font_size(14.0)
-                        .font_weight(Weight::MEDIUM)
+                        .flex_row()
+                        .flex_grow(1.0)
+                        .flex_basis(0.0)
+                        .min_width(0.0)
+                        .height(29.0)
+                        .px_2()
+                        .py_1()
+                        .items_center()
+                        .justify_center()
+                        .rounded_md()
+                        .border_1()
+                        .border_color(peniko::Color::TRANSPARENT)
+                        .text_sm()
+                        .font_medium()
                         .cursor(CursorStyle::Pointer)
                         .transition(
                             floem::style::Background,
@@ -198,14 +168,15 @@ impl Tab {
                     if is_active {
                         base.background(t.background)
                             .color(t.foreground)
-                            .shadow_sm() // shadow-sm for active state
+                            .box_shadow_blur(2.0)
+                            .box_shadow_color(peniko::Color::from_rgba8(0, 0, 0, 25))
                     } else {
                         base.background(peniko::Color::TRANSPARENT)
                             .color(t.muted_foreground)
                     }
                 })
             })
-            .on_click_stop(move |_| {
+            .on_event_stop(floem::event::listener::Click, move |_, _| {
                 if let Some(signal) = active_signal {
                     signal.set(item_id_click.clone());
                 }
@@ -221,22 +192,16 @@ impl HasViewId for Tab {
 
 impl IntoView for Tab {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(self.build().into_view())
     }
 }
 
-// ============================================================================
-// TabsContent
-// ============================================================================
-
-/// Content panel for a specific tab
+/// Content panel for a specific tab.
 pub struct TabsContent<V> {
     view_id: ViewId,
     id: String,
@@ -245,7 +210,6 @@ pub struct TabsContent<V> {
 }
 
 impl<V: IntoView + 'static> TabsContent<V> {
-    /// Create new tab content for the given tab id
     pub fn new(id: impl Into<String>, child: V) -> Self {
         Self {
             view_id: ViewId::new(),
@@ -254,8 +218,6 @@ impl<V: IntoView + 'static> TabsContent<V> {
             active_signal: None,
         }
     }
-
-    /// Set the active signal for this content
     pub fn active(mut self, signal: RwSignal<String>) -> Self {
         self.active_signal = Some(signal);
         self
@@ -270,20 +232,17 @@ impl<V: IntoView + 'static> HasViewId for TabsContent<V> {
 
 impl<V: IntoView + 'static> IntoView for TabsContent<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let id = self.id;
         let active_signal = self.active_signal;
 
         Box::new(
             floem::views::Container::with_id(self.view_id, self.child).style(move |s| {
-                let is_active = active_signal.map(|sig| sig.get() == id).unwrap_or(true); // Show by default if no signal
-
+                let is_active = active_signal.map(|sig| sig.get() == id).unwrap_or(true);
                 s.apply_if(!is_active, |s| s.display(floem::style::Display::None))
             }),
         )

@@ -1,4 +1,5 @@
-//! Tests for Select component
+use floem_test::TestRoot;
+// Tests for Select component
 
 use floem::prelude::*;
 use floem::reactive::RwSignal;
@@ -17,7 +18,7 @@ fn test_select_basic_click() {
             s.size(100.0, 40.0)
                 .background(peniko::Color::from_rgb8(255, 0, 0))
         })
-        .on_click_stop(move |_| {
+        .on_event_stop(floem::event::listener::Click, move |_, _| {
             click_count.update(|c| *c += 1);
         });
 
@@ -29,7 +30,7 @@ fn test_select_basic_click() {
     let view = floem::views::Stack::vertical((test_button, select))
         .style(|s| s.size(400.0, 300.0).gap(10.0));
 
-    let mut harness = HeadlessHarness::new_with_size(view, 400.0, 300.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), view, 400.0, 300.0);
     harness.rebuild();
 
     eprintln!("=== Basic Click Test ===");
@@ -77,7 +78,7 @@ fn test_select_dropdown_position() {
     ))
     .style(|s| s.size(800.0, 600.0));
 
-    let mut harness = HeadlessHarness::new_with_size(view, 800.0, 600.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), view, 800.0, 600.0);
     harness.rebuild();
 
     eprintln!("=== Select Dropdown Position Test ===");
@@ -115,7 +116,7 @@ fn test_select_dropdown_position_at_origin() {
 
     let view = floem::views::Stack::vertical((select,)).style(|s| s.size(400.0, 300.0));
 
-    let mut harness = HeadlessHarness::new_with_size(view, 400.0, 300.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), view, 400.0, 300.0);
     harness.rebuild();
 
     eprintln!("=== Select at Origin Test ===");
@@ -145,7 +146,7 @@ fn test_select_with_offset_trigger() {
     ))
     .style(|s| s.size(400.0, 300.0));
 
-    let mut harness = HeadlessHarness::new_with_size(view, 400.0, 300.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), view, 400.0, 300.0);
     harness.rebuild();
 
     eprintln!("=== Select with Offset Test ===");

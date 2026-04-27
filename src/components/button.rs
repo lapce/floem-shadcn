@@ -23,7 +23,7 @@ use floem_tailwind::TailwindExt;
 
 use crate::theme::{ShadcnTheme, ShadcnThemeExt};
 
-/// Button variants following shadcn/ui conventions
+/// Button variants following shadcn/ui conventions.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum ButtonVariant {
     #[default]
@@ -35,7 +35,7 @@ pub enum ButtonVariant {
     Link,
 }
 
-/// Button sizes
+/// Button sizes.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum ButtonSize {
     Sm,
@@ -45,7 +45,20 @@ pub enum ButtonSize {
     Icon,
 }
 
-/// A styled button builder
+/// A styled button builder.
+///
+/// Use the builder methods to set variant, size, and attach event handlers.
+///
+/// # Example
+///
+/// ```rust
+/// use floem_shadcn::components::button::Button;
+///
+/// let btn = Button::new("Click me")
+///     .secondary()
+///     .sm()
+///     .on_event_stop(floem::event::listener::Click, move |_, _| println!("clicked"));
+/// ```
 pub struct Button<V> {
     id: ViewId,
     child: V,
@@ -54,7 +67,7 @@ pub struct Button<V> {
 }
 
 impl<V: IntoView + 'static> Button<V> {
-    /// Create a new button with the given content
+    /// Create a new button with the given content.
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -64,73 +77,67 @@ impl<V: IntoView + 'static> Button<V> {
         }
     }
 
-    // === Size methods ===
-
-    /// Set button to small size
+    /// Set button to small size.
     pub fn sm(mut self) -> Self {
         self.size = ButtonSize::Sm;
         self
     }
 
-    /// Set button to large size
+    /// Set button to large size.
     pub fn lg(mut self) -> Self {
         self.size = ButtonSize::Lg;
         self
     }
 
-    /// Set button to icon size (square)
+    /// Set button to icon size (square).
     pub fn icon(mut self) -> Self {
         self.size = ButtonSize::Icon;
         self
     }
 
-    // === Variant methods ===
-
-    /// Set button to destructive variant (red/danger)
+    /// Set button to destructive variant (red/danger).
     pub fn destructive(mut self) -> Self {
         self.variant = ButtonVariant::Destructive;
         self
     }
 
-    /// Set button to outline variant (bordered)
+    /// Set button to outline variant (bordered).
     pub fn outline(mut self) -> Self {
         self.variant = ButtonVariant::Outline;
         self
     }
 
-    /// Set button to secondary variant
+    /// Set button to secondary variant.
     pub fn secondary(mut self) -> Self {
         self.variant = ButtonVariant::Secondary;
         self
     }
 
-    /// Set button to ghost variant (transparent background)
+    /// Set button to ghost variant (transparent background).
     pub fn ghost(mut self) -> Self {
         self.variant = ButtonVariant::Ghost;
         self
     }
 
-    /// Set button to link variant (looks like a link)
+    /// Set button to link variant (looks like a link).
     pub fn link(mut self) -> Self {
         self.variant = ButtonVariant::Link;
         self
     }
 
-    // === Explicit setters ===
-
-    /// Set the button variant explicitly
+    /// Set the button variant explicitly.
     pub fn with_variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
         self
     }
 
-    /// Set the button size explicitly
+    /// Set the button size explicitly.
     pub fn with_size(mut self, size: ButtonSize) -> Self {
         self.size = size;
         self
     }
 
-    /// Build the button view with reactive styling
+    /// Build the button view with reactive styling.
     pub fn build(self) -> impl IntoView {
         let size = self.size;
         let variant = self.variant;
@@ -148,10 +155,9 @@ impl<V: IntoView + 'static> HasViewId for Button<V> {
 
 impl<V: IntoView + 'static> IntoView for Button<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -160,18 +166,12 @@ impl<V: IntoView + 'static> IntoView for Button<V> {
 }
 
 fn build_button_style(s: Style, size: ButtonSize, variant: ButtonVariant) -> Style {
-    // Base styles using floem-tailwind
     let s = s
         .flex()
         .items_center()
         .justify_center()
-        // Prevent button from stretching:
-        // - self_center: prevents cross-axis stretching (e.g., width in vertical Stack)
-        // - flex_grow(0): prevents main-axis stretching (e.g., width in horizontal Stack with wrap)
-        .self_center()
         .flex_grow(0.0)
-        .cursor_pointer()
-        .font_medium()
+        .cursor(floem::style::CursorStyle::Pointer)
         .transition(
             floem::style::Background,
             floem::style::Transition::linear(millis(100)),
@@ -181,15 +181,13 @@ fn build_button_style(s: Style, size: ButtonSize, variant: ButtonVariant) -> Sty
             floem::style::Transition::linear(millis(100)),
         );
 
-    // Size styles using floem-tailwind
     let s = match size {
-        ButtonSize::Sm => s.h_9().px_3().rounded_md().text_xs(),
-        ButtonSize::Default => s.h_10().px_4().py_2().rounded_md().text_sm(),
-        ButtonSize::Lg => s.h_11().px_8().rounded_md().text_sm(),
-        ButtonSize::Icon => s.h_10().w_10().rounded_md(),
+        ButtonSize::Sm => s.h_9().px_3().rounded_md().text_xs().font_medium(),
+        ButtonSize::Default => s.h_10().px_4().py_2().rounded_md().text_sm().font_medium(),
+        ButtonSize::Lg => s.h_11().px_8().rounded_md().text_sm().font_medium(),
+        ButtonSize::Icon => s.h_10().w_10().rounded_md().font_medium(),
     };
 
-    // Theme-dependent styles (variant colors + hover + active)
     s.with_shadcn_theme(move |s, t| {
         let s = apply_variant_style(s, variant, t);
         let s = apply_hover_style(s, variant, t);
@@ -198,8 +196,6 @@ fn build_button_style(s: Style, size: ButtonSize, variant: ButtonVariant) -> Sty
 }
 
 fn apply_variant_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Style {
-    // All variants have border_1() for consistent box sizing
-    // Non-outline variants use transparent border
     match variant {
         ButtonVariant::Default => s
             .background(t.primary)
@@ -235,7 +231,6 @@ fn apply_variant_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Sty
 }
 
 fn apply_hover_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Style {
-    // shadcn/ui uses opacity for hover: primary/90, destructive/90, secondary/80
     let hover_primary = with_alpha(t.primary, 0.9);
     let hover_destructive = with_alpha(t.destructive, 0.9);
     let hover_secondary = with_alpha(t.secondary, 0.8);
@@ -253,7 +248,6 @@ fn apply_hover_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Style
 }
 
 fn apply_active_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Style {
-    // Active states: slightly more pronounced than hover
     let active_primary = with_alpha(t.primary, 0.8);
     let active_destructive = with_alpha(t.destructive, 0.8);
     let active_secondary = with_alpha(t.secondary, 0.7);
@@ -270,12 +264,10 @@ fn apply_active_style(s: Style, variant: ButtonVariant, t: &ShadcnTheme) -> Styl
     })
 }
 
-/// Apply alpha/opacity to a color
 fn with_alpha(color: peniko::Color, alpha: f32) -> peniko::Color {
     color.with_alpha(alpha)
 }
 
-// Helper for Duration
 fn millis(ms: u64) -> std::time::Duration {
     std::time::Duration::from_millis(ms)
 }

@@ -15,3 +15,5 @@ Thumbs.db
 
 # Debug
 *.pdb
+wr.sh
+.patch-ts

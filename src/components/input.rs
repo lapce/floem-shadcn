@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ``````rust
 //! use floem::reactive::RwSignal;
 //! use floem_shadcn::components::input::Input;
 //!
@@ -22,115 +22,66 @@
 //! let input = Input::with_text("Hello");
 //! ```
 
-use floem::prelude::*;
-use floem::views::Decorators;
-use floem::{HasViewId, ViewId};
-use floem_tailwind::TailwindExt;
-
-use crate::text::TextInput;
 use crate::theme::ShadcnThemeExt;
+use floem::prelude::*;
+use floem::reactive::{Effect, RwSignal, SignalGet, SignalUpdate};
+use floem::views::{Decorators, TextInput, TextInputEnter};
+use floem::{HasViewId, ViewId};
 
-/// A styled input builder
-#[allow(clippy::type_complexity)]
+/// A styled input builder with support for reactive value binding,
+/// placeholder, on_update, and on_enter callbacks.
 pub struct Input {
     id: ViewId,
-    initial_text: String,
-    placeholder_text: Option<String>,
+    buffer: RwSignal<String>,
+    placeholder: Option<String>,
     on_enter: Option<Box<dyn Fn(&str)>>,
-    on_update: Option<Box<dyn Fn(&str)>>,
-    value_fn: Option<Box<dyn Fn() -> String>>,
 }
-
 impl Input {
-    /// Create a new empty input
     pub fn new() -> Self {
+        Self::with_text("")
+    }
+
+    pub fn with_text(initial: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
-            initial_text: String::new(),
-            placeholder_text: None,
+            buffer: RwSignal::new(initial.into()),
+            placeholder: None,
             on_enter: None,
-            on_update: None,
-            value_fn: None,
         }
     }
 
-    /// Create a new input with initial text
-    pub fn with_text(text: impl Into<String>) -> Self {
-        Self {
-            id: ViewId::new(),
-            initial_text: text.into(),
-            placeholder_text: None,
-            on_enter: None,
-            on_update: None,
-            value_fn: None,
-        }
-    }
-
-    /// Set the placeholder text
     pub fn placeholder(mut self, text: impl Into<String>) -> Self {
-        self.placeholder_text = Some(text.into());
+        self.placeholder = Some(text.into());
         self
     }
 
-    /// Set the callback for when Enter is pressed
-    pub fn on_enter(mut self, callback: impl Fn(&str) + 'static) -> Self {
-        self.on_enter = Some(Box::new(callback));
+    pub fn on_update(self, f: impl Fn(&str) + 'static) -> Self {
+        let buf = self.buffer;
+        Effect::new(move |_| {
+            let text = buf.get();
+            f(&text);
+        });
         self
     }
 
-    /// Set the callback for when the text changes
-    pub fn on_update(mut self, callback: impl Fn(&str) + 'static) -> Self {
-        self.on_update = Some(Box::new(callback));
+    pub fn on_enter(mut self, f: impl Fn(&str) + 'static) -> Self {
+        self.on_enter = Some(Box::new(f));
         self
     }
 
-    /// Set the reactive value getter
-    pub fn value(mut self, getter: impl Fn() -> String + 'static) -> Self {
-        self.value_fn = Some(Box::new(getter));
+    pub fn value(self, getter: impl Fn() -> String + 'static) -> Self {
+        let buf = self.buffer;
+        Effect::new(move |_| {
+            let new_value = getter();
+            if buf.get_untracked() != new_value {
+                buf.set(new_value);
+            }
+        });
         self
     }
 
-    /// Build and return the styled TextInput view
-    pub fn build(self) -> impl IntoView {
-        // Use with_text_and_id to pass our ViewId for proper HasViewId impl
-        let mut input = TextInput::with_text_and_id(self.initial_text, self.id);
-
-        // Set placeholder if provided
-        if let Some(placeholder) = self.placeholder_text {
-            input = input.placeholder(placeholder);
-        }
-
-        // Set on_update callback if provided
-        if let Some(callback) = self.on_update {
-            input = input.on_update(callback);
-        }
-
-        // Set reactive value if provided
-        if let Some(getter) = self.value_fn {
-            input = input.value(getter);
-        }
-
-        // Set on_enter callback if provided
-        if let Some(callback) = self.on_enter {
-            input = input.on_enter(callback);
-        }
-
-        input.style(move |s| {
-            s.h_10()
-                .w_full()
-                .rounded_md()
-                .border(1.0)
-                .px_3()
-                .py_2()
-                .font_size(14.0)
-                .with_shadcn_theme(|s, t| {
-                    let ring = t.ring;
-                    s.border_color(t.input)
-                        .background(t.background)
-                        .color(t.foreground)
-                        .focus(move |s| s.outline(2.0).outline_color(ring))
-                })
-        })
+    pub fn buffer(&self) -> RwSignal<String> {
+        self.buffer
     }
 }
 
@@ -139,22 +90,45 @@ impl Default for Input {
         Self::new()
     }
 }
-
 impl HasViewId for Input {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 impl IntoView for Input {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
-        Box::new(self.build().into_view())
+        let mut view = TextInput::new(self.buffer);
+        if let Some(ph) = self.placeholder {
+            view = view.placeholder(ph);
+        }
+        if let Some(cb) = self.on_enter {
+            let buffer = self.buffer;
+            view = view.on_event_stop(TextInputEnter::listener(), move |_, _| {
+                cb(&buffer.get_untracked());
+            });
+        }
+        Box::new(view.style(move |s| {
+            s.height(40.0)
+                .width_full()
+                .border_radius(6.0)
+                .border(1.0)
+                .padding_left(12.0)
+                .padding_right(12.0)
+                .padding_top(8.0)
+                .padding_bottom(8.0)
+                .font_size(14.0)
+                .with_shadcn_theme(|s, t| {
+                    let ring = t.ring;
+                    s.border_color(t.input)
+                        .background(t.background)
+                        .color(t.foreground)
+                        .focus(move |s| s.outline(2.0).outline_color(ring))
+                })
+        }))
     }
 }

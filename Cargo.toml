@@ -7,15 +7,18 @@ description = "shadcn/ui inspired components for Floem"
 license = "MIT"
 
 [dependencies]
-floem = { path = "../floem", features = ["editor"] }
-floem-tailwind = { path = "../floem-tailwind" }
-floem-editor-core = { path = "../floem/editor-core" }
-peniko = "0.5.0"
-lapce-xi-rope = "0.4.0"
+
+floem = { git = "https://github.com/lapce/floem", features = ["editor"] }
+floem-tailwind = { git = "https://github.com/elcoosp/floem-tailwind" }
+floem-editor-core = { version = "0.2"}
+peniko = "0.5"
+lapce-xi-rope = "0.4"
 ui-events = { version = "0.2", features = ["kurbo"] }
 
 [dev-dependencies]
-floem-test = { path = "../floem/test" }
+
+# floem-test = { git = "https://github.com/lapce/floem", rev = "ae651b10" }
+floem-test = { git = "https://github.com/lapce/floem" }
 dpi = "0.1"
 
 [[example]]

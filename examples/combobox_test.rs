@@ -1,6 +1,6 @@
-//! Minimal test for Combobox component
+// Minimal test for Combobox component
 //!
-//! Run with: cargo run --example combobox_test
+// Run with: cargo run --example combobox_test
 
 use floem::prelude::*;
 use floem::view::ParentView;

@@ -21,8 +21,9 @@ use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
+use floem_tailwind::TailwindExt;
 
-/// Toggle variant for styling
+/// Toggle variant for styling.
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ToggleVariant {
     #[default]
@@ -30,7 +31,7 @@ pub enum ToggleVariant {
     Outline,
 }
 
-/// Toggle size
+/// Toggle size.
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ToggleSize {
     Sm,
@@ -39,11 +40,16 @@ pub enum ToggleSize {
     Lg,
 }
 
-// ============================================================================
-// Toggle
-// ============================================================================
-
-/// A two-state toggle button
+/// A two‑state toggle button.
+///
+/// # Example
+///
+/// ```rust
+/// let pressed = RwSignal::new(false);
+/// Toggle::new(pressed, "Toggle me")
+///     .outline()
+///     .sm();
+/// ```
 pub struct Toggle {
     id: ViewId,
     pressed: RwSignal<bool>,
@@ -54,7 +60,7 @@ pub struct Toggle {
 }
 
 impl Toggle {
-    /// Create a new toggle with pressed state and text
+    /// Create a new toggle with the given pressed state and text.
     pub fn new(pressed: RwSignal<bool>, text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -66,37 +72,37 @@ impl Toggle {
         }
     }
 
-    /// Set the variant
+    /// Set the visual variant.
     pub fn variant(mut self, variant: ToggleVariant) -> Self {
         self.variant = variant;
         self
     }
 
-    /// Use outline variant
+    /// Use outline variant.
     pub fn outline(mut self) -> Self {
         self.variant = ToggleVariant::Outline;
         self
     }
 
-    /// Set the size
+    /// Set the size.
     pub fn size(mut self, size: ToggleSize) -> Self {
         self.size = size;
         self
     }
 
-    /// Use small size
+    /// Use small size.
     pub fn sm(mut self) -> Self {
         self.size = ToggleSize::Sm;
         self
     }
 
-    /// Use large size
+    /// Use large size.
     pub fn lg(mut self) -> Self {
         self.size = ToggleSize::Lg;
         self
     }
 
-    /// Set as disabled
+    /// Set as disabled.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -111,10 +117,9 @@ impl HasViewId for Toggle {
 
 impl IntoView for Toggle {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -127,7 +132,6 @@ impl IntoView for Toggle {
         let label = floem::views::Label::new(text).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let is_pressed = pressed.get();
-                // Size-based padding and font
                 let (px, py, font_size) = match size {
                     ToggleSize::Sm => (8.0, 6.0, 12.0),
                     ToggleSize::Default => (12.0, 8.0, 14.0),
@@ -139,14 +143,12 @@ impl IntoView for Toggle {
                     .padding_top(py)
                     .padding_bottom(py)
                     .font_size(font_size)
-                    .font_weight(floem::text::Weight::MEDIUM)
                     .border_radius(t.radius)
                     .cursor(if disabled {
                         CursorStyle::Default
                     } else {
                         CursorStyle::Pointer
                     });
-                // Apply variant and pressed state styling
                 let styled = match variant {
                     ToggleVariant::Default => {
                         if is_pressed {
@@ -161,12 +163,12 @@ impl IntoView for Toggle {
                         if is_pressed {
                             base.background(t.accent)
                                 .color(t.accent_foreground)
-                                .border(1.0)
+                                .border_1()
                                 .border_color(t.input)
                         } else {
                             base.background(floem::peniko::Color::TRANSPARENT)
                                 .color(t.foreground)
-                                .border(1.0)
+                                .border_1()
                                 .border_color(t.input)
                                 .hover(|s| s.background(t.accent).color(t.accent_foreground))
                         }
@@ -183,18 +185,16 @@ impl IntoView for Toggle {
         if disabled {
             Box::new(label)
         } else {
-            Box::new(label.on_click_stop(move |_| {
-                pressed.update(|v| *v = !*v);
-            }))
+            Box::new(
+                label.on_event_stop(floem::event::listener::Click, move |_, _| {
+                    pressed.update(|v| *v = !*v);
+                }),
+            )
         }
     }
 }
 
-// ============================================================================
-// ToggleCustom - Toggle with custom content
-// ============================================================================
-
-/// Toggle with custom content (e.g., icons)
+/// Toggle with custom content (e.g. icons).
 pub struct ToggleCustom<V> {
     id: ViewId,
     pressed: RwSignal<bool>,
@@ -205,7 +205,6 @@ pub struct ToggleCustom<V> {
 }
 
 impl<V: IntoView + 'static> ToggleCustom<V> {
-    /// Create a new toggle with custom content
     pub fn new(pressed: RwSignal<bool>, child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -216,38 +215,18 @@ impl<V: IntoView + 'static> ToggleCustom<V> {
             disabled: false,
         }
     }
-
-    /// Set the variant
-    pub fn variant(mut self, variant: ToggleVariant) -> Self {
-        self.variant = variant;
-        self
-    }
-
-    /// Use outline variant
     pub fn outline(mut self) -> Self {
         self.variant = ToggleVariant::Outline;
         self
     }
-
-    /// Set the size
-    pub fn size(mut self, size: ToggleSize) -> Self {
-        self.size = size;
-        self
-    }
-
-    /// Use small size
     pub fn sm(mut self) -> Self {
         self.size = ToggleSize::Sm;
         self
     }
-
-    /// Use large size
     pub fn lg(mut self) -> Self {
         self.size = ToggleSize::Lg;
         self
     }
-
-    /// Set as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -262,12 +241,10 @@ impl<V: IntoView + 'static> HasViewId for ToggleCustom<V> {
 
 impl<V: IntoView + 'static> IntoView for ToggleCustom<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let pressed = self.pressed;
         let variant = self.variant;
@@ -277,7 +254,6 @@ impl<V: IntoView + 'static> IntoView for ToggleCustom<V> {
         let container = floem::views::Container::new(self.child).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let is_pressed = pressed.get();
-                // Size-based padding
                 let (px, py) = match size {
                     ToggleSize::Sm => (8.0, 6.0),
                     ToggleSize::Default => (12.0, 8.0),
@@ -297,7 +273,6 @@ impl<V: IntoView + 'static> IntoView for ToggleCustom<V> {
                     .display(floem::style::Display::Flex)
                     .items_center()
                     .justify_center();
-                // Apply variant and pressed state styling
                 match variant {
                     ToggleVariant::Default => {
                         if is_pressed {
@@ -309,10 +284,10 @@ impl<V: IntoView + 'static> IntoView for ToggleCustom<V> {
                     }
                     ToggleVariant::Outline => {
                         if is_pressed {
-                            base.background(t.accent).border(1.0).border_color(t.input)
+                            base.background(t.accent).border_1().border_color(t.input)
                         } else {
                             base.background(floem::peniko::Color::TRANSPARENT)
-                                .border(1.0)
+                                .border_1()
                                 .border_color(t.input)
                                 .hover(|s| s.background(t.accent))
                         }
@@ -324,9 +299,11 @@ impl<V: IntoView + 'static> IntoView for ToggleCustom<V> {
         if disabled {
             Box::new(container)
         } else {
-            Box::new(container.on_click_stop(move |_| {
-                pressed.update(|v| *v = !*v);
-            }))
+            Box::new(
+                container.on_event_stop(floem::event::listener::Click, move |_, _| {
+                    pressed.update(|v| *v = !*v);
+                }),
+            )
         }
     }
 }

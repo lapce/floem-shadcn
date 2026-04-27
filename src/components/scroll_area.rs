@@ -27,7 +27,7 @@ use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
-
+use floem_tailwind::TailwindExt;
 /// Scroll orientation
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ScrollOrientation {
@@ -107,10 +107,10 @@ impl<V: IntoView + 'static> HasViewId for ScrollArea<V> {
 
 impl<V: IntoView + 'static> IntoView for ScrollArea<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
 
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -220,10 +220,10 @@ impl<V: IntoView + 'static> HasViewId for ScrollAreaWithBar<V> {
 
 impl<V: IntoView + 'static> IntoView for ScrollAreaWithBar<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
 
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -233,7 +233,7 @@ impl<V: IntoView + 'static> IntoView for ScrollAreaWithBar<V> {
         Box::new(floem::views::Scroll::new(self.child).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let base = s
-                    .border(1.0)
+                    .border_1()
                     .border_color(t.border)
                     .border_radius(t.radius)
                     .flex_grow(1.0)

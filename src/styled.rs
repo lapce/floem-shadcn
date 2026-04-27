@@ -1,43 +1,7 @@
-//! Semantic Tailwind-style utilities for floem-shadcn
-//!
-//! This module extends floem's `Style` with semantic color utilities
-//! that read from the inherited ShadcnTheme prop, similar to how shadcn extends Tailwind.
-//!
-//! These utilities use floem's `with_context` mechanism, so the theme is resolved
-//! at style application time (not construction time), enabling proper theme inheritance.
-//!
-//! # Example
-//!
-//! ```rust
-//! use floem::style::Style;
-//! use floem_shadcn::styled::ShadcnStyleExt;
-//!
-//! // Simple single-property styling
-//! let style = Style::new()
-//!     .bg_primary()
-//!     .text_primary_foreground();
-//!
-//! // For multiple properties, prefer with_shadcn_theme for efficiency:
-//! use floem_shadcn::theme::ShadcnThemeExt;
-//! let style = Style::new()
-//!     .with_shadcn_theme(|s, t| {
-//!         s.background(t.primary)
-//!          .color(t.primary_foreground)
-//!          .border_color(t.border)
-//!     });
-//! ```
-
-use crate::theme::ShadcnThemeProp;
+use crate::theme::current_theme;
 use floem::style::Style;
 
-/// Extension trait adding semantic theme-aware styling methods to `Style`
-///
-/// Each method uses `with_context` internally to access the inherited `ShadcnThemeProp`.
-/// For efficiency when applying multiple theme properties, consider using
-/// `with_shadcn_theme` from `ShadcnThemeExt` instead.
 pub trait ShadcnStyleExt: Sized {
-    // === Background colors ===
-
     fn bg_background(self) -> Self;
     fn bg_foreground(self) -> Self;
     fn bg_card(self) -> Self;
@@ -54,9 +18,6 @@ pub trait ShadcnStyleExt: Sized {
     fn bg_accent_foreground(self) -> Self;
     fn bg_destructive(self) -> Self;
     fn bg_destructive_foreground(self) -> Self;
-
-    // === Text colors ===
-
     fn text_background(self) -> Self;
     fn text_foreground(self) -> Self;
     fn text_card(self) -> Self;
@@ -73,9 +34,6 @@ pub trait ShadcnStyleExt: Sized {
     fn text_accent_foreground(self) -> Self;
     fn text_destructive(self) -> Self;
     fn text_destructive_foreground(self) -> Self;
-
-    // === Border colors ===
-
     fn border_border(self) -> Self;
     fn border_input(self) -> Self;
     fn border_ring(self) -> Self;
@@ -84,217 +42,100 @@ pub trait ShadcnStyleExt: Sized {
     fn border_destructive(self) -> Self;
     fn border_muted(self) -> Self;
     fn border_accent(self) -> Self;
-
-    // === Outline colors ===
-
     fn outline_ring(self) -> Self;
     fn outline_primary(self) -> Self;
     fn outline_destructive(self) -> Self;
-
-    // === Border radius (from theme) ===
-
     fn rounded_radius(self) -> Self;
     fn rounded_radius_sm(self) -> Self;
     fn rounded_radius_md(self) -> Self;
     fn rounded_radius_lg(self) -> Self;
 }
-
+macro_rules! bg {
+    ($n:ident,$f:ident) => {
+        fn $n(self) -> Self {
+            let t = current_theme();
+            self.background(t.$f)
+        }
+    };
+}
+macro_rules! txt {
+    ($n:ident,$f:ident) => {
+        fn $n(self) -> Self {
+            let t = current_theme();
+            self.color(t.$f)
+        }
+    };
+}
+macro_rules! brd {
+    ($n:ident,$f:ident) => {
+        fn $n(self) -> Self {
+            let t = current_theme();
+            self.border_color(t.$f)
+        }
+    };
+}
+macro_rules! out {
+    ($n:ident,$f:ident) => {
+        fn $n(self) -> Self {
+            let t = current_theme();
+            self.outline_color(t.$f)
+        }
+    };
+}
+macro_rules! rad {
+    ($n:ident,$f:ident) => {
+        fn $n(self) -> Self {
+            let t = current_theme();
+            self.border_radius(t.$f)
+        }
+    };
+}
 impl ShadcnStyleExt for Style {
-    // === Background colors ===
-
-    fn bg_background(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.background))
-    }
-
-    fn bg_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.foreground))
-    }
-
-    fn bg_card(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.card))
-    }
-
-    fn bg_card_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.card_foreground))
-    }
-
-    fn bg_popover(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.popover))
-    }
-
-    fn bg_popover_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.popover_foreground))
-    }
-
-    fn bg_primary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.primary))
-    }
-
-    fn bg_primary_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.primary_foreground))
-    }
-
-    fn bg_secondary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.secondary))
-    }
-
-    fn bg_secondary_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.secondary_foreground))
-    }
-
-    fn bg_muted(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.muted))
-    }
-
-    fn bg_muted_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.muted_foreground))
-    }
-
-    fn bg_accent(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.accent))
-    }
-
-    fn bg_accent_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.accent_foreground))
-    }
-
-    fn bg_destructive(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.destructive))
-    }
-
-    fn bg_destructive_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.background(t.destructive_foreground))
-    }
-
-    // === Text colors ===
-
-    fn text_background(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.background))
-    }
-
-    fn text_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.foreground))
-    }
-
-    fn text_card(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.card))
-    }
-
-    fn text_card_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.card_foreground))
-    }
-
-    fn text_popover(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.popover))
-    }
-
-    fn text_popover_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.popover_foreground))
-    }
-
-    fn text_primary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.primary))
-    }
-
-    fn text_primary_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.primary_foreground))
-    }
-
-    fn text_secondary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.secondary))
-    }
-
-    fn text_secondary_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.secondary_foreground))
-    }
-
-    fn text_muted(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.muted))
-    }
-
-    fn text_muted_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.muted_foreground))
-    }
-
-    fn text_accent(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.accent))
-    }
-
-    fn text_accent_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.accent_foreground))
-    }
-
-    fn text_destructive(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.destructive))
-    }
-
-    fn text_destructive_foreground(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.color(t.destructive_foreground))
-    }
-
-    // === Border colors ===
-
-    fn border_border(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.border))
-    }
-
-    fn border_input(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.input))
-    }
-
-    fn border_ring(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.ring))
-    }
-
-    fn border_primary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.primary))
-    }
-
-    fn border_secondary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.secondary))
-    }
-
-    fn border_destructive(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.destructive))
-    }
-
-    fn border_muted(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.muted))
-    }
-
-    fn border_accent(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_color(t.accent))
-    }
-
-    // === Outline colors ===
-
-    fn outline_ring(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.outline_color(t.ring))
-    }
-
-    fn outline_primary(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.outline_color(t.primary))
-    }
-
-    fn outline_destructive(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.outline_color(t.destructive))
-    }
-
-    // === Border radius ===
-
-    fn rounded_radius(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_radius(t.radius))
-    }
-
-    fn rounded_radius_sm(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_radius(t.radius_sm))
-    }
-
-    fn rounded_radius_md(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_radius(t.radius_md))
-    }
-
-    fn rounded_radius_lg(self) -> Self {
-        self.with_context::<ShadcnThemeProp>(|s, t| s.border_radius(t.radius_lg))
-    }
+    bg!(bg_background, background);
+    bg!(bg_foreground, foreground);
+    bg!(bg_card, card);
+    bg!(bg_card_foreground, card_foreground);
+    bg!(bg_popover, popover);
+    bg!(bg_popover_foreground, popover_foreground);
+    bg!(bg_primary, primary);
+    bg!(bg_primary_foreground, primary_foreground);
+    bg!(bg_secondary, secondary);
+    bg!(bg_secondary_foreground, secondary_foreground);
+    bg!(bg_muted, muted);
+    bg!(bg_muted_foreground, muted_foreground);
+    bg!(bg_accent, accent);
+    bg!(bg_accent_foreground, accent_foreground);
+    bg!(bg_destructive, destructive);
+    bg!(bg_destructive_foreground, destructive_foreground);
+    txt!(text_background, background);
+    txt!(text_foreground, foreground);
+    txt!(text_card, card);
+    txt!(text_card_foreground, card_foreground);
+    txt!(text_popover, popover);
+    txt!(text_popover_foreground, popover_foreground);
+    txt!(text_primary, primary);
+    txt!(text_primary_foreground, primary_foreground);
+    txt!(text_secondary, secondary);
+    txt!(text_secondary_foreground, secondary_foreground);
+    txt!(text_muted, muted);
+    txt!(text_muted_foreground, muted_foreground);
+    txt!(text_accent, accent);
+    txt!(text_accent_foreground, accent_foreground);
+    txt!(text_destructive, destructive);
+    txt!(text_destructive_foreground, destructive_foreground);
+    brd!(border_border, border);
+    brd!(border_input, input);
+    brd!(border_ring, ring);
+    brd!(border_primary, primary);
+    brd!(border_secondary, secondary);
+    brd!(border_destructive, destructive);
+    brd!(border_muted, muted);
+    brd!(border_accent, accent);
+    out!(outline_ring, ring);
+    out!(outline_primary, primary);
+    out!(outline_destructive, destructive);
+    rad!(rounded_radius, radius);
+    rad!(rounded_radius_sm, radius_sm);
+    rad!(rounded_radius_md, radius_md);
+    rad!(rounded_radius_lg, radius_lg);
 }

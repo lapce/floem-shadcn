@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```
 //! use floem_shadcn::components::separator::Separator;
 //!
 //! // Horizontal separator (default)
@@ -17,6 +17,7 @@
 use floem::prelude::*;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
 
@@ -62,8 +63,8 @@ impl Separator {
         floem::views::Empty::new().style(move |s| {
             let base = s.flex_shrink(0.0);
             let base = match orientation {
-                SeparatorOrientation::Horizontal => base.width_full().height(1.0),
-                SeparatorOrientation::Vertical => base.height_full().width(1.0),
+                SeparatorOrientation::Horizontal => base.w_full().h_px(),
+                SeparatorOrientation::Vertical => base.h_full().w_px(),
             };
             base.with_shadcn_theme(|s, t| s.background(t.border))
         })
@@ -84,10 +85,9 @@ impl HasViewId for Separator {
 
 impl IntoView for Separator {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {

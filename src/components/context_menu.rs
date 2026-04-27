@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```
 //! use floem::reactive::RwSignal;
 //! use floem_shadcn::components::context_menu::*;
 //!
@@ -24,28 +24,21 @@
 //!     ));
 //! ```
 
+use crate::theme::ShadcnThemeExt;
 use floem::prelude::*;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
-use crate::theme::ShadcnThemeExt;
-
-// ============================================================================
-// ContextMenu
-// ============================================================================
-
-/// Context menu container (right-click menu)
 pub struct ContextMenu<T, C> {
     id: ViewId,
     open: RwSignal<bool>,
     trigger: Option<T>,
     content: Option<C>,
 }
-
 impl ContextMenu<(), ()> {
-    /// Create a new context menu
     pub fn new(open: RwSignal<bool>) -> Self {
         Self {
             id: ViewId::new(),
@@ -55,9 +48,7 @@ impl ContextMenu<(), ()> {
         }
     }
 }
-
 impl<T, C> ContextMenu<T, C> {
-    /// Set the trigger element (the area that responds to right-click)
     pub fn trigger<T2: Fn() -> V, V: IntoView + 'static>(self, trigger: T2) -> ContextMenu<T2, C> {
         ContextMenu {
             id: self.id,
@@ -66,8 +57,6 @@ impl<T, C> ContextMenu<T, C> {
             content: self.content,
         }
     }
-
-    /// Set the menu content
     pub fn content<C2: IntoView + 'static>(self, content: C2) -> ContextMenu<T, C2> {
         ContextMenu {
             id: self.id,
@@ -77,31 +66,25 @@ impl<T, C> ContextMenu<T, C> {
         }
     }
 }
-
 impl<T, C, TV> ContextMenu<T, C>
 where
     T: Fn() -> TV + 'static,
     C: IntoView + 'static,
     TV: IntoView + 'static,
 {
-    /// Build the context menu view
     pub fn build(self) -> impl IntoView {
         let open = self.open;
         let trigger = self.trigger;
         let content = self.content;
-
-        // Trigger wrapper - handles right-click
         let trigger_view = if let Some(trigger_fn) = trigger {
             floem::views::Container::new(trigger_fn())
-                .on_secondary_click_stop(move |_| {
+                .on_event_stop(floem::event::listener::SecondaryClick, move |_, _| {
                     open.set(true);
                 })
                 .into_any()
         } else {
             floem::views::Empty::new().into_any()
         };
-
-        // Menu content (positioned at trigger's bottom-left)
         let content_view = if let Some(menu_content) = content {
             floem::views::Container::new(menu_content)
                 .style(move |s| {
@@ -109,21 +92,19 @@ where
                         let is_open = open.get();
                         let base = s
                             .min_width(160.0)
-                            .padding_top(4.0)
-                            .padding_bottom(4.0)
+                            .py_1()
                             .background(t.popover)
-                            .border(1.0)
+                            .border_1()
                             .border_color(t.border)
-                            .border_radius(t.radius)
+                            .rounded_md()
                             .box_shadow_blur(8.0)
                             .box_shadow_color(t.foreground.with_alpha(0.1))
-                            .position(floem::style::Position::Absolute)
+                            .absolute()
                             .inset_top_pct(100.0)
                             .inset_left(0.0)
-                            .margin_top(4.0)
+                            .mt_1()
                             .z_index(100)
-                            .display(floem::style::Display::Flex)
-                            .flex_direction(floem::style::FlexDirection::Column);
+                            .flex_col();
                         if is_open {
                             base
                         } else {
@@ -135,35 +116,27 @@ where
         } else {
             floem::views::Empty::new().into_any()
         };
-
-        // Backdrop to close menu when clicking outside
         let backdrop = floem::views::Empty::new()
             .style(move |s| {
                 let is_open = open.get();
-                let base = s
-                    .position(floem::style::Position::Absolute)
-                    .inset(0.0)
-                    .z_index(99);
-
+                let base = s.absolute().inset_0().z_index(99);
                 if is_open {
                     base
                 } else {
                     base.display(floem::style::Display::None)
                 }
             })
-            .on_click_stop(move |_| {
+            .on_event_stop(floem::event::listener::Click, move |_, _| {
                 open.set(false);
             });
-
         floem::views::Container::new(floem::views::Stack::new((
             trigger_view,
             backdrop,
             content_view,
         )))
-        .style(|s| s.position(floem::style::Position::Relative))
+        .style(|s| s.relative())
     }
 }
-
 impl<T, C, TV> HasViewId for ContextMenu<T, C>
 where
     T: Fn() -> TV + 'static,
@@ -174,7 +147,6 @@ where
         self.id
     }
 }
-
 impl<T, C, TV> IntoView for ContextMenu<T, C>
 where
     T: Fn() -> TV + 'static,
@@ -182,29 +154,20 @@ where
     TV: IntoView + 'static,
 {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(self.build().into_view())
     }
 }
 
-// ============================================================================
-// ContextMenuContent
-// ============================================================================
-
-/// Styled container for context menu items
 pub struct ContextMenuContent<V> {
     id: ViewId,
     child: V,
 }
-
 impl<V: IntoView + 'static> ContextMenuContent<V> {
-    /// Create new context menu content
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -212,36 +175,22 @@ impl<V: IntoView + 'static> ContextMenuContent<V> {
         }
     }
 }
-
 impl<V: IntoView + 'static> HasViewId for ContextMenuContent<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 impl<V: IntoView + 'static> IntoView for ContextMenuContent<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Column)
-            }),
-        )
+        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| s.flex_col()))
     }
 }
 
-// ============================================================================
-// ContextMenuItem
-// ============================================================================
-
-/// Individual menu item
 pub struct ContextMenuItem {
     id: ViewId,
     text: String,
@@ -250,9 +199,7 @@ pub struct ContextMenuItem {
     shortcut: Option<String>,
     on_click: Option<Box<dyn Fn() + 'static>>,
 }
-
 impl ContextMenuItem {
-    /// Create a new menu item
     pub fn new(text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -263,57 +210,43 @@ impl ContextMenuItem {
             on_click: None,
         }
     }
-
-    /// Set click handler
     pub fn on_click(mut self, handler: impl Fn() + 'static) -> Self {
         self.on_click = Some(Box::new(handler));
         self
     }
-
-    /// Mark as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
-
-    /// Mark as destructive (red text)
     pub fn destructive(mut self) -> Self {
         self.destructive = true;
         self
     }
-
-    /// Add keyboard shortcut hint
     pub fn shortcut(mut self, shortcut: impl Into<String>) -> Self {
         self.shortcut = Some(shortcut.into());
         self
     }
 }
-
 impl HasViewId for ContextMenuItem {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 impl IntoView for ContextMenuItem {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let text = self.text;
         let disabled = self.disabled;
         let destructive = self.destructive;
         let shortcut = self.shortcut;
         let on_click = self.on_click;
-
-        // Main label
         let label = floem::views::Label::new(text.clone()).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
-                let base = s.font_size(14.0).flex_grow(1.0);
+                let base = s.text_sm().flex_grow(1.0);
                 if destructive {
                     base.color(t.destructive)
                 } else if disabled {
@@ -323,35 +256,22 @@ impl IntoView for ContextMenuItem {
                 }
             })
         });
-
-        // Shortcut hint (if any)
         let shortcut_view = if let Some(sc) = shortcut {
             floem::views::Label::new(sc)
                 .style(|s| {
-                    s.with_shadcn_theme(move |s, t| {
-                        s.font_size(12.0)
-                            .color(t.muted_foreground)
-                            .margin_left(16.0)
-                    })
+                    s.with_shadcn_theme(move |s, t| s.text_xs().color(t.muted_foreground).ml_4())
                 })
                 .into_any()
         } else {
             floem::views::Empty::new().into_any()
         };
-
         let row = floem::views::Stack::horizontal((label, shortcut_view)).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
-                let base = s
-                    .width_full()
-                    .padding_left(12.0)
-                    .padding_right(12.0)
-                    .padding_top(8.0)
-                    .padding_bottom(8.0)
-                    .cursor(if disabled {
-                        CursorStyle::Default
-                    } else {
-                        CursorStyle::Pointer
-                    });
+                let base = s.w_full().px_3().py_2().cursor(if disabled {
+                    CursorStyle::Default
+                } else {
+                    CursorStyle::Pointer
+                });
                 if disabled {
                     base
                 } else {
@@ -359,10 +279,9 @@ impl IntoView for ContextMenuItem {
                 }
             })
         });
-
         if let Some(handler) = on_click {
             if !disabled {
-                Box::new(row.on_click_stop(move |_| handler()))
+                Box::new(row.on_event_stop(floem::event::listener::Click, move |_, _| handler()))
             } else {
                 Box::new(row)
             }
@@ -372,65 +291,40 @@ impl IntoView for ContextMenuItem {
     }
 }
 
-// ============================================================================
-// ContextMenuSeparator
-// ============================================================================
-
-/// Separator line between menu items
 pub struct ContextMenuSeparator;
-
 impl ContextMenuSeparator {
-    /// Create a new separator
     pub fn new() -> Self {
         Self
     }
 }
-
 impl Default for ContextMenuSeparator {
     fn default() -> Self {
         Self::new()
     }
 }
-
 impl HasViewId for ContextMenuSeparator {
     fn view_id(&self) -> ViewId {
         ViewId::new()
     }
 }
-
 impl IntoView for ContextMenuSeparator {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(floem::views::Empty::new().style(|s| {
-            s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .height(1.0)
-                    .background(t.border)
-                    .margin_top(4.0)
-                    .margin_bottom(4.0)
-            })
+            s.with_shadcn_theme(move |s, t| s.w_full().h_px().background(t.border).my_1())
         }))
     }
 }
 
-// ============================================================================
-// ContextMenuLabel
-// ============================================================================
-
-/// Label/header for a group of menu items
 pub struct ContextMenuLabel {
     id: ViewId,
     text: String,
 }
-
 impl ContextMenuLabel {
-    /// Create a new menu label
     pub fn new(text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -438,51 +332,38 @@ impl ContextMenuLabel {
         }
     }
 }
-
 impl HasViewId for ContextMenuLabel {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 impl IntoView for ContextMenuLabel {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let text = self.text;
-
         Box::new(floem::views::Label::new(text).style(|s| {
             s.with_shadcn_theme(move |s, t| {
-                s.width_full()
-                    .padding_left(12.0)
-                    .padding_right(12.0)
-                    .padding_top(8.0)
-                    .padding_bottom(4.0)
-                    .font_size(12.0)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
+                s.w_full()
+                    .px_3()
+                    .pt_2()
+                    .pb_1()
+                    .text_xs()
+                    .font_medium()
                     .color(t.foreground)
             })
         }))
     }
 }
 
-// ============================================================================
-// ContextMenuGroup
-// ============================================================================
-
-/// Group of related menu items
 pub struct ContextMenuGroup<V> {
     id: ViewId,
     child: V,
 }
-
 impl<V: IntoView + 'static> ContextMenuGroup<V> {
-    /// Create a new menu group
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -490,27 +371,18 @@ impl<V: IntoView + 'static> ContextMenuGroup<V> {
         }
     }
 }
-
 impl<V: IntoView + 'static> HasViewId for ContextMenuGroup<V> {
     fn view_id(&self) -> ViewId {
         self.id
     }
 }
-
 impl<V: IntoView + 'static> IntoView for ContextMenuGroup<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
-        Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Column)
-            }),
-        )
+        Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| s.flex_col()))
     }
 }

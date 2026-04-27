@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```
 //! use floem_shadcn::components::aspect_ratio::AspectRatio;
 //!
 //! // 16:9 aspect ratio
@@ -98,11 +98,6 @@ where
         let ratio = self.ratio;
         let child = self.child;
 
-        // The padding-bottom trick to maintain aspect ratio
-        // Since we can't use padding-bottom percentage in floem directly,
-        // we use a fixed approach with aspect_ratio style if available,
-        // or approximate with min-height based on width
-
         let inner = if let Some(child_fn) = child {
             floem::views::Container::new(child_fn())
                 .style(|s| s.position(floem::style::Position::Absolute).inset(0.0))
@@ -114,7 +109,6 @@ where
         floem::views::Container::new(inner).style(move |s| {
             s.position(floem::style::Position::Relative)
                 .width_full()
-                // Use aspect_ratio style property
                 .aspect_ratio(ratio as f32)
         })
     }
@@ -136,10 +130,10 @@ where
     V: IntoView + 'static,
 {
     type V = Box<dyn View>;
-    type Intermediate = Self;
 
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -193,10 +187,9 @@ impl<V: IntoView + 'static> HasViewId for AspectRatioSimple<V> {
 
 impl<V: IntoView + 'static> IntoView for AspectRatioSimple<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {

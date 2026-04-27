@@ -23,10 +23,9 @@ use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::{Decorators, Overlay};
 use floem::{HasViewId, ViewId};
-use floem_tailwind::TailwindExt;
 
 use crate::theme::ShadcnThemeExt;
-
+use floem_tailwind::TailwindExt;
 /// Toast variant for styling
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ToastVariant {
@@ -128,10 +127,9 @@ impl HasViewId for ToastContainer {
 
 impl IntoView for ToastContainer {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -155,7 +153,7 @@ impl IntoView for ToastContainer {
                     .collect();
 
                 floem::views::Stack::vertical_from_iter(views)
-                    .style(|s| s.gap(8.0))
+                    .style(|s| s.gap_2())
                     .into_any()
             },
         )
@@ -164,16 +162,16 @@ impl IntoView for ToastContainer {
                 .inset_bottom(16.0)
                 .inset_right(16.0)
                 .flex_col()
-                .gap(8.0)
+                .gap_2()
         });
 
         // Use Overlay with fixed positioning
-        Box::new(Overlay::new().child(toast_list).style(move |s| {
+        Box::new(Overlay::new(toast_list).style(move |s| {
             let has_toasts = !toasts.get().is_empty();
             s.fixed()
-                .inset_0()
-                .width_full()
-                .height_full()
+                .inset(0.0)
+                .w_full()
+                .h_full()
                 .pointer_events_none()
                 .apply_if(!has_toasts, |s| s.hide())
         }))
@@ -210,10 +208,9 @@ impl Toast {
 
 impl IntoView for Toast {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -225,13 +222,11 @@ impl IntoView for Toast {
         // Title
         let title_view = floem::views::Label::new(title).style(move |s| {
             s.with_shadcn_theme(move |s, t| {
-                s.font_size(14.0)
-                    .font_weight(floem::text::Weight::SEMIBOLD)
-                    .color(match variant {
-                        ToastVariant::Default => t.foreground,
-                        ToastVariant::Success => t.foreground,
-                        ToastVariant::Destructive => t.destructive_foreground,
-                    })
+                s.text_sm().color(match variant {
+                    ToastVariant::Default => t.foreground,
+                    ToastVariant::Success => t.foreground,
+                    ToastVariant::Destructive => t.destructive_foreground,
+                })
             })
         });
 
@@ -259,7 +254,7 @@ impl IntoView for Toast {
         // Close button
         let close_btn = floem::views::Label::new("×").style(|s| {
             s.with_shadcn_theme(move |s, t| {
-                s.font_size(18.0)
+                s.text_lg()
                     .color(t.muted_foreground)
                     .cursor(CursorStyle::Pointer)
                     .hover(|s| s.color(t.foreground))
@@ -267,7 +262,9 @@ impl IntoView for Toast {
         });
 
         let close_btn = if let Some(handler) = on_close {
-            close_btn.on_click_stop(move |_| handler()).into_any()
+            close_btn
+                .on_event_stop(floem::event::listener::Click, move |_, _| handler())
+                .into_any()
         } else {
             close_btn.into_any()
         };
@@ -282,13 +279,13 @@ impl IntoView for Toast {
                     let base = s
                         .min_width(300.0)
                         .max_width(420.0)
-                        .padding(16.0)
-                        .border(1.0)
+                        .p_4()
+                        .border_1()
                         .border_radius(t.radius)
                         .box_shadow_blur(8.0)
                         .box_shadow_color(t.foreground.with_alpha(0.1))
                         .items_start()
-                        .gap(8.0)
+                        .gap_2()
                         .pointer_events_auto(); // Enable clicks on toast (parent overlay has pointer-events: none)
                     match variant {
                         ToastVariant::Default | ToastVariant::Success => {
@@ -340,10 +337,9 @@ impl HasViewId for ToastAction {
 
 impl IntoView for ToastAction {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -353,13 +349,12 @@ impl IntoView for ToastAction {
         let btn = floem::views::Label::new(text).style(|s| {
             s.with_shadcn_theme(move |s, t| {
                 s.font_size(13.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
                     .color(t.foreground)
                     .padding_left(12.0)
                     .padding_right(12.0)
                     .padding_top(6.0)
                     .padding_bottom(6.0)
-                    .border(1.0)
+                    .border_1()
                     .border_color(t.border)
                     .border_radius(t.radius)
                     .cursor(CursorStyle::Pointer)
@@ -368,7 +363,7 @@ impl IntoView for ToastAction {
         });
 
         if let Some(handler) = on_click {
-            Box::new(btn.on_click_stop(move |_| handler()))
+            Box::new(btn.on_event_stop(floem::event::listener::Click, move |_, _| handler()))
         } else {
             Box::new(btn)
         }

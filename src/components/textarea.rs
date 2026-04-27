@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ``````rust
 //! use floem_shadcn::components::textarea::Textarea;
 //!
 //! // Basic textarea
@@ -17,93 +17,61 @@
 //!     .on_change(|text| println!("Text changed: {}", text));
 //! ```
 
-use floem::prelude::*;
-use floem::views::Decorators;
-use floem::{HasViewId, ViewId};
-use floem_tailwind::TailwindExt;
-
-use crate::text::TextArea as TextAreaView;
 use crate::theme::ShadcnThemeExt;
+use floem::prelude::*;
+use floem::reactive::{Effect, RwSignal, SignalGet, SignalUpdate};
+use floem::views::{Decorators, TextInput};
+use floem::{HasViewId, ViewId};
 
-/// A styled textarea (multi-line input) builder
-#[allow(clippy::type_complexity)]
+/// A styled multi-line text area.
+/// Uses floem's TextInput internally with a minimum height.
 pub struct Textarea {
     id: ViewId,
-    initial_value: String,
+    buffer: RwSignal<String>,
     placeholder: Option<String>,
     rows: u32,
     on_change: Option<Box<dyn Fn(&str)>>,
-    resizable: bool,
 }
 
 impl Textarea {
-    /// Create a new textarea with the given initial value
-    pub fn new(initial_value: impl Into<String>) -> Self {
+    pub fn new(initial: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
-            initial_value: initial_value.into(),
+            buffer: RwSignal::new(initial.into()),
             placeholder: None,
             rows: 3,
             on_change: None,
-            resizable: false,
         }
     }
 
-    /// Set placeholder text
     pub fn placeholder(mut self, text: impl Into<String>) -> Self {
         self.placeholder = Some(text.into());
         self
     }
 
-    /// Set the number of visible rows (default: 3)
     pub fn rows(mut self, rows: u32) -> Self {
         self.rows = rows;
         self
     }
 
-    /// Set a callback for when the text changes
-    pub fn on_change(mut self, on_change: impl Fn(&str) + 'static) -> Self {
-        self.on_change = Some(Box::new(on_change));
+    pub fn on_change(mut self, f: impl Fn(&str) + 'static) -> Self {
+        self.on_change = Some(Box::new(f));
         self
     }
 
-    /// Enable or disable the resize handle (drag grip at bottom-right corner)
-    pub fn resizable(mut self, enabled: bool) -> Self {
-        self.resizable = enabled;
+    pub fn value(self, getter: impl Fn() -> String + 'static) -> Self {
+        let buf = self.buffer;
+        Effect::new(move |_| {
+            let new_value = getter();
+            if buf.get_untracked() != new_value {
+                buf.set(new_value);
+            }
+        });
         self
     }
 
-    /// Build the textarea view
-    pub fn build(self) -> impl IntoView {
-        let min_height = (self.rows as f64) * 24.0 + 16.0; // line height * rows + padding
-
-        // Use our custom multi-line TextArea, passing our ViewId for proper HasViewId impl
-        let mut textarea =
-            TextAreaView::with_text_and_id(self.initial_value, self.id).resizable(self.resizable);
-
-        if let Some(on_change) = self.on_change {
-            textarea = textarea.on_update(move |text| {
-                on_change(text);
-            });
-        }
-
-        textarea.style(move |s| {
-            s.min_height(min_height)
-                .w_full()
-                .rounded_md()
-                .border_1()
-                .px_3()
-                .py_2()
-                .text_sm()
-                .with_shadcn_theme(|s, t| {
-                    let ring = t.ring;
-                    s.border_color(t.input)
-                        .background(t.background)
-                        .color(t.foreground)
-                        .focus(move |s| s.outline(2.0).outline_color(ring))
-                        .disabled(|s| s.background(t.muted).color(t.muted_foreground))
-                })
-        })
+    pub fn buffer(&self) -> RwSignal<String> {
+        self.buffer
     }
 }
 
@@ -115,13 +83,45 @@ impl HasViewId for Textarea {
 
 impl IntoView for Textarea {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
-        Box::new(self.build().into_view())
+        let min_height = (self.rows as f64) * 24.0 + 16.0;
+        let buf = self.buffer;
+
+        // Wire on_change if provided
+        if let Some(cb) = self.on_change {
+            let buf = buf;
+            Effect::new(move |_| {
+                let text = buf.get_untracked();
+                cb(&text);
+            });
+        }
+
+        let mut view = TextInput::new(buf);
+        if let Some(ph) = self.placeholder {
+            view = view.placeholder(ph);
+        }
+
+        Box::new(view.style(move |s| {
+            s.min_height(min_height)
+                .width_full()
+                .border_radius(6.0)
+                .border(1.0)
+                .padding_left(12.0)
+                .padding_right(12.0)
+                .padding_top(8.0)
+                .padding_bottom(8.0)
+                .font_size(14.0)
+                .with_shadcn_theme(|s, t| {
+                    let ring = t.ring;
+                    s.border_color(t.input)
+                        .background(t.background)
+                        .color(t.foreground)
+                        .focus(move |s| s.outline(2.0).outline_color(ring))
+                })
+        }))
     }
 }

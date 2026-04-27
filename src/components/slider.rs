@@ -17,17 +17,13 @@
 //! let slider = Slider::new(value).min(0.0).max(200.0);
 //! ```
 
+use crate::theme::ShadcnThemeExt;
 use floem::prelude::*;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::CursorStyle;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
-use floem_tailwind::TailwindExt;
-use ui_events::pointer::PointerEvent;
 
-use crate::theme::ShadcnThemeExt;
-
-/// A styled slider builder
 pub struct Slider {
     id: ViewId,
     value: RwSignal<f64>,
@@ -36,9 +32,7 @@ pub struct Slider {
     step: f64,
     disabled: bool,
 }
-
 impl Slider {
-    /// Create a new slider with the given value signal
     pub fn new(value: RwSignal<f64>) -> Self {
         Self {
             id: ViewId::new(),
@@ -49,116 +43,86 @@ impl Slider {
             disabled: false,
         }
     }
-
-    /// Set the minimum value (default: 0)
     pub fn min(mut self, min: f64) -> Self {
         self.min = min;
         self
     }
-
-    /// Set the maximum value (default: 100)
     pub fn max(mut self, max: f64) -> Self {
         self.max = max;
         self
     }
-
-    /// Set the step value (default: 1)
     pub fn step(mut self, step: f64) -> Self {
         self.step = step;
         self
     }
-
-    /// Set the slider as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
 
-    /// Build the slider view
     pub fn build(self) -> impl IntoView {
         let value = self.value;
         let min = self.min;
         let max = self.max;
         let disabled = self.disabled;
-
-        // Track dragging state
         let is_dragging = RwSignal::new(false);
 
-        // shadcn/ui Slider (v4 new-york):
-        // Root: relative flex w-full touch-none items-center select-none
-        // Track: bg-muted relative grow overflow-hidden rounded-full h-1.5 (6px)
-        // Range: bg-primary absolute h-full
-        // Thumb: size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm
-
-        // Track (background)
-        let track = floem::views::Container::new(
-            // Range (filled portion) - bg-primary absolute h-full
-            floem::views::Empty::new().style(move |s| {
-                s.with_shadcn_theme(move |s, t| {
-                    let percent = ((value.get() - min) / (max - min) * 100.0).clamp(0.0, 100.0);
-                    s.rounded_full()
-                        .height_full()
-                        .width_pct(percent)
-                        .background(t.primary) // bg-primary
-                })
-            }),
-        )
+        let track = floem::views::Container::new(floem::views::Empty::new().style(move |s| {
+            s.with_shadcn_theme(move |s, t| {
+                let percent = ((value.get() - min) / (max - min) * 100.0).clamp(0.0, 100.0);
+                s.border_radius(9999.0)
+                    .height_full()
+                    .width_pct(percent)
+                    .background(t.primary)
+            })
+        }))
         .style(move |s| {
             s.with_shadcn_theme(move |s, t| {
-                // Track: bg-muted relative grow rounded-full h-1.5
-                s.rounded_full()
+                s.border_radius(9999.0)
                     .width_full()
-                    .height(6.0) // h-1.5 = 6px
-                    .background(t.muted) // bg-muted
+                    .height(6.0)
+                    .background(t.muted)
                     .position(floem::style::Position::Relative)
             })
         });
 
-        // Thumb: size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm
         let thumb = floem::views::Empty::new().style(move |s| {
             s.with_shadcn_theme(move |s, t| {
                 let percent = ((value.get() - min) / (max - min) * 100.0).clamp(0.0, 100.0);
-                s.size_4() // size-4 = 16px
-                    .flex_shrink(0.0) // shrink-0
-                    .rounded_full() // rounded-full
-                    .background(peniko::Color::WHITE) // bg-white (always white, not theme background)
-                    .border_1() // border (1px)
-                    .border_color(t.primary) // border-primary
-                    .shadow_sm() // shadow-sm
+                s.size(16.0, 16.0)
+                    .flex_shrink(0.0)
+                    .border_radius(9999.0)
+                    .background(peniko::Color::WHITE)
+                    .border(1.0)
+                    .border_color(t.primary)
+                    .box_shadow_blur(2.0)
+                    .box_shadow_color(peniko::Color::from_rgba8(0, 0, 0, 25))
                     .position(floem::style::Position::Absolute)
-                    .inset_top(-5.0) // center vertically: (16 - 6) / 2 = 5
+                    .inset_top(-5.0)
                     .inset_left_pct(percent)
-                    .margin_left(-8.0) // Center the thumb horizontally
+                    .margin_left(-8.0)
                     .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
                     .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
             })
         });
 
-        // Helper to calculate value from pointer position (window coordinates)
         let calc_value_window = move |container_id: ViewId, x: f64| {
             let content_rect = container_id.get_content_rect();
             let track_width = content_rect.width();
-            // x is in window coordinates, content_rect.x0 is also in window coordinates
             let click_x = x - content_rect.x0;
             let percent = (click_x / track_width).clamp(0.0, 1.0);
             min + percent * (max - min)
         };
-
-        // Helper to calculate value from pointer position (view-relative coordinates)
-        // When pointer capture is active, PointerMove gives view-relative coords
         let calc_value_relative = move |container_id: ViewId, x: f64| {
             let content_rect = container_id.get_content_rect();
-            let layout_rect = container_id.layout_rect();
+            let layout_rect = container_id.get_layout_rect();
             let track_width = content_rect.width();
-            // x is view-relative, convert to content-relative by subtracting the padding
-            // padding = content_rect.x0 - layout_rect.x0 (in window coords, but same offset)
             let padding = content_rect.x0 - layout_rect.x0;
             let click_x = x - padding;
             let percent = (click_x / track_width).clamp(0.0, 1.0);
             min + percent * (max - min)
         };
 
-        // Container with interaction
         let container_id = ViewId::new();
         floem::views::Container::with_id(
             container_id,
@@ -166,46 +130,34 @@ impl Slider {
                 .style(|s| s.width_full().position(floem::style::Position::Relative)),
         )
         .style(move |s| {
-            // Root: relative flex w-full touch-none items-center select-none
             s.width_full()
-                .h_4() // height matches thumb for proper alignment
+                .height(16.0)
                 .items_center()
                 .apply_if(disabled, |s| s.cursor(CursorStyle::Default))
                 .apply_if(!disabled, |s| s.cursor(CursorStyle::Pointer))
-                .padding_left(8.0) // account for thumb overflow
+                .padding_left(8.0)
                 .padding_right(8.0)
         })
-        .on_event(floem::event::EventListener::PointerDown, move |e| {
+        .on_event_stop(floem::event::listener::PointerDown, move |_cx, event| {
             if disabled {
-                return floem::event::EventPropagation::Continue;
+                return;
             }
-            if let floem::event::Event::Pointer(PointerEvent::Down(pointer_event)) = e {
-                let x = pointer_event.state.logical_point().x;
-                // PointerDown uses window coordinates
-                value.set(calc_value_window(container_id, x));
-                is_dragging.set(true);
-                // Set pointer capture to receive events even outside bounds
-                if let Some(pointer_id) = pointer_event.pointer.pointer_id {
-                    container_id.set_pointer_capture(pointer_id);
-                }
+            let x = event.state.logical_point().x;
+            value.set(calc_value_window(container_id, x));
+            is_dragging.set(true);
+            if let Some(pid) = event.pointer.pointer_id {
+                container_id.set_pointer_capture(pid);
             }
-            floem::event::EventPropagation::Continue
         })
-        .on_event(floem::event::EventListener::PointerMove, move |e| {
+        .on_event_stop(floem::event::listener::PointerMove, move |_cx, event| {
             if disabled || !is_dragging.get() {
-                return floem::event::EventPropagation::Continue;
+                return;
             }
-            if let floem::event::Event::Pointer(PointerEvent::Move(pointer_event)) = e {
-                let x = pointer_event.current.logical_point().x;
-                // PointerMove with pointer capture uses view-relative coordinates
-                value.set(calc_value_relative(container_id, x));
-            }
-            floem::event::EventPropagation::Continue
+            let x = event.current.logical_point().x;
+            value.set(calc_value_relative(container_id, x));
         })
-        .on_event(floem::event::EventListener::PointerUp, move |_| {
+        .on_event_stop(floem::event::listener::PointerUp, move |_cx, _event| {
             is_dragging.set(false);
-            // Pointer capture is automatically released on pointer up
-            floem::event::EventPropagation::Continue
         })
     }
 }
@@ -215,15 +167,12 @@ impl HasViewId for Slider {
         self.id
     }
 }
-
 impl IntoView for Slider {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(self.build().into_view())
     }

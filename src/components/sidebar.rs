@@ -29,14 +29,14 @@
 //!                                 SidebarMenuItem::new().child(
 //!                                     SidebarMenuButton::new("Buttons")
 //!                                         .is_active(move || active.get() == "buttons")
-//!                                         .on_click_stop(move |_| active.set("buttons"))
+//!                                         .on_event_stop(floem::event::listener::Click, move |_, _| active.set("buttons"))
 //!                                 )
 //!                             )
 //!                             .child(
 //!                                 SidebarMenuItem::new().child(
 //!                                     SidebarMenuButton::new("Cards")
 //!                                         .is_active(move || active.get() == "cards")
-//!                                         .on_click_stop(move |_| active.set("cards"))
+//!                                         .on_event_stop(floem::event::listener::Click, move |_, _| active.set("cards"))
 //!                                 )
 //!                             )
 //!                     )
@@ -52,14 +52,13 @@
 use std::rc::Rc;
 
 use floem::prelude::*;
-use floem::views::Scroll;
 use floem::style::CursorStyle;
-use floem::text::Weight;
 use floem::view::ParentView;
+use floem::views::Scroll;
 use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
-
+use floem_tailwind::TailwindExt;
 // ============================================================================
 // Sidebar - Main container
 // ============================================================================
@@ -132,10 +131,9 @@ impl HasViewId for Sidebar {
 
 impl IntoView for Sidebar {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -155,7 +153,7 @@ impl IntoView for Sidebar {
                     s.width(width)
                         .min_width(width)
                         .flex_shrink(0.)
-                        .height_full()
+                        .h_full()
                         .border_right(1.0)
                         .border_color(t.border)
                         .background(t.background)
@@ -194,21 +192,15 @@ impl HasViewId for SidebarHeader {
 }
 
 impl IntoView for SidebarHeader {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
-            s.with_shadcn_theme(|s, t| {
-                s.width_full()
-                    .padding(16.0)
-                    .border_bottom(1.0)
-                    .border_color(t.border)
-            })
+        Container::with_id(self.id, ()).style(|s| {
+            s.with_shadcn_theme(|s, t| s.w_full().p_4().border_bottom(1.0).border_color(t.border))
         })
     }
 }
@@ -245,27 +237,21 @@ impl HasViewId for SidebarContent {
 
 impl IntoView for SidebarContent {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        let inner = floem::views::Stem::with_id(self.id).style(|s| {
-            s.width_full()
+        let inner = Container::with_id(self.id, ()).style(|s| {
+            s.w_full()
                 .flex_direction(floem::style::FlexDirection::Column)
                 .padding(8.0)
-                .gap(8.0)
+                .gap_2()
         });
 
         Box::new(
-            Scroll::new(inner).style(|s| {
-                s.flex_grow(1.0)
-                    .flex_basis(0.0)
-                    .min_height(0.0)
-                    .width_full()
-            }),
+            Scroll::new(inner).style(|s| s.flex_grow(1.0).flex_basis(0.0).min_height(0.0).w_full()),
         )
     }
 }
@@ -301,21 +287,15 @@ impl HasViewId for SidebarFooter {
 }
 
 impl IntoView for SidebarFooter {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
-            s.with_shadcn_theme(|s, t| {
-                s.width_full()
-                    .padding(16.0)
-                    .border_top(1.0)
-                    .border_color(t.border)
-            })
+        Container::with_id(self.id, ()).style(|s| {
+            s.with_shadcn_theme(|s, t| s.w_full().p_4().border_top(1.0).border_color(t.border))
         })
     }
 }
@@ -351,18 +331,17 @@ impl HasViewId for SidebarGroup {
 }
 
 impl IntoView for SidebarGroup {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
+        Container::with_id(self.id, ()).style(|s| {
             s.flex_direction(floem::style::FlexDirection::Column)
-                .width_full()
-                .gap(4.0)
+                .w_full()
+                .gap_1()
         })
     }
 }
@@ -397,10 +376,9 @@ impl HasViewId for SidebarGroupLabel {
 
 impl IntoView for SidebarGroupLabel {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -409,7 +387,6 @@ impl IntoView for SidebarGroupLabel {
             floem::views::Label::derived(move || text.clone()).style(|s| {
                 s.with_shadcn_theme(|s, t| {
                     s.font_size(11.0)
-                        .font_weight(Weight::SEMIBOLD)
                         .color(t.muted_foreground)
                         .padding_left(8.0)
                         .padding_right(8.0)
@@ -450,17 +427,16 @@ impl HasViewId for SidebarGroupContent {
 }
 
 impl IntoView for SidebarGroupContent {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
+        Container::with_id(self.id, ()).style(|s| {
             s.flex_direction(floem::style::FlexDirection::Column)
-                .width_full()
+                .w_full()
         })
     }
 }
@@ -496,17 +472,16 @@ impl HasViewId for SidebarGroupAction {
 }
 
 impl IntoView for SidebarGroupAction {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
+        Container::with_id(self.id, ()).style(|s| {
             s.with_shadcn_theme(|s, t| {
-                s.padding(4.0)
+                s.p_1()
                     .border_radius(t.radius_sm)
                     .cursor(CursorStyle::Pointer)
                     .hover(|s| s.background(t.accent))
@@ -546,17 +521,16 @@ impl HasViewId for SidebarMenu {
 }
 
 impl IntoView for SidebarMenu {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| {
+        Container::with_id(self.id, ()).style(|s| {
             s.flex_direction(floem::style::FlexDirection::Column)
-                .width_full()
+                .w_full()
                 .gap(2.0)
         })
     }
@@ -593,15 +567,14 @@ impl HasViewId for SidebarMenuItem {
 }
 
 impl IntoView for SidebarMenuItem {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
-        floem::views::Stem::with_id(self.id).style(|s| s.width_full())
+        Container::with_id(self.id, ()).style(|s| s.w_full())
     }
 }
 
@@ -647,7 +620,7 @@ impl SidebarMenuButtonSize {
 ///
 /// SidebarMenuButton::new("Buttons")
 ///     .is_active(move || active.get() == "buttons")
-///     .on_click_stop(move |_| active.set("buttons"))
+///     .on_event_stop(floem::event::listener::Click, move |_, _| active.set("buttons"))
 /// ```
 ///
 /// # Example with children
@@ -703,30 +676,29 @@ impl HasViewId for SidebarMenuButton {
 }
 
 impl IntoView for SidebarMenuButton {
-    type V = floem::views::Stem;
-    type Intermediate = Self;
-
+    type V = Container;
+    type Intermediate = Container;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
         let is_active = self.is_active.clone();
         let height = self.size.height();
-        floem::views::Stem::with_id(self.id).style(move |s| {
+        Container::with_id(self.id, ()).style(move |s| {
             let is_active = is_active.clone();
             s.with_shadcn_theme(move |s, t| {
                 let active = is_active.as_ref().as_ref().map(|f| f()).unwrap_or(false);
                 let base = s
-                    .width_full()
+                    .w_full()
                     .height(height)
                     .flex_direction(floem::style::FlexDirection::Row)
                     .items_center()
-                    .gap(8.0)
+                    .gap_2()
                     .padding_left(12.0)
                     .padding_right(12.0)
                     .border_radius(t.radius_sm)
-                    .font_size(14.0)
+                    .text_sm()
                     .cursor(CursorStyle::Pointer)
                     .transition(
                         floem::style::Background,
@@ -734,11 +706,10 @@ impl IntoView for SidebarMenuButton {
                     )
                     .hover(move |s| s.background(t.accent));
                 if active {
-                    base.background(t.accent)
-                        .color(t.accent_foreground)
-                        .font_weight(Weight::MEDIUM)
+                    base.background(t.accent).color(t.accent_foreground)
                 } else {
-                    base.background(peniko::Color::TRANSPARENT).color(t.foreground)
+                    base.background(peniko::Color::TRANSPARENT)
+                        .color(t.foreground)
                 }
             })
         })
@@ -777,10 +748,9 @@ impl HasViewId for SidebarMenuButtonWithLabel {
 
 impl IntoView for SidebarMenuButtonWithLabel {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -798,13 +768,13 @@ impl IntoView for SidebarMenuButtonWithLabel {
                 s.with_shadcn_theme(move |s, t| {
                     let active = is_active.as_ref().as_ref().map(|f| f()).unwrap_or(false);
                     let base = s
-                        .width_full()
+                        .w_full()
                         .height(height)
                         .items_center()
                         .padding_left(12.0)
                         .padding_right(12.0)
                         .border_radius(t.radius_sm)
-                        .font_size(14.0)
+                        .text_sm()
                         .cursor(CursorStyle::Pointer)
                         .transition(
                             floem::style::Background,
@@ -812,9 +782,7 @@ impl IntoView for SidebarMenuButtonWithLabel {
                         )
                         .hover(move |s| s.background(t.accent));
                     if active {
-                        base.background(t.accent)
-                            .color(t.accent_foreground)
-                            .font_weight(Weight::MEDIUM)
+                        base.background(t.accent).color(t.accent_foreground)
                     } else {
                         base.background(peniko::Color::TRANSPARENT)
                             .color(t.foreground)
@@ -853,16 +821,15 @@ impl HasViewId for SidebarSeparator {
 
 impl IntoView for SidebarSeparator {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
         Box::new(floem::views::Empty::new().style(|s| {
             s.with_shadcn_theme(|s, t| {
-                s.width_full()
+                s.w_full()
                     .height(1.0)
                     .margin_top(8.0)
                     .margin_bottom(8.0)

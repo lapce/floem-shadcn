@@ -21,10 +21,13 @@ use floem::prelude::*;
 use floem::reactive::{RwSignal, SignalGet};
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
-use crate::theme::ShadcnThemeExt;
+use crate::styled::ShadcnStyleExt;
 
-/// A styled progress bar builder
+/// A styled progress bar builder.
+///
+/// Accepts a signal for 0‑100 percent value or can be indeterminate.
 pub struct Progress {
     id: ViewId,
     value: Option<RwSignal<f64>>,
@@ -32,7 +35,7 @@ pub struct Progress {
 }
 
 impl Progress {
-    /// Create a new progress bar with the given value signal (0-100)
+    /// Create a new progress bar with the given value signal (0‑100).
     pub fn new(value: RwSignal<f64>) -> Self {
         Self {
             id: ViewId::new(),
@@ -41,7 +44,7 @@ impl Progress {
         }
     }
 
-    /// Create an indeterminate progress bar (no specific value)
+    /// Create an indeterminate progress bar (no specific value).
     pub fn indeterminate() -> Self {
         Self {
             id: ViewId::new(),
@@ -50,45 +53,34 @@ impl Progress {
         }
     }
 
-    /// Set the maximum value (default: 100)
+    /// Set the maximum value (default 100).
     pub fn max(mut self, max: f64) -> Self {
         self.max = max;
         self
     }
 
-    /// Build the progress bar view
+    /// Build the progress bar view.
     pub fn build(self) -> impl IntoView {
         let value = self.value;
         let max = self.max;
 
-        // The track (background)
+        floem::views::Container::new(floem::views::Empty::new().style(move |s| {
+            let percent = if let Some(v) = value {
+                ((v.get() / max) * 100.0).clamp(0.0, 100.0)
+            } else {
+                30.0
+            };
 
-        floem::views::Container::new(
-            // The indicator (foreground)
-            floem::views::Empty::new().style(move |s| {
-                let percent = if let Some(v) = value {
-                    ((v.get() / max) * 100.0).clamp(0.0, 100.0)
-                } else {
-                    // Indeterminate - show 30% width
-                    30.0
-                };
-
-                s.height_full()
-                    .width_pct(percent)
-                    .border_radius(4.0)
-                    .transition(
-                        floem::style::Width,
-                        floem::style::Transition::linear(millis(200)),
-                    )
-                    .with_shadcn_theme(|s, t| s.background(t.primary))
-            }),
-        )
-        .style(|s| {
-            s.width_full()
-                .height(8.0)
-                .border_radius(4.0)
-                .with_shadcn_theme(|s, t| s.background(t.muted))
-        })
+            s.h_full()
+                .width_pct(percent)
+                .rounded()
+                .transition(
+                    floem::style::Width,
+                    floem::style::Transition::linear(millis(200)),
+                )
+                .bg_primary()
+        }))
+        .style(|s| s.w_full().h_2().rounded().bg_muted())
     }
 }
 
@@ -100,10 +92,9 @@ impl HasViewId for Progress {
 
 impl IntoView for Progress {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {

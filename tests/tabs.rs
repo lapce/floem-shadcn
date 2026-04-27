@@ -1,12 +1,13 @@
-//! Integration tests for the Tabs component using floem-test.
-//!
-//! These tests verify that:
-//! 1. Tabs with flex-grow actually stretch to fill space equally
-//! 2. The layout calculations match our expected behavior
-//! 3. Tab heights match the shadcn/ui specifications
+use floem_test::TestRoot;
+// Integration tests for the Tabs component using floem-test.
+//
+// These tests verify that:
+// 1. Tabs with flex-grow actually stretch to fill space equally
+// 2. The layout calculations match our expected behavior
+// 3. Tab heights match the shadcn/ui specifications
 
 use floem::prelude::*;
-use floem_shadcn::components::tabs::{Tab, Tabs, TabsContent, TabsList};
+use floem_shadcn::components::tabs::{Tab, TabsList};
 use floem_test::prelude::*;
 
 #[test]
@@ -38,7 +39,7 @@ fn test_tabs_flex_grow_equal_distribution() {
     // Available for tabs: 300 - 6 - 6 = 288px
     // Each tab should get: 288 / 3 = 96px
 
-    let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), container, 400.0, 200.0);
     harness.rebuild();
 
     let tabs_list_layout = tabs_list_id
@@ -107,7 +108,7 @@ fn test_tabs_height() {
 
     let container = Stack::new((tabs_list,)).style(|s| s.width(300.0));
 
-    let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), container, 400.0, 200.0);
     harness.rebuild();
 
     let list_layout = tabs_list_id
@@ -158,7 +159,7 @@ fn test_two_tabs_equal_distribution() {
     // Available: 300 - 6 - 3 = 291px
     // Each tab: 291 / 2 = 145.5px
 
-    let mut harness = HeadlessHarness::new_with_size(container, 400.0, 200.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), container, 400.0, 200.0);
     harness.rebuild();
 
     let tabs_list_layout = tabs_list_id.get_layout().expect("TabsList should exist");
@@ -232,7 +233,7 @@ fn test_four_tabs_equal_distribution() {
     // Available: 400 - 6 - 9 = 385px
     // Each tab: 385 / 4 = 96.25px
 
-    let mut harness = HeadlessHarness::new_with_size(container, 500.0, 200.0);
+    let mut harness = HeadlessHarness::new_with_size(TestRoot::new(), container, 500.0, 200.0);
     harness.rebuild();
 
     let tabs_list_layout = tabs_list_id

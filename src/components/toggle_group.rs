@@ -34,8 +34,9 @@ use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
+use floem_tailwind::TailwindExt;
 
-/// Toggle group variant
+/// Toggle group variant.
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ToggleGroupVariant {
     #[default]
@@ -43,7 +44,7 @@ pub enum ToggleGroupVariant {
     Outline,
 }
 
-/// Toggle group size
+/// Toggle group size.
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ToggleGroupSize {
     Sm,
@@ -52,11 +53,9 @@ pub enum ToggleGroupSize {
     Lg,
 }
 
-// ============================================================================
-// ToggleGroup (Single Selection)
-// ============================================================================
-
-/// Toggle group with single selection
+/// Toggle group with **single** selection.
+///
+/// Only one item can be active at a time.
 pub struct ToggleGroup<V> {
     id: ViewId,
     #[allow(dead_code)]
@@ -67,7 +66,7 @@ pub struct ToggleGroup<V> {
 }
 
 impl<V: IntoView + 'static> ToggleGroup<V> {
-    /// Create a toggle group with single selection
+    /// Create a single‑selection toggle group.
     pub fn single(selected: RwSignal<Option<String>>, child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -78,19 +77,14 @@ impl<V: IntoView + 'static> ToggleGroup<V> {
         }
     }
 
-    /// Set the variant
     pub fn variant(mut self, variant: ToggleGroupVariant) -> Self {
         self.variant = variant;
         self
     }
-
-    /// Use outline variant
     pub fn outline(mut self) -> Self {
         self.variant = ToggleGroupVariant::Outline;
         self
     }
-
-    /// Set the size
     pub fn size(mut self, size: ToggleGroupSize) -> Self {
         self.size = size;
         self
@@ -105,10 +99,9 @@ impl<V: IntoView + 'static> HasViewId for ToggleGroup<V> {
 
 impl<V: IntoView + 'static> IntoView for ToggleGroup<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -126,7 +119,7 @@ impl<V: IntoView + 'static> IntoView for ToggleGroup<V> {
                     match variant {
                         ToggleGroupVariant::Default => base,
                         ToggleGroupVariant::Outline => {
-                            base.border(1.0).border_color(t.input).padding(2.0)
+                            base.border_1().border_color(t.input).padding(2.0)
                         }
                     }
                 })
@@ -135,22 +128,18 @@ impl<V: IntoView + 'static> IntoView for ToggleGroup<V> {
     }
 }
 
-// ============================================================================
-// ToggleGroupMultiple
-// ============================================================================
-
-/// Toggle group with multiple selection
+/// Toggle group with **multiple** selection.
 pub struct ToggleGroupMultiple<V> {
     id: ViewId,
     #[allow(dead_code)]
     selected: RwSignal<Vec<String>>,
     child: V,
     variant: ToggleGroupVariant,
+    #[allow(dead_code)]
     size: ToggleGroupSize,
 }
 
 impl<V: IntoView + 'static> ToggleGroupMultiple<V> {
-    /// Create a toggle group with multiple selection
     pub fn new(selected: RwSignal<Vec<String>>, child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -160,22 +149,12 @@ impl<V: IntoView + 'static> ToggleGroupMultiple<V> {
             size: ToggleGroupSize::Default,
         }
     }
-
-    /// Set the variant
     pub fn variant(mut self, variant: ToggleGroupVariant) -> Self {
         self.variant = variant;
         self
     }
-
-    /// Use outline variant
     pub fn outline(mut self) -> Self {
         self.variant = ToggleGroupVariant::Outline;
-        self
-    }
-
-    /// Set the size
-    pub fn size(mut self, size: ToggleGroupSize) -> Self {
-        self.size = size;
         self
     }
 }
@@ -188,15 +167,13 @@ impl<V: IntoView + 'static> HasViewId for ToggleGroupMultiple<V> {
 
 impl<V: IntoView + 'static> IntoView for ToggleGroupMultiple<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
         let variant = self.variant;
-
         Box::new(
             floem::views::Container::with_id(self.id, self.child).style(move |s| {
                 s.with_shadcn_theme(move |s, t| {
@@ -209,7 +186,7 @@ impl<V: IntoView + 'static> IntoView for ToggleGroupMultiple<V> {
                     match variant {
                         ToggleGroupVariant::Default => base,
                         ToggleGroupVariant::Outline => {
-                            base.border(1.0).border_color(t.input).padding(2.0)
+                            base.border_1().border_color(t.input).padding(2.0)
                         }
                     }
                 })
@@ -218,11 +195,7 @@ impl<V: IntoView + 'static> IntoView for ToggleGroupMultiple<V> {
     }
 }
 
-// ============================================================================
-// ToggleGroupItem (for single selection)
-// ============================================================================
-
-/// Individual item in a single-selection toggle group
+/// An item inside a single‑selection toggle group.
 pub struct ToggleGroupItem {
     id: ViewId,
     value: String,
@@ -232,7 +205,6 @@ pub struct ToggleGroupItem {
 }
 
 impl ToggleGroupItem {
-    /// Create a new toggle group item
     pub fn new(value: impl Into<String>, text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -242,14 +214,10 @@ impl ToggleGroupItem {
             disabled: false,
         }
     }
-
-    /// Set the selected signal (connects to parent group)
     pub fn selected(mut self, signal: RwSignal<Option<String>>) -> Self {
         self.selected_signal = Some(signal);
         self
     }
-
-    /// Set as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -264,10 +232,9 @@ impl HasViewId for ToggleGroupItem {
 
 impl IntoView for ToggleGroupItem {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -288,8 +255,7 @@ impl IntoView for ToggleGroupItem {
                     .padding_right(12.0)
                     .padding_top(8.0)
                     .padding_bottom(8.0)
-                    .font_size(14.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
+                    .text_sm()
                     .border_radius(t.radius)
                     .cursor(if disabled {
                         CursorStyle::Default
@@ -312,20 +278,18 @@ impl IntoView for ToggleGroupItem {
         if disabled {
             Box::new(label)
         } else if let Some(signal) = selected_signal {
-            Box::new(label.on_click_stop(move |_| {
-                signal.update(|v| *v = Some(value_for_click.clone()));
-            }))
+            Box::new(
+                label.on_event_stop(floem::event::listener::Click, move |_, _| {
+                    signal.update(|v| *v = Some(value_for_click.clone()));
+                }),
+            )
         } else {
             Box::new(label)
         }
     }
 }
 
-// ============================================================================
-// ToggleGroupItemMultiple (for multiple selection)
-// ============================================================================
-
-/// Individual item in a multiple-selection toggle group
+/// An item inside a multiple‑selection toggle group.
 pub struct ToggleGroupItemMultiple {
     id: ViewId,
     value: String,
@@ -335,7 +299,6 @@ pub struct ToggleGroupItemMultiple {
 }
 
 impl ToggleGroupItemMultiple {
-    /// Create a new toggle group item for multiple selection
     pub fn new(value: impl Into<String>, text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -345,14 +308,10 @@ impl ToggleGroupItemMultiple {
             disabled: false,
         }
     }
-
-    /// Set the selected signal (connects to parent group)
     pub fn selected(mut self, signal: RwSignal<Vec<String>>) -> Self {
         self.selected_signal = Some(signal);
         self
     }
-
-    /// Set as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -367,10 +326,9 @@ impl HasViewId for ToggleGroupItemMultiple {
 
 impl IntoView for ToggleGroupItemMultiple {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -391,8 +349,7 @@ impl IntoView for ToggleGroupItemMultiple {
                     .padding_right(12.0)
                     .padding_top(8.0)
                     .padding_bottom(8.0)
-                    .font_size(14.0)
-                    .font_weight(floem::text::Weight::MEDIUM)
+                    .text_sm()
                     .border_radius(t.radius)
                     .cursor(if disabled {
                         CursorStyle::Default
@@ -415,15 +372,17 @@ impl IntoView for ToggleGroupItemMultiple {
         if disabled {
             Box::new(label)
         } else if let Some(signal) = selected_signal {
-            Box::new(label.on_click_stop(move |_| {
-                signal.update(|v| {
-                    if v.contains(&value_for_click) {
-                        v.retain(|x| x != &value_for_click);
-                    } else {
-                        v.push(value_for_click.clone());
-                    }
-                });
-            }))
+            Box::new(
+                label.on_event_stop(floem::event::listener::Click, move |_, _| {
+                    signal.update(|v| {
+                        if v.contains(&value_for_click) {
+                            v.retain(|x| x != &value_for_click);
+                        } else {
+                            v.push(value_for_click.clone());
+                        }
+                    });
+                }),
+            )
         } else {
             Box::new(label)
         }

@@ -21,7 +21,7 @@
 
 pub mod components;
 pub mod styled;
-pub mod text;
+// pub mod text; // removed: use floem built-in views
 pub mod theme;
 
 pub mod prelude {
@@ -107,10 +107,6 @@ pub mod prelude {
     pub use crate::components::scroll_area::{
         ScrollArea, ScrollAreaWithBar, ScrollOrientation, VirtualScrollArea,
     };
-    pub use crate::components::select::{
-        Select, SelectContent, SelectGroup, SelectItem, SelectItemData, SelectLabel,
-        SelectSeparator, SelectTrigger,
-    };
     pub use crate::components::separator::{Separator, SeparatorOrientation};
     pub use crate::components::sheet::{
         Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetSide,
@@ -141,7 +137,6 @@ pub mod prelude {
     };
     pub use crate::components::tooltip::TooltipExt;
     pub use crate::styled::ShadcnStyleExt;
-    pub use crate::theme::{ShadcnTheme, ShadcnThemeExt, ShadcnThemeProp, ThemeMode};
 
     // Re-export ParentView for .child() API
     pub use floem::view::ParentView;

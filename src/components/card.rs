@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ``````rust
 //! use floem_shadcn::components::card::{Card, CardHeader, CardContent, CardFooter};
 //!
 //! let card = Card::new((
@@ -17,26 +17,36 @@
 //! ```
 
 use floem::prelude::*;
-use floem::text::Weight;
 use floem::view::IntoViewIter;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 use floem_tailwind::TailwindExt;
 
+use crate::styled::ShadcnStyleExt;
 use crate::theme::ShadcnThemeExt;
 
-// ============================================================================
-// Card
-// ============================================================================
-
-/// Card container builder
+/// Card container builder.
+///
+/// # Example
+///
+/// ``````rust
+/// use floem_shadcn::components::card::{Card, CardHeader, CardContent, CardFooter};
+///
+/// let card = Card::new((
+///     CardHeader::new()
+///         .title("Create project")
+///         .description("Deploy your new project in one-click."),
+///     CardContent::new(content),
+///     CardFooter::new(buttons),
+/// ));
+/// ```
 pub struct Card<C> {
     id: ViewId,
     children: C,
 }
 
 impl<C: IntoViewIter> Card<C> {
-    /// Create a new card with the given children
+    /// Create a new card with the given children.
     pub fn new(children: C) -> Self {
         Self {
             id: ViewId::new(),
@@ -44,14 +54,13 @@ impl<C: IntoViewIter> Card<C> {
         }
     }
 
-    /// Build the card view with reactive styling
+    /// Build the card view with reactive styling.
     pub fn build(self) -> impl IntoView {
         floem::views::Stack::vertical_from_iter(self.children.into_view_iter()).style(|s| {
             s.gap_6()
-                .rounded_xl()
-                .border(1.0)
-                .py_6()
-                // Note: shadow-sm not available in floem-tailwind yet
+                .rounded_xl() // rounded-xl = 12px
+                .border_1()
+                .py_6() // py-6 = 24px
                 .with_shadcn_theme(|s, t| {
                     s.border_color(t.border)
                         .background(t.card)
@@ -69,10 +78,9 @@ impl<C: IntoViewIter> HasViewId for Card<C> {
 
 impl<C: IntoViewIter> IntoView for Card<C> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -80,11 +88,7 @@ impl<C: IntoViewIter> IntoView for Card<C> {
     }
 }
 
-// ============================================================================
-// CardHeader
-// ============================================================================
-
-/// Card header builder
+/// Card header builder.
 pub struct CardHeader {
     id: ViewId,
     title: Option<String>,
@@ -92,7 +96,7 @@ pub struct CardHeader {
 }
 
 impl CardHeader {
-    /// Create a new card header
+    /// Create a new card header.
     pub fn new() -> Self {
         Self {
             id: ViewId::new(),
@@ -101,13 +105,13 @@ impl CardHeader {
         }
     }
 
-    /// Set the header title
+    /// Set the header title.
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = Some(title.into());
         self
     }
 
-    /// Set the header description
+    /// Set the header description.
     pub fn description(mut self, description: impl Into<String>) -> Self {
         self.description = Some(description.into());
         self
@@ -128,48 +132,40 @@ impl HasViewId for CardHeader {
 
 impl IntoView for CardHeader {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
         let mut children: Vec<Box<dyn View>> = Vec::new();
 
         if let Some(title) = self.title {
-            children
-                .push(Box::new(Label::derived(move || title.clone()).style(|s| {
-                    s.text_lg().font_weight(Weight::SEMIBOLD).leading_none()
-                })));
+            children.push(Box::new(
+                Label::derived(move || title.clone())
+                    .style(|s| s.text_lg().leading_none().font_medium()),
+            ));
         }
 
         if let Some(description) = self.description {
-            children.push(Box::new(Label::derived(move || description.clone()).style(
-                |s| {
-                    s.text_sm()
-                        .line_height(1.43) // 20px / 14px
-                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-                },
-            )));
+            children.push(Box::new(
+                Label::derived(move || description.clone())
+                    .style(|s| s.text_sm().text_muted_foreground()),
+            ));
         }
 
-        Box::new(floem::views::Stack::vertical_from_iter(children).style(|s| s.gap(8.0).px_6())) // gap-2 px-6
+        Box::new(floem::views::Stack::vertical_from_iter(children).style(|s| s.gap_2().px_6())) // gap-2 px-6
     }
 }
 
-// ============================================================================
-// CardContent
-// ============================================================================
-
-/// Card content section builder
+/// Card content section builder.
 pub struct CardContent<V> {
     id: ViewId,
     child: V,
 }
 
 impl<V: IntoView + 'static> CardContent<V> {
-    /// Create a new card content section
+    /// Create a new card content section.
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -186,29 +182,23 @@ impl<V: IntoView + 'static> HasViewId for CardContent<V> {
 
 impl<V: IntoView + 'static> IntoView for CardContent<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(floem::views::Container::with_id(self.id, self.child).style(|s| s.px_6()))
     }
 }
 
-// ============================================================================
-// CardFooter
-// ============================================================================
-
-/// Card footer section builder
+/// Card footer section builder.
 pub struct CardFooter<V> {
     id: ViewId,
     child: V,
 }
 
 impl<V: IntoView + 'static> CardFooter<V> {
-    /// Create a new card footer section
+    /// Create a new card footer section.
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -225,33 +215,26 @@ impl<V: IntoView + 'static> HasViewId for CardFooter<V> {
 
 impl<V: IntoView + 'static> IntoView for CardFooter<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.flex().items_center().px_6() // flex items-center px-6
-            }),
+            floem::views::Container::with_id(self.id, self.child)
+                .style(|s| s.flex().items_center().px_6()),
         )
     }
 }
 
-// ============================================================================
-// CardTitle (standalone, for custom headers)
-// ============================================================================
-
-/// Standalone card title builder
+/// Standalone card title builder.
 pub struct CardTitle<V> {
     id: ViewId,
     child: V,
 }
 
 impl<V: IntoView + 'static> CardTitle<V> {
-    /// Create a new card title
+    /// Create a new card title.
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -268,32 +251,26 @@ impl<V: IntoView + 'static> HasViewId for CardTitle<V> {
 
 impl<V: IntoView + 'static> IntoView for CardTitle<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(
             floem::views::Container::with_id(self.id, self.child)
-                .style(|s| s.text_lg().font_weight(Weight::SEMIBOLD).leading_none()),
+                .style(|s| s.text_lg().leading_none().font_medium()),
         )
     }
 }
 
-// ============================================================================
-// CardDescription (standalone, for custom headers)
-// ============================================================================
-
-/// Standalone card description builder
+/// Standalone card description builder.
 pub struct CardDescription<V> {
     id: ViewId,
     child: V,
 }
 
 impl<V: IntoView + 'static> CardDescription<V> {
-    /// Create a new card description
+    /// Create a new card description.
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -310,19 +287,14 @@ impl<V: IntoView + 'static> HasViewId for CardDescription<V> {
 
 impl<V: IntoView + 'static> IntoView for CardDescription<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         Box::new(
-            floem::views::Container::with_id(self.id, self.child).style(|s| {
-                s.text_sm()
-                    .line_height(1.43) // 20px / 14px
-                    .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-            }),
+            floem::views::Container::with_id(self.id, self.child)
+                .style(|s| s.text_sm().text_muted_foreground()),
         )
     }
 }

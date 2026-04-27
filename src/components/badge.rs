@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ``````rust
 //! use floem_shadcn::components::badge::Badge;
 //!
 //! // Default badge
@@ -23,7 +23,7 @@ use floem_tailwind::TailwindExt;
 
 use crate::theme::{ShadcnTheme, ShadcnThemeExt};
 
-/// Badge variants following shadcn/ui conventions
+/// Badge variants following shadcn/ui conventions.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum BadgeVariant {
     #[default]
@@ -33,7 +33,16 @@ pub enum BadgeVariant {
     Outline,
 }
 
-/// A styled badge builder
+/// A styled badge builder.
+///
+/// # Example
+///
+/// ``````rust
+/// use floem_shadcn::components::badge::Badge;
+///
+/// let badge = Badge::new("New").secondary();
+/// let error = Badge::new("Error").destructive();
+/// ```
 pub struct Badge<V> {
     id: ViewId,
     child: V,
@@ -41,7 +50,7 @@ pub struct Badge<V> {
 }
 
 impl<V: IntoView + 'static> Badge<V> {
-    /// Create a new badge with the given content
+    /// Create a new badge with the given content.
     pub fn new(child: V) -> Self {
         Self {
             id: ViewId::new(),
@@ -50,33 +59,31 @@ impl<V: IntoView + 'static> Badge<V> {
         }
     }
 
-    // === Variant methods ===
-
-    /// Set badge to secondary variant
+    /// Set badge to secondary variant.
     pub fn secondary(mut self) -> Self {
         self.variant = BadgeVariant::Secondary;
         self
     }
 
-    /// Set badge to destructive variant (red/danger)
+    /// Set badge to destructive variant (red/danger).
     pub fn destructive(mut self) -> Self {
         self.variant = BadgeVariant::Destructive;
         self
     }
 
-    /// Set badge to outline variant (bordered, transparent background)
+    /// Set badge to outline variant (bordered, transparent background).
     pub fn outline(mut self) -> Self {
         self.variant = BadgeVariant::Outline;
         self
     }
 
-    /// Set the badge variant explicitly
+    /// Set the badge variant explicitly.
     pub fn with_variant(mut self, variant: BadgeVariant) -> Self {
         self.variant = variant;
         self
     }
 
-    /// Build the badge view with reactive styling
+    /// Build the badge view with reactive styling.
     pub fn build(self) -> impl IntoView {
         let variant = self.variant;
 
@@ -93,10 +100,9 @@ impl<V: IntoView + 'static> HasViewId for Badge<V> {
 
 impl<V: IntoView + 'static> IntoView for Badge<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -105,23 +111,20 @@ impl<V: IntoView + 'static> IntoView for Badge<V> {
 }
 
 fn build_badge_style(s: Style, variant: BadgeVariant) -> Style {
-    // Base styles using floem-tailwind
-    // Use rounded_xl (12px) for pill shape - half the badge height (~22px)
     let s = s
         .flex()
         .items_center()
-        .rounded_full() // 12px radius for pill shape
+        .rounded_full()
         .border_1()
-        .px_2() // 8px horizontal padding
-        .py_0p5() // 2px vertical padding
-        .text_xs() // 12px font size
+        .px_2()
+        .py_0p5()
+        .text_xs()
         .font_medium()
         .transition(
             floem::style::Background,
             floem::style::Transition::linear(millis(100)),
         );
 
-    // Theme-dependent styles
     s.with_shadcn_theme(move |s, t| apply_variant_style(s, variant, t))
 }
 

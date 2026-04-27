@@ -24,7 +24,7 @@ use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
 
 use crate::theme::ShadcnThemeExt;
-
+use floem_tailwind::TailwindExt;
 /// Direction of the resizable panel group
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum ResizableDirection {
@@ -84,10 +84,10 @@ impl<V: IntoView + 'static> HasViewId for ResizablePanel<V> {
 
 impl<V: IntoView + 'static> IntoView for ResizablePanelGroup<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
 
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -95,10 +95,7 @@ impl<V: IntoView + 'static> IntoView for ResizablePanelGroup<V> {
 
         Box::new(
             floem::views::Container::with_id(self.id, self.child).style(move |s| {
-                let base = s
-                    .width_full()
-                    .height_full()
-                    .display(floem::style::Display::Flex);
+                let base = s.w_full().h_full().display(floem::style::Display::Flex);
 
                 match direction {
                     ResizableDirection::Horizontal => {
@@ -167,10 +164,10 @@ impl<V: IntoView + 'static> ResizablePanel<V> {
 
 impl<V: IntoView + 'static> IntoView for ResizablePanel<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
 
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -184,7 +181,7 @@ impl<V: IntoView + 'static> IntoView for ResizablePanel<V> {
                 let size = size_signal.map(|sig| sig.get()).unwrap_or(default_size);
 
                 let base = s
-                    .flex_basis(floem::unit::PxPctAuto::Pct(size))
+                    .flex_basis(floem::unit::LengthAuto::Pct(size))
                     .flex_grow(0.0)
                     .flex_shrink(0.0);
 
@@ -252,10 +249,9 @@ impl HasViewId for ResizableHandle {
 
 impl IntoView for ResizableHandle {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -284,11 +280,11 @@ impl IntoView for ResizableHandle {
                     match direction {
                         ResizableDirection::Horizontal => base
                             .width(4.0)
-                            .height_full()
+                            .h_full()
                             .cursor(CursorStyle::ColResize)
                             .hover(|s| s.background(t.primary)),
                         ResizableDirection::Vertical => base
-                            .width_full()
+                            .w_full()
                             .height(4.0)
                             .cursor(CursorStyle::RowResize)
                             .hover(|s| s.background(t.primary)),

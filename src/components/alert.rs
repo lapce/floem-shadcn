@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ``````rust
 //! use floem_shadcn::components::alert::Alert;
 //!
 //! // Default alert
@@ -20,10 +20,11 @@
 //! ```
 
 use floem::prelude::*;
-use floem::text::Weight;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
+use crate::styled::ShadcnStyleExt;
 use crate::theme::ShadcnThemeExt;
 
 /// Alert variants
@@ -34,7 +35,19 @@ pub enum AlertVariant {
     Destructive,
 }
 
-/// A styled alert builder
+/// A styled alert builder.
+///
+/// Supports default and destructive variants with optional title and description.
+///
+/// # Example
+///
+/// ``````rust
+/// use floem_shadcn::components::alert::Alert;
+///
+/// let alert = Alert::new()
+///     .title("Heads up!")
+///     .description("You can add components to your app using the cli.");
+/// ```
 pub struct Alert {
     id: ViewId,
     variant: AlertVariant,
@@ -43,7 +56,7 @@ pub struct Alert {
 }
 
 impl Alert {
-    /// Create a new alert
+    /// Create a new alert.
     pub fn new() -> Self {
         Self {
             id: ViewId::new(),
@@ -53,30 +66,29 @@ impl Alert {
         }
     }
 
-    /// Set the alert variant to destructive
+    /// Set the alert variant to destructive.
     pub fn destructive(mut self) -> Self {
         self.variant = AlertVariant::Destructive;
         self
     }
 
-    /// Set the alert title
+    /// Set the alert title.
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = Some(title.into());
         self
     }
 
-    /// Set the alert description
+    /// Set the alert description.
     pub fn description(mut self, description: impl Into<String>) -> Self {
         self.description = Some(description.into());
         self
     }
 
-    /// Build the alert view
+    /// Build the alert view.
     pub fn build(self) -> impl IntoView {
         let variant = self.variant;
         let mut children: Vec<Box<dyn View>> = Vec::new();
 
-        // Icon based on variant
         let icon_svg = match variant {
             AlertVariant::Default => INFO_ICON_SVG,
             AlertVariant::Destructive => ALERT_ICON_SVG,
@@ -84,8 +96,7 @@ impl Alert {
 
         children.push(Box::new(
             floem::views::svg(move || icon_svg.to_string()).style(move |s| {
-                s.width(16.0)
-                    .height(16.0)
+                s.size_4() // w-4 h-4 = 16px
                     .flex_shrink(0.0)
                     .with_shadcn_theme(move |s, t| {
                         let color = match variant {
@@ -97,13 +108,12 @@ impl Alert {
             }),
         ));
 
-        // Content container
         let mut content_children: Vec<Box<dyn View>> = Vec::new();
 
         if let Some(title) = self.title {
             content_children.push(Box::new(floem::views::Label::new(title).style(move |s| {
-                s.font_size(14.0)
-                    .font_weight(Weight::MEDIUM)
+                s.text_sm() // text-sm = 14px
+                    .font_medium() // font-medium
                     .line_height(1.0)
                     .with_shadcn_theme(move |s, t| {
                         let color = match variant {
@@ -116,36 +126,33 @@ impl Alert {
         }
 
         if let Some(description) = self.description {
-            content_children.push(Box::new(floem::views::Label::new(description).style(
-                move |s| {
-                    s.font_size(14.0)
-                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-                },
-            )));
+            content_children.push(Box::new(
+                floem::views::Label::new(description)
+                    .style(move |s| s.text_sm().text_muted_foreground()),
+            ));
         }
 
         children.push(Box::new(
             floem::views::Stack::vertical_from_iter(content_children)
-                .style(|s| s.gap(4.0).flex_grow(1.0)),
+                .style(|s| s.gap_1().flex_grow(1.0)),
         ));
 
         floem::views::Stack::horizontal_from_iter(children).style(move |s| {
-            s.width_full()
-                .padding(16.0)
-                .border_radius(8.0)
-                .border(1.0)
-                .gap(12.0)
+            s.w_full()
+                .p_4() // p-4 = 16px
+                .rounded_lg() // rounded-lg = 8px
+                .border_1()
+                .gap_3() // gap-3 = 12px
                 .items_start()
                 .with_shadcn_theme(move |s, t| {
                     let (bg, border_color) = match variant {
                         AlertVariant::Default => (t.background, t.border),
                         AlertVariant::Destructive => {
-                            // Subtle red background
                             let destructive_bg = peniko::Color::from_rgba8(
                                 t.destructive.to_rgba8().r,
                                 t.destructive.to_rgba8().g,
                                 t.destructive.to_rgba8().b,
-                                25, // Low alpha for subtle background
+                                25,
                             );
                             (destructive_bg, t.destructive)
                         }
@@ -170,10 +177,9 @@ impl HasViewId for Alert {
 
 impl IntoView for Alert {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
 
     fn into_view(self) -> Self::V {
@@ -181,8 +187,5 @@ impl IntoView for Alert {
     }
 }
 
-// Info icon SVG
 const INFO_ICON_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>"#;
-
-// Alert triangle icon SVG
 const ALERT_ICON_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>"#;

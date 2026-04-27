@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```
 //! use floem_shadcn::components::label::FormLabel;
 //!
 //! // Simple label
@@ -19,14 +19,11 @@
 use floem::prelude::*;
 use floem::views::Decorators;
 use floem::{HasViewId, ViewId};
+use floem_tailwind::TailwindExt;
 
+use crate::styled::ShadcnStyleExt;
 use crate::theme::ShadcnThemeExt;
 
-// ============================================================================
-// FormLabel
-// ============================================================================
-
-/// A styled label for form controls (named FormLabel to avoid conflict with floem::views::Label)
 pub struct FormLabel {
     id: ViewId,
     text: String,
@@ -36,7 +33,6 @@ pub struct FormLabel {
 }
 
 impl FormLabel {
-    /// Create a new label
     pub fn new(text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -46,20 +42,14 @@ impl FormLabel {
             error: false,
         }
     }
-
-    /// Mark as required (shows asterisk)
     pub fn required(mut self) -> Self {
         self.required = true;
         self
     }
-
-    /// Set as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
-
-    /// Set as error state
     pub fn error(mut self, error: bool) -> Self {
         self.error = error;
         self
@@ -74,19 +64,15 @@ impl HasViewId for FormLabel {
 
 impl IntoView for FormLabel {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let text = self.text;
         let required = self.required;
         let disabled = self.disabled;
         let error = self.error;
-
-        // Build the display text
         let display_text = if required {
             format!("{} *", text)
         } else {
@@ -94,9 +80,9 @@ impl IntoView for FormLabel {
         };
 
         Box::new(floem::views::Label::new(display_text).style(move |s| {
-            s.font_size(14.0)
-                .font_weight(floem::text::Weight::MEDIUM)
-                .line_height(1.0)
+            s.text_sm()
+                .font_medium()
+                .leading_none()
                 .with_shadcn_theme(move |s, t| {
                     if error {
                         s.color(t.destructive)
@@ -110,11 +96,6 @@ impl IntoView for FormLabel {
     }
 }
 
-// ============================================================================
-// LabelWithIcon
-// ============================================================================
-
-/// Label with an icon prefix
 pub struct LabelWithIcon<V> {
     id: ViewId,
     icon: V,
@@ -124,7 +105,6 @@ pub struct LabelWithIcon<V> {
 }
 
 impl<V: IntoView + 'static> LabelWithIcon<V> {
-    /// Create a new label with icon
     pub fn new(icon: V, text: impl Into<String>) -> Self {
         Self {
             id: ViewId::new(),
@@ -134,14 +114,10 @@ impl<V: IntoView + 'static> LabelWithIcon<V> {
             disabled: false,
         }
     }
-
-    /// Mark as required
     pub fn required(mut self) -> Self {
         self.required = true;
         self
     }
-
-    /// Set as disabled
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -156,17 +132,14 @@ impl<V: IntoView + 'static> HasViewId for LabelWithIcon<V> {
 
 impl<V: IntoView + 'static> IntoView for LabelWithIcon<V> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let text = self.text;
         let required = self.required;
         let disabled = self.disabled;
-
         let display_text = if required {
             format!("{} *", text)
         } else {
@@ -174,9 +147,9 @@ impl<V: IntoView + 'static> IntoView for LabelWithIcon<V> {
         };
 
         let label = floem::views::Label::new(display_text).style(move |s| {
-            s.font_size(14.0)
-                .font_weight(floem::text::Weight::MEDIUM)
-                .line_height(1.0)
+            s.text_sm()
+                .font_medium()
+                .leading_none()
                 .with_shadcn_theme(move |s, t| {
                     if disabled {
                         s.color(t.muted_foreground)
@@ -187,21 +160,12 @@ impl<V: IntoView + 'static> IntoView for LabelWithIcon<V> {
         });
 
         Box::new(
-            floem::views::Stack::horizontal((self.icon, label)).style(|s| {
-                s.display(floem::style::Display::Flex)
-                    .flex_direction(floem::style::FlexDirection::Row)
-                    .items_center()
-                    .gap(6.0)
-            }),
+            floem::views::Stack::horizontal((self.icon, label))
+                .style(|s| s.flex_row().items_center().gap_1p5()),
         )
     }
 }
 
-// ============================================================================
-// FormField
-// ============================================================================
-
-/// A form field with label and input grouped together
 pub struct FormField<L, I> {
     id: ViewId,
     label: L,
@@ -211,7 +175,6 @@ pub struct FormField<L, I> {
 }
 
 impl<L: IntoView + 'static, I: IntoView + 'static> FormField<L, I> {
-    /// Create a new form field
     pub fn new(label: L, input: I) -> Self {
         Self {
             id: ViewId::new(),
@@ -221,14 +184,10 @@ impl<L: IntoView + 'static, I: IntoView + 'static> FormField<L, I> {
             error_message: None,
         }
     }
-
-    /// Add description text
     pub fn description(mut self, desc: impl Into<String>) -> Self {
         self.description = Some(desc.into());
         self
     }
-
-    /// Add error message
     pub fn error(mut self, message: impl Into<String>) -> Self {
         self.error_message = Some(message.into());
         self
@@ -243,48 +202,33 @@ impl<L: IntoView + 'static, I: IntoView + 'static> HasViewId for FormField<L, I>
 
 impl<L: IntoView + 'static, I: IntoView + 'static> IntoView for FormField<L, I> {
     type V = Box<dyn View>;
-    type Intermediate = Self;
-
+    type Intermediate = Box<dyn View>;
     fn into_intermediate(self) -> Self::Intermediate {
-        self
+        self.into_view()
     }
-
     fn into_view(self) -> Self::V {
         let description = self.description;
         let error_message = self.error_message;
 
-        // Description text (if any)
         let desc_view = if let Some(desc) = description {
             floem::views::Label::new(desc)
-                .style(move |s| {
-                    s.font_size(12.0)
-                        .with_shadcn_theme(|s, t| s.color(t.muted_foreground))
-                })
+                .style(move |s| s.text_xs().text_muted_foreground())
                 .into_any()
         } else {
             floem::views::Empty::new().into_any()
         };
 
-        // Error message (if any)
         let error_view = if let Some(err) = error_message {
             floem::views::Label::new(err)
-                .style(move |s| {
-                    s.font_size(12.0)
-                        .with_shadcn_theme(|s, t| s.color(t.destructive))
-                })
+                .style(move |s| s.text_xs().with_shadcn_theme(|s, t| s.color(t.destructive)))
                 .into_any()
         } else {
             floem::views::Empty::new().into_any()
         };
 
         Box::new(
-            floem::views::Stack::vertical((self.label, self.input, desc_view, error_view)).style(
-                |s| {
-                    s.display(floem::style::Display::Flex)
-                        .flex_direction(floem::style::FlexDirection::Column)
-                        .gap(6.0)
-                },
-            ),
+            floem::views::Stack::vertical((self.label, self.input, desc_view, error_view))
+                .style(|s| s.flex_col().gap_1p5()),
         )
     }
 }
